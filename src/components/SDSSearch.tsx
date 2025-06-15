@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,20 @@ interface SearchResult {
   hazard_statements?: Array<{code: string; statement: string}>;
   precautionary_statements?: Array<{code: string; statement: string}>;
 }
+
+// Helper function to safely parse JSON arrays
+const parseJsonArray = (jsonData: any, fallback: any[] = []): any[] => {
+  if (!jsonData) return fallback;
+  if (Array.isArray(jsonData)) return jsonData;
+  try {
+    if (typeof jsonData === 'string') {
+      return JSON.parse(jsonData);
+    }
+    return jsonData;
+  } catch {
+    return fallback;
+  }
+};
 
 const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,19 +86,19 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
         throw error;
       }
 
-      // Transform the data to match our SearchResult interface
+      // Transform the data to match our SearchResult interface with proper type handling
       const results: SearchResult[] = (sdsData || []).map(doc => ({
         id: doc.id,
         product_name: doc.product_name,
         manufacturer: doc.manufacturer || 'Unknown Manufacturer',
-        h_codes: Array.isArray(doc.h_codes) ? doc.h_codes : [],
-        pictograms: Array.isArray(doc.pictograms) ? doc.pictograms : [],
+        h_codes: parseJsonArray(doc.h_codes, []),
+        pictograms: parseJsonArray(doc.pictograms, []),
         source_url: doc.source_url,
         last_updated: doc.created_at || new Date().toISOString(),
         cas_number: doc.cas_number,
         signal_word: doc.signal_word,
-        hazard_statements: Array.isArray(doc.hazard_statements) ? doc.hazard_statements : [],
-        precautionary_statements: Array.isArray(doc.precautionary_statements) ? doc.precautionary_statements : []
+        hazard_statements: parseJsonArray(doc.hazard_statements, []),
+        precautionary_statements: parseJsonArray(doc.precautionary_statements, [])
       }));
       
       setSearchResults(results);
@@ -219,7 +232,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                       <div className="flex flex-wrap gap-2">
                         {result.h_codes.map((hcode, index) => (
                           <Badge key={index} variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
-                            {hcode.code}: {hcode.description}
+                            {hcode.code ? `${hcode.code}: ${hcode.description}` : hcode.description || hcode}
                           </Badge>
                         ))}
                       </div>
@@ -233,7 +246,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                       <div className="flex flex-wrap gap-2">
                         {result.hazard_statements.map((hazard, index) => (
                           <Badge key={index} variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
-                            {hazard.code}: {hazard.statement}
+                            {hazard.code ? `${hazard.code}: ${hazard.statement}` : hazard.statement || hazard}
                           </Badge>
                         ))}
                       </div>
@@ -248,7 +261,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                         {result.pictograms.map((pictogram, index) => (
                           <Badge key={index} variant="outline" className="bg-red-50 text-red-800 border-red-300 flex items-center">
                             <AlertTriangle className="w-3 h-3 mr-1" />
-                            {pictogram.ghs_code} - {pictogram.name}
+                            {pictogram.ghs_code ? `${pictogram.ghs_code} - ${pictogram.name}` : pictogram.name || pictogram}
                           </Badge>
                         ))}
                       </div>
@@ -262,7 +275,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                       <div className="flex flex-wrap gap-2">
                         {result.precautionary_statements.slice(0, 3).map((precaution, index) => (
                           <Badge key={index} variant="outline" className="bg-blue-50 text-blue-800 border-blue-300">
-                            {precaution.code}: {precaution.statement}
+                            {precaution.code ? `${precaution.code}: ${precaution.statement}` : precaution.statement || precaution}
                           </Badge>
                         ))}
                         {result.precautionary_statements.length > 3 && (
