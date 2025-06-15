@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Smartphone, MapPin, FileText, BarChart3, Shield, Zap, CheckCircle } from "lucide-react";
+import { Smartphone, MapPin, FileText, BarChart3, Shield, Zap, CheckCircle, Clock } from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -65,14 +65,14 @@ const LandingPage = () => {
               onClick={handleGetStarted}
               className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-8 py-3 text-lg font-semibold w-full sm:w-auto"
             >
-              Get Started
+              Start 7-Day Free Trial
             </Button>
           </div>
 
           <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center">
               <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-              18-Month License
+              7-Day Free Trial
             </div>
             <div className="flex items-center">
               <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
@@ -185,55 +185,105 @@ const LandingPage = () => {
             Simple, Facility-Based Pricing
           </h2>
           
-          <Card className="p-8 border-2 border-blue-200 relative">
-            <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-red-600 to-blue-600 text-white">
-              Most Popular
-            </Badge>
-            
-            <div className="mb-6">
-              <span className="text-5xl font-bold text-gray-900">$500</span>
-              <span className="text-xl text-gray-600 ml-2">/ 18 months</span>
-            </div>
-            
-            <h3 className="text-2xl font-semibold mb-4">Facility License</h3>
-            <p className="text-gray-600 mb-8">
-              Complete chemical safety solution for your entire facility
-            </p>
-            
-            <ul className="space-y-3 mb-8 text-left max-w-md mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            {/* 18-Month Plan */}
+            <Card className="p-8 border-2 border-blue-200 relative">
+              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-red-600 to-blue-600 text-white">
+                Most Popular - Save 44%
+              </Badge>
+              
+              <div className="mb-6">
+                <span className="text-5xl font-bold text-gray-900">$500</span>
+                <span className="text-xl text-gray-600 ml-2">one-time</span>
+              </div>
+              
+              <h3 className="text-2xl font-semibold mb-2">18-Month License</h3>
+              <p className="text-gray-600 mb-4">
+                Complete chemical safety solution for your entire facility
+              </p>
+              
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
+                <div className="flex items-center justify-center text-green-800">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span className="font-semibold">7-Day Free Trial Included</span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleGetStarted}
+                className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold w-full mb-4"
+              >
+                Start 7-Day Free Trial
+              </Button>
+              
+              <p className="text-sm text-gray-500">
+                Equivalent to $27.78/month - Cancel anytime during trial
+              </p>
+            </Card>
+
+            {/* Monthly Plan */}
+            <Card className="p-8 border border-gray-200">
+              <div className="mb-6">
+                <span className="text-5xl font-bold text-gray-900">$50</span>
+                <span className="text-xl text-gray-600 ml-2">/ month</span>
+              </div>
+              
+              <h3 className="text-2xl font-semibold mb-2">Monthly License</h3>
+              <p className="text-gray-600 mb-4">
+                Flexible monthly billing for your facility
+              </p>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                <div className="flex items-center justify-center text-blue-800">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span className="font-semibold">7-Day Free Trial Included</span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleGetStarted}
+                variant="outline"
+                className="border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white px-8 py-4 text-lg font-semibold w-full mb-4"
+              >
+                Start 7-Day Free Trial
+              </Button>
+              
+              <p className="text-sm text-gray-500">
+                Cancel anytime - No long-term commitment
+              </p>
+            </Card>
+          </div>
+          
+          {/* Features List */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <h4 className="text-lg font-semibold mb-4">Both plans include:</h4>
+            <ul className="grid md:grid-cols-2 gap-3 text-left max-w-2xl mx-auto">
               <li className="flex items-center">
-                <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 Unlimited worker access via QR codes
               </li>
               <li className="flex items-center">
-                <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 Custom branded facility website
               </li>
               <li className="flex items-center">
-                <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 AI-powered chemical safety assistant
               </li>
               <li className="flex items-center">
-                <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 Automatic compliance tracking
               </li>
               <li className="flex items-center">
-                <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 Professional audit trails
               </li>
               <li className="flex items-center">
-                <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 Label printing capabilities
               </li>
             </ul>
-            
-            <Button 
-              onClick={handleGetStarted}
-              className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold w-full"
-            >
-              Start Your 18-Month License
-            </Button>
-          </Card>
+          </div>
         </div>
       </section>
 
