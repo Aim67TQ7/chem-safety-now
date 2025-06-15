@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Search, ExternalLink, AlertTriangle, Clock, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SDSSearchProps {
   facilityData: any;
@@ -20,86 +21,11 @@ interface SearchResult {
   pictograms: Array<{ghs_code: string; name: string}>;
   source_url: string;
   last_updated: string;
+  cas_number?: string;
+  signal_word?: string;
+  hazard_statements?: Array<{code: string; statement: string}>;
+  precautionary_statements?: Array<{code: string; statement: string}>;
 }
-
-// Mock SDS Database
-const mockSDSDatabase: SearchResult[] = [
-  {
-    id: "1",
-    product_name: "WD-40 Multi-Use Product",
-    manufacturer: "WD-40 Company",
-    h_codes: [
-      { code: "H222", description: "Extremely flammable aerosol" },
-      { code: "H229", description: "Pressurised container: May burst if heated" }
-    ],
-    pictograms: [
-      { ghs_code: "GHS02", name: "Flame" },
-      { ghs_code: "GHS04", name: "Gas Cylinder" }
-    ],
-    source_url: "https://www.wd40.com/files/pdf/sds-wd-40-multi-use-product-aerosol-can.pdf",
-    last_updated: "2024-01-15"
-  },
-  {
-    id: "2",
-    product_name: "Loctite 401 Instant Adhesive",
-    manufacturer: "Henkel Corporation",
-    h_codes: [
-      { code: "H315", description: "Causes skin irritation" },
-      { code: "H319", description: "Causes serious eye irritation" },
-      { code: "H335", description: "May cause respiratory irritation" }
-    ],
-    pictograms: [
-      { ghs_code: "GHS07", name: "Exclamation Mark" }
-    ],
-    source_url: "https://www.henkel-adhesives.com/sds/loctite-401.pdf",
-    last_updated: "2024-02-10"
-  },
-  {
-    id: "3",
-    product_name: "Simple Green All-Purpose Cleaner",
-    manufacturer: "Simple Green",
-    h_codes: [
-      { code: "H319", description: "Causes serious eye irritation" }
-    ],
-    pictograms: [
-      { ghs_code: "GHS07", name: "Exclamation Mark" }
-    ],
-    source_url: "https://simplegreen.com/sds/all-purpose-cleaner.pdf",
-    last_updated: "2024-01-20"
-  },
-  {
-    id: "4",
-    product_name: "Acetone",
-    manufacturer: "Various",
-    h_codes: [
-      { code: "H225", description: "Highly flammable liquid and vapour" },
-      { code: "H319", description: "Causes serious eye irritation" },
-      { code: "H336", description: "May cause drowsiness or dizziness" }
-    ],
-    pictograms: [
-      { ghs_code: "GHS02", name: "Flame" },
-      { ghs_code: "GHS07", name: "Exclamation Mark" }
-    ],
-    source_url: "https://www.fishersci.com/sds/acetone.pdf",
-    last_updated: "2024-03-01"
-  },
-  {
-    id: "5",
-    product_name: "Isopropyl Alcohol 99%",
-    manufacturer: "Various",
-    h_codes: [
-      { code: "H225", description: "Highly flammable liquid and vapour" },
-      { code: "H319", description: "Causes serious eye irritation" },
-      { code: "H336", description: "May cause drowsiness or dizziness" }
-    ],
-    pictograms: [
-      { ghs_code: "GHS02", name: "Flame" },
-      { ghs_code: "GHS07", name: "Exclamation Mark" }
-    ],
-    source_url: "https://www.fishersci.com/sds/isopropyl-alcohol.pdf",
-    last_updated: "2024-02-28"
-  }
-];
 
 const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,22 +50,50 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
       
       console.log('Searching SDS database for:', searchQuery);
       console.log('Search log:', searchLog);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Search mock database
-      const results = mockSDSDatabase.filter(item => 
-        item.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+
+      // Log search to facility_search_history table
+      if (facilityData.id) {
+        await supabase.from('facility_search_history').insert({
+          facility_id: facilityData.id,
+          search_query: searchQuery,
+          lat: currentLocation?.lat,
+          lng: currentLocation?.lng
+        });
+      }
+
+      // Search the sds_documents table
+      const { data: sdsData, error } = await supabase
+        .from('sds_documents')
+        .select('*')
+        .or(`product_name.ilike.%${searchQuery}%,manufacturer.ilike.%${searchQuery}%,cas_number.ilike.%${searchQuery}%`)
+        .limit(20);
+
+      if (error) {
+        console.error('Supabase search error:', error);
+        throw error;
+      }
+
+      // Transform the data to match our SearchResult interface
+      const results: SearchResult[] = (sdsData || []).map(doc => ({
+        id: doc.id,
+        product_name: doc.product_name,
+        manufacturer: doc.manufacturer || 'Unknown Manufacturer',
+        h_codes: Array.isArray(doc.h_codes) ? doc.h_codes : [],
+        pictograms: Array.isArray(doc.pictograms) ? doc.pictograms : [],
+        source_url: doc.source_url,
+        last_updated: doc.created_at || new Date().toISOString(),
+        cas_number: doc.cas_number,
+        signal_word: doc.signal_word,
+        hazard_statements: Array.isArray(doc.hazard_statements) ? doc.hazard_statements : [],
+        precautionary_statements: Array.isArray(doc.precautionary_statements) ? doc.precautionary_statements : []
+      }));
       
       setSearchResults(results);
       
       if (results.length === 0) {
         toast({
           title: "No Results Found",
-          description: "Try searching with a different product name or manufacturer.",
+          description: "Try searching with a different product name, manufacturer, or CAS number.",
         });
       } else {
         toast({
@@ -152,7 +106,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
       console.error('Search error:', error);
       toast({
         title: "Search Failed",
-        description: "Please try again.",
+        description: "Please try again. If the problem persists, contact support.",
         variant: "destructive"
       });
     } finally {
@@ -176,7 +130,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
               🔍 Search Safety Data Sheets
             </h3>
             <p className="text-gray-600">
-              Find chemical safety information instantly. Search by product name or manufacturer.
+              Find chemical safety information instantly. Search by product name, manufacturer, or CAS number.
             </p>
           </div>
 
@@ -184,7 +138,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
             <div className="flex-1">
               <Input
                 type="text"
-                placeholder="Enter product name (e.g., WD-40, Loctite 401)"
+                placeholder="Enter product name, manufacturer, or CAS number"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -199,12 +153,12 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
               {isSearching ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Searching...
+                  Searching Database...
                 </div>
               ) : (
                 <>
                   <Search className="w-4 h-4 mr-2" />
-                  Search
+                  Search SDS Database
                 </>
               )}
             </Button>
@@ -239,6 +193,16 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                     <p className="text-gray-600">
                       Manufacturer: {result.manufacturer}
                     </p>
+                    {result.cas_number && (
+                      <p className="text-sm text-gray-500">
+                        CAS Number: {result.cas_number}
+                      </p>
+                    )}
+                    {result.signal_word && (
+                      <Badge variant="outline" className="mt-1 bg-orange-50 text-orange-800 border-orange-300">
+                        Signal Word: {result.signal_word}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center text-sm text-gray-500">
                     <Clock className="w-4 h-4 mr-1" />
@@ -262,6 +226,20 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                     </div>
                   )}
 
+                  {/* Hazard Statements from JSON */}
+                  {result.hazard_statements && result.hazard_statements.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 mb-2">Additional Hazard Statements:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.hazard_statements.map((hazard, index) => (
+                          <Badge key={index} variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
+                            {hazard.code}: {hazard.statement}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* GHS Pictograms */}
                   {result.pictograms && result.pictograms.length > 0 && (
                     <div>
@@ -273,6 +251,25 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                             {pictogram.ghs_code} - {pictogram.name}
                           </Badge>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Precautionary Statements */}
+                  {result.precautionary_statements && result.precautionary_statements.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 mb-2">Precautionary Statements:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.precautionary_statements.slice(0, 3).map((precaution, index) => (
+                          <Badge key={index} variant="outline" className="bg-blue-50 text-blue-800 border-blue-300">
+                            {precaution.code}: {precaution.statement}
+                          </Badge>
+                        ))}
+                        {result.precautionary_statements.length > 3 && (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-300">
+                            +{result.precautionary_statements.length - 3} more
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   )}
@@ -290,7 +287,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                   </Button>
                   
                   <Button variant="outline">
-                    Generate Label
+                    Generate OSHA Label
                   </Button>
                   
                   <Button variant="outline">
@@ -303,27 +300,21 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
         </div>
       )}
 
-      {/* Quick Search Suggestions */}
-      {searchResults.length === 0 && !isSearching && (
-        <Card className="p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">
-            💡 Popular Searches
+      {/* No Results State */}
+      {searchResults.length === 0 && !isSearching && searchQuery && (
+        <Card className="p-6 text-center">
+          <h4 className="text-lg font-semibold text-gray-900 mb-2">
+            No Results Found
           </h4>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {['WD-40', 'Loctite 401', 'Simple Green', 'Acetone', 'Isopropyl Alcohol', 'Brake Cleaner'].map((suggestion) => (
-              <Button
-                key={suggestion}
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery(suggestion);
-                }}
-                className="text-left justify-start"
-              >
-                {suggestion}
-              </Button>
-            ))}
-          </div>
+          <p className="text-gray-600 mb-4">
+            We couldn't find any SDS documents matching "{searchQuery}". Try:
+          </p>
+          <ul className="text-sm text-gray-600 space-y-1">
+            <li>• Check spelling and try different keywords</li>
+            <li>• Search by manufacturer name instead</li>
+            <li>• Use the CAS number if available</li>
+            <li>• Try common chemical names</li>
+          </ul>
         </Card>
       )}
 
@@ -334,10 +325,11 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
         </h4>
         
         <ul className="space-y-2 text-sm text-gray-700">
-          <li>• Search by exact product name for best results (e.g., "WD-40")</li>
+          <li>• Search by exact product name for best results</li>
           <li>• Try manufacturer names if you can't find a product</li>
-          <li>• Use common chemical names (e.g., "Acetone" instead of "2-Propanone")</li>
+          <li>• Use CAS numbers for precise chemical identification</li>
           <li>• All searches are logged automatically for OSHA compliance</li>
+          <li>• Database contains thousands of real SDS documents</li>
         </ul>
       </Card>
     </div>
