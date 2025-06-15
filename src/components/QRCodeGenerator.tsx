@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Download, QrCode, Printer, Share } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useRef } from "react";
+import QRCodeLib from 'qrcode';
 
 interface QRCodeGeneratorProps {
   facilityData: any;
@@ -13,13 +15,35 @@ interface QRCodeGeneratorProps {
 
 const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGeneratorProps) => {
   const { toast } = useToast();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRCodeLib.toCanvas(canvasRef.current, facilityUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      }, (error) => {
+        if (error) console.error('QR Code generation failed:', error);
+      });
+    }
+  }, [facilityUrl]);
 
   const downloadQRCode = () => {
-    // In a real implementation, this would generate and download a QR code image
-    toast({
-      title: "QR Code Downloaded",
-      description: "Your facility QR code has been saved to downloads.",
-    });
+    if (canvasRef.current) {
+      const link = document.createElement('a');
+      link.download = `${facilityData.facilityName}-QR-Code.png`;
+      link.href = canvasRef.current.toDataURL();
+      link.click();
+      
+      toast({
+        title: "QR Code Downloaded",
+        description: "Your facility QR code has been saved to downloads.",
+      });
+    }
   };
 
   const copyUrl = () => {
@@ -45,16 +69,17 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
 
           {/* QR Code Display Area */}
           <div className="bg-white border-2 border-gray-200 rounded-lg p-8 inline-block">
-            <div className="w-64 h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <QrCode className="w-16 h-16 text-gray-400 mx-auto" />
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-900">{facilityData.facilityName}</p>
-                  <p className="text-xs text-gray-500">Chemical Safety Portal</p>
-                  <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-                    Scan with Phone Camera
-                  </Badge>
-                </div>
+            <div className="text-center space-y-4">
+              <canvas 
+                ref={canvasRef} 
+                className="mx-auto border border-gray-200 rounded"
+              />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-900">{facilityData.facilityName}</p>
+                <p className="text-xs text-gray-500">Chemical Safety Portal</p>
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                  Scan with Phone Camera
+                </Badge>
               </div>
             </div>
           </div>

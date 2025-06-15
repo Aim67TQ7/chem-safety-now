@@ -22,6 +22,85 @@ interface SearchResult {
   last_updated: string;
 }
 
+// Mock SDS Database
+const mockSDSDatabase: SearchResult[] = [
+  {
+    id: "1",
+    product_name: "WD-40 Multi-Use Product",
+    manufacturer: "WD-40 Company",
+    h_codes: [
+      { code: "H222", description: "Extremely flammable aerosol" },
+      { code: "H229", description: "Pressurised container: May burst if heated" }
+    ],
+    pictograms: [
+      { ghs_code: "GHS02", name: "Flame" },
+      { ghs_code: "GHS04", name: "Gas Cylinder" }
+    ],
+    source_url: "https://www.wd40.com/files/pdf/sds-wd-40-multi-use-product-aerosol-can.pdf",
+    last_updated: "2024-01-15"
+  },
+  {
+    id: "2",
+    product_name: "Loctite 401 Instant Adhesive",
+    manufacturer: "Henkel Corporation",
+    h_codes: [
+      { code: "H315", description: "Causes skin irritation" },
+      { code: "H319", description: "Causes serious eye irritation" },
+      { code: "H335", description: "May cause respiratory irritation" }
+    ],
+    pictograms: [
+      { ghs_code: "GHS07", name: "Exclamation Mark" }
+    ],
+    source_url: "https://www.henkel-adhesives.com/sds/loctite-401.pdf",
+    last_updated: "2024-02-10"
+  },
+  {
+    id: "3",
+    product_name: "Simple Green All-Purpose Cleaner",
+    manufacturer: "Simple Green",
+    h_codes: [
+      { code: "H319", description: "Causes serious eye irritation" }
+    ],
+    pictograms: [
+      { ghs_code: "GHS07", name: "Exclamation Mark" }
+    ],
+    source_url: "https://simplegreen.com/sds/all-purpose-cleaner.pdf",
+    last_updated: "2024-01-20"
+  },
+  {
+    id: "4",
+    product_name: "Acetone",
+    manufacturer: "Various",
+    h_codes: [
+      { code: "H225", description: "Highly flammable liquid and vapour" },
+      { code: "H319", description: "Causes serious eye irritation" },
+      { code: "H336", description: "May cause drowsiness or dizziness" }
+    ],
+    pictograms: [
+      { ghs_code: "GHS02", name: "Flame" },
+      { ghs_code: "GHS07", name: "Exclamation Mark" }
+    ],
+    source_url: "https://www.fishersci.com/sds/acetone.pdf",
+    last_updated: "2024-03-01"
+  },
+  {
+    id: "5",
+    product_name: "Isopropyl Alcohol 99%",
+    manufacturer: "Various",
+    h_codes: [
+      { code: "H225", description: "Highly flammable liquid and vapour" },
+      { code: "H319", description: "Causes serious eye irritation" },
+      { code: "H336", description: "May cause drowsiness or dizziness" }
+    ],
+    pictograms: [
+      { ghs_code: "GHS02", name: "Flame" },
+      { ghs_code: "GHS07", name: "Exclamation Mark" }
+    ],
+    source_url: "https://www.fishersci.com/sds/isopropyl-alcohol.pdf",
+    last_updated: "2024-02-28"
+  }
+];
+
 const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -43,32 +122,18 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
         user_agent: navigator.userAgent
       };
       
-      console.log('Searching for:', searchQuery);
+      console.log('Searching SDS database for:', searchQuery);
       console.log('Search log:', searchLog);
       
-      // Make API call to your Replit backend
-      const response = await fetch('https://chemlabel.replit.app/api/search', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-          query: searchQuery,
-          facility: facilityData.facilityName,
-          location: currentLocation 
-        })
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
+      // Search mock database
+      const results = mockSDSDatabase.filter(item => 
+        item.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())
+      );
       
-      const data = await response.json();
-      console.log('API response:', data);
-      
-      // Handle the response format from your API
-      const results = data.results || data || [];
       setSearchResults(results);
       
       if (results.length === 0) {
@@ -87,7 +152,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
       console.error('Search error:', error);
       toast({
         title: "Search Failed",
-        description: "Please check your connection and try again.",
+        description: "Please try again.",
         variant: "destructive"
       });
     } finally {
