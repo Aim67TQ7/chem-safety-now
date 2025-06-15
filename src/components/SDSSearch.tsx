@@ -28,40 +28,6 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const { toast } = useToast();
 
-  // Mock search results for demonstration
-  const mockResults: SearchResult[] = [
-    {
-      id: "1",
-      product_name: "WD-40 Multi-Use Product",
-      manufacturer: "WD-40 Company",
-      h_codes: [
-        { code: "H222", description: "Extremely flammable aerosol" },
-        { code: "H229", description: "Pressurized container" }
-      ],
-      pictograms: [
-        { ghs_code: "GHS02", name: "Flame" },
-        { ghs_code: "GHS04", name: "Gas Cylinder" }
-      ],
-      source_url: "https://example.com/sds/wd40.pdf",
-      last_updated: "2024-01-15"
-    },
-    {
-      id: "2", 
-      product_name: "Loctite 401 Instant Adhesive",
-      manufacturer: "Henkel Corporation",
-      h_codes: [
-        { code: "H315", description: "Causes skin irritation" },
-        { code: "H319", description: "Causes serious eye irritation" },
-        { code: "H335", description: "May cause respiratory irritation" }
-      ],
-      pictograms: [
-        { ghs_code: "GHS07", name: "Exclamation Mark" }
-      ],
-      source_url: "https://example.com/sds/loctite401.pdf",
-      last_updated: "2024-02-01"
-    }
-  ];
-
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
@@ -77,32 +43,48 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
         user_agent: navigator.userAgent
       };
       
-      // In real app, this would call the backend API
-      // const response = await fetch('http://localhost:5000/api/search', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ query: searchQuery })
-      // });
+      console.log('Searching for:', searchQuery);
+      console.log('Search log:', searchLog);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Make API call to your Replit backend
+      const response = await fetch('https://chemlabel.replit.app/api/search', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          query: searchQuery,
+          facility: facilityData.facilityName,
+          location: currentLocation 
+        })
+      });
       
-      // Filter mock results based on search query
-      const filtered = mockResults.filter(result => 
-        result.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        result.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
       
-      setSearchResults(filtered);
+      const data = await response.json();
+      console.log('API response:', data);
       
-      if (filtered.length === 0) {
+      // Handle the response format from your API
+      const results = data.results || data || [];
+      setSearchResults(results);
+      
+      if (results.length === 0) {
         toast({
           title: "No Results Found",
           description: "Try searching with a different product name or manufacturer.",
         });
+      } else {
+        toast({
+          title: "Search Complete",
+          description: `Found ${results.length} result(s) for "${searchQuery}"`,
+        });
       }
       
     } catch (error) {
+      console.error('Search error:', error);
       toast({
         title: "Search Failed",
         description: "Please check your connection and try again.",
@@ -202,29 +184,33 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                 {/* Hazard Information */}
                 <div className="space-y-3">
                   {/* H-Codes */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 mb-2">Hazard Statements:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {result.h_codes.map((hcode, index) => (
-                        <Badge key={index} variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
-                          {hcode.code}: {hcode.description}
-                        </Badge>
-                      ))}
+                  {result.h_codes && result.h_codes.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 mb-2">Hazard Statements:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.h_codes.map((hcode, index) => (
+                          <Badge key={index} variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
+                            {hcode.code}: {hcode.description}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* GHS Pictograms */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 mb-2">GHS Pictograms:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {result.pictograms.map((pictogram, index) => (
-                        <Badge key={index} variant="outline" className="bg-red-50 text-red-800 border-red-300 flex items-center">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          {pictogram.ghs_code} - {pictogram.name}
-                        </Badge>
-                      ))}
+                  {result.pictograms && result.pictograms.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 mb-2">GHS Pictograms:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.pictograms.map((pictogram, index) => (
+                          <Badge key={index} variant="outline" className="bg-red-50 text-red-800 border-red-300 flex items-center">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            {pictogram.ghs_code} - {pictogram.name}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Actions */}
@@ -266,7 +252,6 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                 variant="outline"
                 onClick={() => {
                   setSearchQuery(suggestion);
-                  handleSearch();
                 }}
                 className="text-left justify-start"
               >
