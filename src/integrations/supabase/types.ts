@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          created_at: string | null
+          facility_id: string | null
+          id: string
+          metadata: Json | null
+          question: string
+          response: string
+          response_time_ms: number | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          question: string
+          response: string
+          response_time_ms?: number | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          question?: string
+          response?: string
+          response_time_ms?: number | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           company_logo_url: string | null
@@ -155,37 +199,161 @@ export type Database = {
       facility_usage_logs: {
         Row: {
           created_at: string
+          duration_ms: number | null
           event_detail: Json | null
           event_type: string
           facility_id: string
           id: string
+          ip_address: unknown | null
           lat: number | null
           lng: number | null
+          session_id: string | null
+          user_agent: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          duration_ms?: number | null
           event_detail?: Json | null
           event_type: string
           facility_id: string
           id?: string
+          ip_address?: unknown | null
           lat?: number | null
           lng?: number | null
+          session_id?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          duration_ms?: number | null
           event_detail?: Json | null
           event_type?: string
           facility_id?: string
           id?: string
+          ip_address?: unknown | null
           lat?: number | null
           lng?: number | null
+          session_id?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "facility_usage_logs_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_user_sessions: {
+        Row: {
+          created_at: string | null
+          end_time: string | null
+          facility_id: string | null
+          id: string
+          ip_address: unknown | null
+          last_activity: string | null
+          location_lat: number | null
+          location_lng: number | null
+          page_views: Json | null
+          session_token: string
+          start_time: string | null
+          total_duration_ms: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_time?: string | null
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          last_activity?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          page_views?: Json | null
+          session_token: string
+          start_time?: string | null
+          total_duration_ms?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string | null
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          last_activity?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          page_views?: Json | null
+          session_token?: string
+          start_time?: string | null
+          total_duration_ms?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_user_sessions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      label_generations: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          facility_id: string | null
+          hazard_codes: Json | null
+          id: string
+          label_type: string | null
+          manufacturer: string | null
+          metadata: Json | null
+          pictograms: Json | null
+          product_name: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          facility_id?: string | null
+          hazard_codes?: Json | null
+          id?: string
+          label_type?: string | null
+          manufacturer?: string | null
+          metadata?: Json | null
+          pictograms?: Json | null
+          product_name: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          facility_id?: string | null
+          hazard_codes?: Json | null
+          id?: string
+          label_type?: string | null
+          manufacturer?: string | null
+          metadata?: Json | null
+          pictograms?: Json | null
+          product_name?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "label_generations_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
@@ -225,6 +393,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      qr_code_interactions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          facility_id: string | null
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          qr_code_id: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          qr_code_id?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          qr_code_id?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_code_interactions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_code_interactions_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qr_codes: {
         Row: {
@@ -380,6 +602,57 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "sds_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sds_interactions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          facility_id: string | null
+          id: string
+          metadata: Json | null
+          sds_document_id: string | null
+          search_query: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          sds_document_id?: string | null
+          search_query?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          sds_document_id?: string | null
+          search_query?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sds_interactions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sds_interactions_sds_document_id_fkey"
+            columns: ["sds_document_id"]
+            isOneToOne: false
+            referencedRelation: "sds_documents"
             referencedColumns: ["id"]
           },
         ]

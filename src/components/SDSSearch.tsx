@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Search, ExternalLink, AlertTriangle, Clock, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { interactionLogger } from "@/services/interactionLogger";
 
 interface SDSSearchProps {
   facilityData: any;
@@ -67,19 +68,21 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
+    const searchStartTime = Date.now();
     
     try {
-      // Log the search for compliance
-      const searchLog = {
-        query: searchQuery,
-        timestamp: new Date().toISOString(),
-        facility: facilityData.facilityName,
-        location: currentLocation,
-        user_agent: navigator.userAgent
-      };
-      
+      // Log search initiation
+      await interactionLogger.logFacilityUsage({
+        eventType: 'sds_search_initiated',
+        eventDetail: { 
+          query: searchQuery,
+          location: currentLocation 
+        },
+        lat: currentLocation?.lat,
+        lng: currentLocation?.lng
+      });
+
       console.log('Searching SDS database for:', searchQuery);
-      console.log('Search log:', searchLog);
 
       // Log search to facility_search_history table
       if (facilityData.id) {
@@ -103,7 +106,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
         throw error;
       }
 
-      // Transform the data to match our SearchResult interface with proper type handling
+      // Transform the data
       const results: SearchResult[] = (sdsData || []).map(doc => ({
         id: doc.id,
         product_name: doc.product_name,
@@ -119,6 +122,17 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
       }));
       
       setSearchResults(results);
+
+      // Log search completion
+      await interactionLogger.logFacilityUsage({
+        eventType: 'sds_search_completed',
+        eventDetail: { 
+          query: searchQuery,
+          resultsCount: results.length,
+          searchDurationMs: Date.now() - searchStartTime
+        },
+        durationMs: Date.now() - searchStartTime
+      });
       
       if (results.length === 0) {
         toast({
@@ -134,6 +148,16 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
       
     } catch (error) {
       console.error('Search error:', error);
+      
+      // Log search error
+      await interactionLogger.logFacilityUsage({
+        eventType: 'sds_search_error',
+        eventDetail: { 
+          query: searchQuery,
+          error: error.message
+        }
+      });
+
       toast({
         title: "Search Failed",
         description: "Please try again. If the problem persists, contact support.",
@@ -147,6 +171,51 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
+    }
+  };
+
+  const handleSDSAction = async (action: string, result: SearchResult) => {
+    // Log SDS interaction
+    await interactionLogger.logSDSInteraction({
+      sdsDocumentId: result.id,
+      actionType: action as any,
+      searchQuery: searchQuery,
+      metadata: {
+        productName: result.product_name,
+        manufacturer: result.manufacturer
+      }
+    });
+
+    // Log facility usage
+    await interactionLogger.logFacilityUsage({
+      eventType: `sds_${action}`,
+      eventDetail: {
+        productName: result.product_name,
+        manufacturer: result.manufacturer,
+        sdsId: result.id
+      }
+    });
+
+    // Handle specific actions
+    switch (action) {
+      case 'view':
+        window.open(result.source_url, '_blank');
+        break;
+      case 'generate_label':
+        // Navigate to label printer with pre-filled data
+        // This would be implemented based on your routing system
+        toast({
+          title: "Label Generator",
+          description: `Pre-filling label data for ${result.product_name}`,
+        });
+        break;
+      case 'ask_ai':
+        // Navigate to AI assistant with pre-filled question
+        toast({
+          title: "AI Assistant",
+          description: `Preparing safety information for ${result.product_name}`,
+        });
+        break;
     }
   };
 
@@ -309,18 +378,24 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
                   <Button 
                     variant="default"
-                    onClick={() => window.open(result.source_url, '_blank')}
+                    onClick={() => handleSDSAction('view', result)}
                     className="flex items-center"
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
                     View Full SDS
                   </Button>
                   
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleSDSAction('generate_label', result)}
+                  >
                     Generate OSHA Label
                   </Button>
                   
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleSDSAction('ask_ai', result)}
+                  >
                     Ask AI About This Chemical
                   </Button>
                 </div>

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Printer, Download, AlertTriangle, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { interactionLogger } from "@/services/interactionLogger";
 
 interface LabelPrinterProps {
   facilityData: any;
@@ -40,25 +40,49 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
     { code: "GHS08", name: "Health Hazard", symbol: "☣️" }
   ];
 
-  const handleHazardCodeToggle = (code: string) => {
+  const handleHazardCodeToggle = async (code: string) => {
+    const newCodes = labelData.hazardCodes.includes(code)
+      ? labelData.hazardCodes.filter(c => c !== code)
+      : [...labelData.hazardCodes, code];
+    
     setLabelData(prev => ({
       ...prev,
-      hazardCodes: prev.hazardCodes.includes(code)
-        ? prev.hazardCodes.filter(c => c !== code)
-        : [...prev.hazardCodes, code]
+      hazardCodes: newCodes
     }));
+
+    // Log hazard code selection
+    await interactionLogger.logFacilityUsage({
+      eventType: 'label_hazard_code_toggled',
+      eventDetail: {
+        code: code,
+        action: labelData.hazardCodes.includes(code) ? 'removed' : 'added',
+        productName: labelData.productName
+      }
+    });
   };
 
-  const handlePictogramToggle = (code: string) => {
+  const handlePictogramToggle = async (code: string) => {
+    const newPictograms = labelData.pictograms.includes(code)
+      ? labelData.pictograms.filter(p => p !== code)
+      : [...labelData.pictograms, code];
+
     setLabelData(prev => ({
       ...prev,
-      pictograms: prev.pictograms.includes(code)
-        ? prev.pictograms.filter(p => p !== code)
-        : [...prev.pictograms, code]
+      pictograms: newPictograms
     }));
+
+    // Log pictogram selection
+    await interactionLogger.logFacilityUsage({
+      eventType: 'label_pictogram_toggled',
+      eventDetail: {
+        code: code,
+        action: labelData.pictograms.includes(code) ? 'removed' : 'added',
+        productName: labelData.productName
+      }
+    });
   };
 
-  const generateLabel = () => {
+  const generateLabel = async () => {
     if (!labelData.productName) {
       toast({
         title: "Product Name Required",
@@ -68,28 +92,87 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       return;
     }
 
+    // Log label generation
+    await interactionLogger.logLabelGeneration({
+      productName: labelData.productName,
+      manufacturer: labelData.manufacturer,
+      hazardCodes: labelData.hazardCodes,
+      pictograms: labelData.pictograms,
+      actionType: 'generate',
+      metadata: {
+        precautionaryStatements: labelData.precautionaryStatements,
+        dateCreated: labelData.dateCreated
+      }
+    });
+
+    await interactionLogger.logFacilityUsage({
+      eventType: 'label_generated',
+      eventDetail: {
+        productName: labelData.productName,
+        hazardCodeCount: labelData.hazardCodes.length,
+        pictogramCount: labelData.pictograms.length
+      }
+    });
+
     toast({
       title: "Label Generated",
       description: "Your GHS-compliant label has been created successfully.",
     });
   };
 
-  const printLabel = () => {
+  const printLabel = async () => {
+    if (!labelData.productName) {
+      toast({
+        title: "No Label to Print",
+        description: "Please generate a label first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Log label printing
+    await interactionLogger.logLabelGeneration({
+      productName: labelData.productName,
+      manufacturer: labelData.manufacturer,
+      hazardCodes: labelData.hazardCodes,
+      pictograms: labelData.pictograms,
+      actionType: 'print'
+    });
+
     window.print();
+    
     toast({
       title: "Printing Label",
       description: "Your label has been sent to the printer.",
     });
   };
 
-  const downloadLabel = () => {
+  const downloadLabel = async () => {
+    if (!labelData.productName) {
+      toast({
+        title: "No Label to Download",
+        description: "Please generate a label first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Log label download
+    await interactionLogger.logLabelGeneration({
+      productName: labelData.productName,
+      manufacturer: labelData.manufacturer,
+      hazardCodes: labelData.hazardCodes,
+      pictograms: labelData.pictograms,
+      actionType: 'download'
+    });
+
     toast({
       title: "Label Downloaded",
       description: "Your label has been saved as a PDF.",
     });
   };
 
-  const loadFromSDS = (productName: string) => {
+  const loadFromSDS = async (productName: string) => {
     // Mock loading data from previously searched SDS
     const mockData = {
       "WD-40": {
@@ -116,6 +199,15 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
         manufacturer: data.manufacturer,
         precautionaryStatements: data.precautionaryStatements
       }));
+
+      // Log SDS data loading
+      await interactionLogger.logFacilityUsage({
+        eventType: 'label_sds_data_loaded',
+        eventDetail: {
+          productName: productName,
+          loadedFrom: 'mock_data'
+        }
+      });
       
       toast({
         title: "SDS Data Loaded",
@@ -213,7 +305,7 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
                     variant={labelData.hazardCodes.includes(hazard.code) ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleHazardCodeToggle(hazard.code)}
-                    className="text-left justify-start h-auto p-3"
+                    className="text-left justify-start h-auto p-3 whitespace-normal"
                   >
                     <span className="font-medium">{hazard.code}:</span>
                     <span className="ml-2">{hazard.description}</span>

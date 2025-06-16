@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { MessageCircle, Send, Bot, User, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { interactionLogger } from "@/services/interactionLogger";
 
 interface AIAssistantProps {
   facilityData: any;
@@ -43,6 +44,8 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
   const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
 
+    const questionStartTime = Date.now();
+
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -51,6 +54,17 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Log the user question
+    await interactionLogger.logFacilityUsage({
+      eventType: 'ai_question_asked',
+      eventDetail: {
+        question: currentMessage,
+        messageCount: messages.length + 1
+      }
+    });
+
+    const questionContent = currentMessage;
     setCurrentMessage("");
     setIsThinking(true);
 
@@ -61,13 +75,15 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
       // Mock AI responses based on common safety questions
       let aiResponse = "I understand your question about chemical safety. Let me provide you with relevant safety information based on our SDS database and safety protocols.";
 
-      if (currentMessage.toLowerCase().includes('wd-40')) {
+      if (questionContent.toLowerCase().includes('wd-40')) {
         aiResponse = "WD-40 is generally safe for aluminum, but you should:\n\n• Ensure adequate ventilation (H222: Extremely flammable aerosol)\n• Keep away from heat sources and flames\n• Use in well-ventilated areas only\n• Wear nitrile gloves if prolonged contact expected\n• Avoid breathing spray mist\n\nAlways check the specific SDS for your WD-40 product variant.";
-      } else if (currentMessage.toLowerCase().includes('acetone')) {
+      } else if (questionContent.toLowerCase().includes('acetone')) {
         aiResponse = "For acetone handling, you need:\n\n**PPE Requirements:**\n• Chemical-resistant gloves (nitrile recommended)\n• Safety glasses with side shields\n• Use in well-ventilated area or with local exhaust\n\n**Hazards:**\n• Highly flammable liquid (H225)\n• Causes serious eye irritation (H319)\n• May cause drowsiness (H336)\n\n**Storage:** Keep in cool, dry place away from ignition sources.";
-      } else if (currentMessage.toLowerCase().includes('ppe')) {
+      } else if (questionContent.toLowerCase().includes('ppe')) {
         aiResponse = "PPE selection depends on the specific chemical and exposure scenario. General guidelines:\n\n• **Eyes:** Safety glasses minimum, goggles for splash risk\n• **Hands:** Chemical-resistant gloves (check compatibility)\n• **Respiratory:** Use when ventilation is inadequate\n• **Body:** Chemical-resistant apron for splash protection\n\nAlways consult the SDS Section 8 for specific PPE recommendations.";
       }
+
+      const responseTime = Date.now() - questionStartTime;
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -78,7 +94,42 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
 
       setMessages(prev => [...prev, assistantMessage]);
 
+      // Log the AI conversation
+      await interactionLogger.logAIConversation({
+        question: questionContent,
+        response: aiResponse,
+        responseTimeMs: responseTime,
+        metadata: {
+          messageCount: messages.length + 2,
+          questionType: questionContent.toLowerCase().includes('ppe') ? 'ppe' : 
+                       questionContent.toLowerCase().includes('acetone') ? 'chemical_specific' :
+                       questionContent.toLowerCase().includes('wd-40') ? 'chemical_specific' : 'general'
+        }
+      });
+
+      // Log facility usage
+      await interactionLogger.logFacilityUsage({
+        eventType: 'ai_response_generated',
+        eventDetail: {
+          question: questionContent,
+          responseLength: aiResponse.length,
+          responseTimeMs: responseTime
+        },
+        durationMs: responseTime
+      });
+
     } catch (error) {
+      console.error('AI Assistant error:', error);
+      
+      // Log the error
+      await interactionLogger.logFacilityUsage({
+        eventType: 'ai_response_error',
+        eventDetail: {
+          question: questionContent,
+          error: error.message
+        }
+      });
+
       toast({
         title: "AI Assistant Error",
         description: "Sorry, I'm having trouble right now. Please try again.",
@@ -96,8 +147,16 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
     }
   };
 
-  const useExampleQuestion = (question: string) => {
+  const useExampleQuestion = async (question: string) => {
     setCurrentMessage(question);
+    
+    // Log example question usage
+    await interactionLogger.logFacilityUsage({
+      eventType: 'ai_example_question_used',
+      eventDetail: {
+        question: question
+      }
+    });
   };
 
   return (

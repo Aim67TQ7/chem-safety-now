@@ -6,6 +6,7 @@ import { Download, QrCode, Printer, Share } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef } from "react";
 import QRCodeLib from 'qrcode';
+import { interactionLogger } from "@/services/interactionLogger";
 
 interface QRCodeGeneratorProps {
   facilityData: any;
@@ -32,12 +33,29 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
     }
   }, [facilityUrl]);
 
-  const downloadQRCode = () => {
+  const downloadQRCode = async () => {
     if (canvasRef.current) {
       const link = document.createElement('a');
       link.download = `${facilityData.facilityName}-QR-Code.png`;
       link.href = canvasRef.current.toDataURL();
       link.click();
+
+      // Log QR code download
+      await interactionLogger.logQRCodeInteraction({
+        actionType: 'download',
+        metadata: {
+          facilityName: facilityData.facilityName,
+          fileName: `${facilityData.facilityName}-QR-Code.png`
+        }
+      });
+
+      await interactionLogger.logFacilityUsage({
+        eventType: 'qr_code_downloaded',
+        eventDetail: {
+          facilityName: facilityData.facilityName,
+          fileName: `${facilityData.facilityName}-QR-Code.png`
+        }
+      });
       
       toast({
         title: "QR Code Downloaded",
@@ -46,12 +64,50 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
     }
   };
 
-  const copyUrl = () => {
+  const copyUrl = async () => {
     navigator.clipboard.writeText(facilityUrl);
+
+    // Log URL copy
+    await interactionLogger.logQRCodeInteraction({
+      actionType: 'copy_url',
+      metadata: {
+        facilityUrl: facilityUrl,
+        facilityName: facilityData.facilityName
+      }
+    });
+
+    await interactionLogger.logFacilityUsage({
+      eventType: 'facility_url_copied',
+      eventDetail: {
+        facilityUrl: facilityUrl
+      }
+    });
+
     toast({
       title: "URL Copied",
       description: "Facility URL copied to clipboard.",
     });
+  };
+
+  const printInstructions = async () => {
+    // Log print instructions
+    await interactionLogger.logQRCodeInteraction({
+      actionType: 'print',
+      metadata: {
+        action: 'print_instructions',
+        facilityName: facilityData.facilityName
+      }
+    });
+
+    await interactionLogger.logFacilityUsage({
+      eventType: 'qr_print_instructions_requested',
+      eventDetail: {
+        facilityName: facilityData.facilityName
+      }
+    });
+
+    // Trigger print dialog
+    window.print();
   };
 
   return (
@@ -99,7 +155,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
               Copy URL
             </Button>
             
-            <Button variant="outline" onClick={downloadQRCode}>
+            <Button variant="outline" onClick={printInstructions}>
               <Printer className="w-4 h-4 mr-2" />
               Print Instructions
             </Button>

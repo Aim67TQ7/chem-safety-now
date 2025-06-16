@@ -12,6 +12,7 @@ import QRCodeGenerator from "@/components/QRCodeGenerator";
 import SDSSearch from "@/components/SDSSearch";
 import AIAssistant from "@/components/AIAssistant";
 import LabelPrinter from "@/components/LabelPrinter";
+import { interactionLogger } from "@/services/interactionLogger";
 
 interface FacilityData {
   email: string;
@@ -35,6 +36,8 @@ const FacilityPage = () => {
   
   const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [activeTab, setActiveTab] = useState("search");
+  const [sessionStartTime] = useState(Date.now());
   
   useEffect(() => {
     // Load facility data
@@ -65,7 +68,52 @@ const FacilityPage = () => {
         description: "Your chemical safety platform is now ready for workers.",
       });
     }
-  }, [slug, isSetup, toast]);
+
+    // Log facility page access
+    interactionLogger.logFacilityUsage({
+      eventType: 'facility_page_accessed',
+      eventDetail: {
+        facilitySlug: slug,
+        isSetup: isSetup,
+        referrer: document.referrer
+      }
+    });
+
+    // Update page view
+    interactionLogger.updatePageView(window.location.pathname);
+
+    // Cleanup function to log session end
+    return () => {
+      const sessionDuration = Date.now() - sessionStartTime;
+      interactionLogger.logFacilityUsage({
+        eventType: 'facility_session_ended',
+        eventDetail: {
+          sessionDurationMs: sessionDuration,
+          finalTab: activeTab
+        },
+        durationMs: sessionDuration
+      });
+    };
+  }, [slug, isSetup, toast, sessionStartTime, activeTab]);
+
+  const handleTabChange = async (newTab: string) => {
+    const tabStartTime = Date.now();
+    
+    // Log tab switch
+    await interactionLogger.logFacilityUsage({
+      eventType: 'facility_tab_switched',
+      eventDetail: {
+        fromTab: activeTab,
+        toTab: newTab,
+        timeOnPreviousTab: Date.now() - sessionStartTime
+      }
+    });
+
+    setActiveTab(newTab);
+
+    // Update page view
+    await interactionLogger.updatePageView(`${window.location.pathname}#${newTab}`);
+  };
 
   if (!facilityData) {
     return (
@@ -141,7 +189,7 @@ const FacilityPage = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="search" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="search" className="flex items-center space-x-2">
               <Search className="w-4 h-4" />
