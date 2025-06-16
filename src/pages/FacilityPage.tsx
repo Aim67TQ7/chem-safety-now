@@ -88,8 +88,12 @@ const FacilityPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <Shield className="w-8 h-8 text-white" />
+              <div className="w-12 h-12">
+                <img 
+                  src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
+                  alt="ChemLabel-GPT Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{facilityData.facilityName}</h1>

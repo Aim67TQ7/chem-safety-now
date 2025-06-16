@@ -64,7 +64,7 @@ const SignupPage = () => {
       localStorage.setItem(`facility_${facilitySlug}`, JSON.stringify(facilityData));
       
       toast({
-        title: "Welcome to CHEMLABEL-GPT!",
+        title: "Welcome to ChemLabel-GPT!",
         description: "Your facility has been set up successfully.",
       });
       
@@ -89,11 +89,15 @@ const SignupPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
+              <div className="w-10 h-10">
+                <img 
+                  src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
+                  alt="ChemLabel-GPT Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">CHEMLABEL-GPT</h1>
+                <h1 className="text-2xl font-bold text-gray-900">ChemLabel-GPT</h1>
                 <p className="text-sm text-gray-600">AI-Powered Chemical Safety</p>
               </div>
             </div>
