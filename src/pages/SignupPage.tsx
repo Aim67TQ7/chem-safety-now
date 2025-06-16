@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Shield, Upload, CheckCircle, Bot, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SetupFailureDialog } from "@/components/SetupFailureDialog";
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -24,6 +24,8 @@ const SignupPage = () => {
   });
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,6 +46,7 @@ const SignupPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
+    setSetupError(null);
 
     try {
       // Simulate setup processing
@@ -76,14 +79,18 @@ const SignupPage = () => {
       
     } catch (error) {
       console.error('Setup error:', error);
-      toast({
-        title: "Setup Failed",
-        description: "Please try again or contact support.",
-        variant: "destructive"
-      });
+      setSetupError(error instanceof Error ? error.message : 'Unknown error occurred');
+      setShowErrorDialog(true);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleRetrySetup = () => {
+    setShowErrorDialog(false);
+    setSetupError(null);
+    // Retry the form submission
+    handleSubmit(new Event('submit') as any);
   };
 
   return (
@@ -293,6 +300,14 @@ const SignupPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Setup Failure Dialog */}
+      <SetupFailureDialog
+        isOpen={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+        onRetry={handleRetrySetup}
+        error={setupError || undefined}
+      />
     </div>
   );
 };
