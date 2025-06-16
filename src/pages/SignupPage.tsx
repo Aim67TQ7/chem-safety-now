@@ -56,12 +56,8 @@ const SignupPage = () => {
         .from('facilities')
         .insert({
           slug: facilitySlug,
-          facility_name: formData.facilityName,
-          contact_name: formData.contactName,
-          email: formData.email,
-          address: formData.address,
-          subscription_status: 'active',
-          subscription_expires_at: new Date(Date.now() + 18 * 30 * 24 * 60 * 60 * 1000).toISOString() // 18 months
+          name: formData.facilityName,
+          username: formData.contactName,
         })
         .select()
         .single();

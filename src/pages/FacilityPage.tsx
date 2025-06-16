@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -18,14 +19,12 @@ import { useToast } from "@/hooks/use-toast";
 interface FacilityData {
   id: string;
   slug: string;
-  facility_name: string;
-  contact_name: string;
-  email: string;
-  address: string;
+  name: string;
+  username: string;
   logo_url?: string;
-  subscription_status: string;
-  subscription_expires_at?: string;
+  user_id?: string;
   created_at: string;
+  updated_at: string;
 }
 
 const FacilityPage = () => {
@@ -148,19 +147,19 @@ const FacilityPage = () => {
               {facilityData.logo_url ? (
                 <img 
                   src={facilityData.logo_url} 
-                  alt={facilityData.facility_name}
+                  alt={facilityData.name}
                   className="h-10 w-auto"
                 />
               ) : (
                 <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
-                    {facilityData.facility_name.charAt(0)}
+                    {facilityData.name.charAt(0)}
                   </span>
                 </div>
               )}
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  {facilityData.facility_name}
+                  {facilityData.name}
                 </h1>
                 <p className="text-sm text-gray-600">Chemical Safety Platform</p>
               </div>
@@ -193,11 +192,9 @@ const FacilityPage = () => {
                 </Badge>
               )}
               
-              {facilityData.subscription_status === 'active' && (
-                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                  Active License
-                </Badge>
-              )}
+              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                Active License
+              </Badge>
             </div>
           </div>
         </div>
