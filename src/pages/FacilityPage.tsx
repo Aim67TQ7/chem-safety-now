@@ -1,235 +1,164 @@
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Search, MessageCircle, Printer, QrCode, MapPin, Clock, Shield, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import QRCodeGenerator from "@/components/QRCodeGenerator";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Search, Printer, Bot, QrCode, Settings } from "lucide-react";
 import SDSSearch from "@/components/SDSSearch";
-import AIAssistant from "@/components/AIAssistant";
 import LabelPrinter from "@/components/LabelPrinter";
+import AIAssistant from "@/components/AIAssistant";
+import QRCodeGenerator from "@/components/QRCodeGenerator";
 import { interactionLogger } from "@/services/interactionLogger";
 
-interface FacilityData {
-  email: string;
-  facilityName: string;
-  contactName: string;
-  address: string;
-  logo: File | null;
-  slug: string;
-  createdAt: string;
-  subscription: {
-    status: string;
-    expiresAt: string;
-  };
-}
-
 const FacilityPage = () => {
-  const { slug } = useParams();
+  const { facilitySlug } = useParams();
   const [searchParams] = useSearchParams();
-  const { toast } = useToast();
   const isSetup = searchParams.get('setup') === 'true';
-  
-  const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [activeTab, setActiveTab] = useState("search");
-  const [sessionStartTime] = useState(Date.now());
-  
-  useEffect(() => {
-    // Load facility data
-    const data = localStorage.getItem(`facility_${slug}`);
-    if (data) {
-      setFacilityData(JSON.parse(data));
-    }
-    
-    // Get GPS location for compliance
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.log('Location access denied:', error);
-        }
-      );
-    }
-    
-    // Show setup success message
-    if (isSetup) {
-      toast({
-        title: "🎉 Facility Setup Complete!",
-        description: "Your chemical safety platform is now ready for workers.",
-      });
-    }
 
-    // Log facility page access
-    interactionLogger.logFacilityUsage({
-      eventType: 'facility_page_accessed',
-      eventDetail: {
-        facilitySlug: slug,
-        isSetup: isSetup,
-        referrer: document.referrer
-      }
-    });
-
-    // Update page view
-    interactionLogger.updatePageView(window.location.pathname);
-
-    // Cleanup function to log session end
-    return () => {
-      const sessionDuration = Date.now() - sessionStartTime;
-      interactionLogger.logFacilityUsage({
-        eventType: 'facility_session_ended',
-        eventDetail: {
-          sessionDurationMs: sessionDuration,
-          finalTab: activeTab
-        },
-        durationMs: sessionDuration
-      });
-    };
-  }, [slug, isSetup, toast, sessionStartTime, activeTab]);
-
-  const handleTabChange = async (newTab: string) => {
-    const tabStartTime = Date.now();
-    
-    // Log tab switch
-    await interactionLogger.logFacilityUsage({
-      eventType: 'facility_tab_switched',
-      eventDetail: {
-        fromTab: activeTab,
-        toTab: newTab,
-        timeOnPreviousTab: Date.now() - sessionStartTime
-      }
-    });
-
-    setActiveTab(newTab);
-
-    // Update page view
-    await interactionLogger.updatePageView(`${window.location.pathname}#${newTab}`);
+  // Mock facility data - in real app, this would come from API
+  const facilityData = {
+    facilityName: "Bunting Magnetics",
+    facilitySlug: facilitySlug,
+    logoUrl: null,
+    setupMode: isSetup
   };
 
-  if (!facilityData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Facility Not Found</h2>
-          <p className="text-gray-600">This facility link may be invalid or expired.</p>
-        </Card>
-      </div>
-    );
-  }
+  useEffect(() => {
+    // Set facility context for interaction logging
+    interactionLogger.setUserContext(null, facilityData.facilitySlug);
+    
+    // Log facility page visit
+    interactionLogger.logFacilityUsage({
+      eventType: 'facility_page_visit',
+      eventDetail: {
+        facilitySlug,
+        setupMode: isSetup,
+        tab: activeTab
+      }
+    });
+  }, [facilitySlug, isSetup, activeTab]);
 
-  const facilityUrl = `${window.location.origin}/facility/${slug}`;
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    interactionLogger.logFacilityUsage({
+      eventType: 'facility_tab_change',
+      eventDetail: {
+        previousTab: activeTab,
+        newTab: value
+      }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Facility Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12">
+              {facilityData.logoUrl ? (
                 <img 
-                  src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-                  alt="ChemLabel-GPT Logo" 
-                  className="w-full h-full object-contain"
+                  src={facilityData.logoUrl} 
+                  alt={facilityData.facilityName}
+                  className="h-10 w-auto"
                 />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{facilityData.facilityName}</h1>
-                <div className="flex items-center text-sm text-gray-600 space-x-4">
-                  <span className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {facilityData.address}
+              ) : (
+                <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">
+                    {facilityData.facilityName.charAt(0)}
                   </span>
-                  {currentLocation && (
-                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                      Location Verified
-                    </Badge>
-                  )}
                 </div>
+              )}
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {facilityData.facilityName}
+                </h1>
+                <p className="text-sm text-gray-600">Chemical Safety Platform</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-                <Clock className="w-3 h-3 mr-1" />
-                Active License
+            {isSetup && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                Setup Mode
               </Badge>
-              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                OSHA Compliant
-              </Badge>
-            </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Setup Success Banner */}
-      {isSetup && (
-        <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white py-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h2 className="text-xl font-semibold mb-2">🎉 Your Facility is Ready!</h2>
-              <p className="text-green-100">
-                Workers can now scan QR codes to access chemical safety information. 
-                Download your QR code from the "View QR Code" tab below.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="search" className="flex items-center space-x-2">
               <Search className="w-4 h-4" />
-              <span className="hidden sm:inline">Search SDS</span>
-            </TabsTrigger>
-            <TabsTrigger value="ai" className="flex items-center space-x-2">
-              <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Assistant</span>
+              <span>SDS Search</span>
             </TabsTrigger>
             <TabsTrigger value="labels" className="flex items-center space-x-2">
               <Printer className="w-4 h-4" />
-              <span className="hidden sm:inline">Print Labels</span>
+              <span>Print Labels</span>
+            </TabsTrigger>
+            <TabsTrigger value="assistant" className="flex items-center space-x-2">
+              <Bot className="w-4 h-4" />
+              <span>AI Assistant</span>
             </TabsTrigger>
             <TabsTrigger value="qr" className="flex items-center space-x-2">
               <QrCode className="w-4 h-4" />
-              <span className="hidden sm:inline">View QR Code</span>
+              <span>QR Codes</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="search">
-            <SDSSearch facilityData={facilityData} currentLocation={currentLocation} />
+          <TabsContent value="search" className="space-y-6">
+            <SDSSearch facilityData={facilityData} />
           </TabsContent>
 
-          <TabsContent value="ai">
-            <AIAssistant facilityData={facilityData} />
+          <TabsContent value="labels" className="space-y-6">
+            <Card className="p-6">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  GHS Label Printer
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Create compliant chemical labels with HMIS ratings, pictograms, and hazard information
+                </p>
+              </div>
+              <LabelPrinter />
+            </Card>
           </TabsContent>
 
-          <TabsContent value="labels">
-            <LabelPrinter facilityData={facilityData} />
+          <TabsContent value="assistant" className="space-y-6">
+            <Card className="p-6">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  Chemical Safety Assistant
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Get expert guidance on chemical safety protocols and regulatory compliance
+                </p>
+              </div>
+              <AIAssistant facilityData={facilityData} />
+            </Card>
           </TabsContent>
 
-          <TabsContent value="qr">
-            <QRCodeGenerator 
-              facilityData={facilityData} 
-              facilityUrl={facilityUrl}
-              isSetup={isSetup}
-            />
+          <TabsContent value="qr" className="space-y-6">
+            <Card className="p-6">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  QR Code Generator
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Generate QR codes for quick access to safety information and documentation
+                </p>
+              </div>
+              <QRCodeGenerator />
+            </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

@@ -53,36 +53,6 @@ export type Database = {
           },
         ]
       }
-      company_settings: {
-        Row: {
-          company_logo_url: string | null
-          company_name: string | null
-          created_at: string | null
-          id: string
-          primary_color: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          company_logo_url?: string | null
-          company_name?: string | null
-          created_at?: string | null
-          id?: string
-          primary_color?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          company_logo_url?: string | null
-          company_name?: string | null
-          created_at?: string | null
-          id?: string
-          primary_color?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       facilities: {
         Row: {
           created_at: string
@@ -115,86 +85,6 @@ export type Database = {
           username?: string
         }
         Relationships: []
-      }
-      facility_search_history: {
-        Row: {
-          created_at: string
-          facility_id: string
-          id: string
-          lat: number | null
-          lng: number | null
-          search_query: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          facility_id: string
-          id?: string
-          lat?: number | null
-          lng?: number | null
-          search_query: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          facility_id?: string
-          id?: string
-          lat?: number | null
-          lng?: number | null
-          search_query?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "facility_search_history_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      facility_sessions: {
-        Row: {
-          created_at: string | null
-          id: string
-          last_activity: string | null
-          qr_code_id: string
-          session_token: string
-          subscription_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          last_activity?: string | null
-          qr_code_id: string
-          session_token: string
-          subscription_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          last_activity?: string | null
-          qr_code_id?: string
-          session_token?: string
-          subscription_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "facility_sessions_qr_code_id_fkey"
-            columns: ["qr_code_id"]
-            isOneToOne: false
-            referencedRelation: "qr_codes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "facility_sessions_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       facility_usage_logs: {
         Row: {
@@ -693,54 +583,6 @@ export type Database = {
         }
         Relationships: []
       }
-      sds_lookups: {
-        Row: {
-          chemical_name: string | null
-          created_at: string
-          id: string
-          lookup_type: string | null
-          qr_code_id: string | null
-          sds_document_id: string | null
-          subscription_id: string | null
-          user_id: string
-        }
-        Insert: {
-          chemical_name?: string | null
-          created_at?: string
-          id?: string
-          lookup_type?: string | null
-          qr_code_id?: string | null
-          sds_document_id?: string | null
-          subscription_id?: string | null
-          user_id: string
-        }
-        Update: {
-          chemical_name?: string | null
-          created_at?: string
-          id?: string
-          lookup_type?: string | null
-          qr_code_id?: string | null
-          sds_document_id?: string | null
-          subscription_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sds_lookups_qr_code_id_fkey"
-            columns: ["qr_code_id"]
-            isOneToOne: false
-            referencedRelation: "qr_codes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sds_lookups_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       subscription_tiers: {
         Row: {
           annual_price: number
@@ -831,69 +673,6 @@ export type Database = {
           },
         ]
       }
-      user_locations: {
-        Row: {
-          created_at: string
-          event_type: string | null
-          facility_id: string | null
-          id: string
-          lat: number
-          lng: number
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event_type?: string | null
-          facility_id?: string | null
-          id?: string
-          lat: number
-          lng: number
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event_type?: string | null
-          facility_id?: string | null
-          id?: string
-          lat?: number
-          lng?: number
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      webhook_event_logs: {
-        Row: {
-          attempt_status: string
-          created_at: string
-          event_type: string
-          facility_id: string | null
-          id: string
-          payload: Json
-          response_body: string | null
-          response_status: number | null
-        }
-        Insert: {
-          attempt_status: string
-          created_at?: string
-          event_type: string
-          facility_id?: string | null
-          id?: string
-          payload: Json
-          response_body?: string | null
-          response_status?: number | null
-        }
-        Update: {
-          attempt_status?: string
-          created_at?: string
-          event_type?: string
-          facility_id?: string | null
-          id?: string
-          payload?: Json
-          response_body?: string | null
-          response_status?: number | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -906,6 +685,10 @@ export type Database = {
       reset_monthly_usage: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      upgrade_user_subscription: {
+        Args: { p_user_id: string; p_tier_name: string }
+        Returns: boolean
       }
     }
     Enums: {
