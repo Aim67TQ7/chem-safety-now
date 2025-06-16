@@ -40,8 +40,8 @@ const FacilityPage = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Generate facility URL for QR code
-  const facilityUrl = `${window.location.origin}/facility/${facilitySlug}`;
+  // Generate facility URL for QR code - always use production domain
+  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilitySlug}`;
 
   useEffect(() => {
     const fetchFacilityData = async () => {

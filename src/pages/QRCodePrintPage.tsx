@@ -63,7 +63,8 @@ const QRCodePrintPage = () => {
 
   useEffect(() => {
     if (facilityData) {
-      const facilityUrl = `https://chemlabel-gpt.lovable.app/facility/${facilitySlug}`;
+      // Always use production domain for QR codes
+      const facilityUrl = `https://chemlabel-gpt.com/facility/${facilitySlug}`;
       
       QRCodeLib.toDataURL(facilityUrl, {
         width: 400,
