@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -19,8 +18,10 @@ import { useToast } from "@/hooks/use-toast";
 interface FacilityData {
   id: string;
   slug: string;
-  name: string;
-  username: string;
+  facility_name: string | null;
+  contact_name: string | null;
+  email: string | null;
+  address: string | null;
   logo_url?: string;
   user_id?: string;
   created_at: string;
@@ -137,6 +138,8 @@ const FacilityPage = () => {
     );
   }
 
+  const facilityDisplayName = facilityData.facility_name || 'Facility';
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -147,19 +150,19 @@ const FacilityPage = () => {
               {facilityData.logo_url ? (
                 <img 
                   src={facilityData.logo_url} 
-                  alt={facilityData.name}
+                  alt={facilityDisplayName}
                   className="h-10 w-auto"
                 />
               ) : (
                 <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
-                    {facilityData.name.charAt(0)}
+                    {facilityDisplayName.charAt(0)}
                   </span>
                 </div>
               )}
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  {facilityData.name}
+                  {facilityDisplayName}
                 </h1>
                 <p className="text-sm text-gray-600">Chemical Safety Platform</p>
               </div>
