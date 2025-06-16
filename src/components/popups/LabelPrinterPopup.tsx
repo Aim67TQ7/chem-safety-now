@@ -8,10 +8,11 @@ import { Printer, X } from "lucide-react";
 interface LabelPrinterPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  document: any;
+  initialProductName?: string;
+  initialManufacturer?: string;
 }
 
-const LabelPrinterPopup = ({ isOpen, onClose, document }: LabelPrinterPopupProps) => {
+const LabelPrinterPopup = ({ isOpen, onClose, initialProductName, initialManufacturer }: LabelPrinterPopupProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -32,8 +33,8 @@ const LabelPrinterPopup = ({ isOpen, onClose, document }: LabelPrinterPopupProps
         
         <div className="flex-1 overflow-hidden">
           <LabelPrinter 
-            initialProductName={document?.productName}
-            initialManufacturer={document?.manufacturer}
+            initialProductName={initialProductName}
+            initialManufacturer={initialManufacturer}
           />
         </div>
       </DialogContent>
