@@ -51,7 +51,7 @@ const SignupPage = () => {
       
       const facilitySlug = generateSlug(formData.facilityName);
       
-      // Save facility data to Supabase
+      // Save facility data to Supabase using correct column names
       const { data: facility, error } = await supabase
         .from('facilities')
         .insert({
