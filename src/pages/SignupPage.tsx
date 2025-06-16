@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Shield, Upload, CreditCard, CheckCircle, Bot, Mail } from "lucide-react";
+import { Shield, Upload, CheckCircle, Bot, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,7 +46,7 @@ const SignupPage = () => {
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing
+      // Simulate setup processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const facilitySlug = generateSlug(formData.facilityName);
@@ -71,11 +71,11 @@ const SignupPage = () => {
         description: "Your facility has been set up successfully.",
       });
       
-      // Redirect to facility page
+      // Redirect to facility page with setup mode
       navigate(`/facility/${facilitySlug}?setup=true`);
       
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Setup error:', error);
       toast({
         title: "Setup Failed",
         description: "Please try again or contact support.",
@@ -222,33 +222,6 @@ const SignupPage = () => {
                   </div>
                 </div>
 
-                {/* Payment Summary */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center mb-4">
-                    <CreditCard className="w-5 h-5 text-blue-600 mr-2" />
-                    Payment Summary
-                  </h3>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Facility License (18 months)</span>
-                      <span className="font-semibold">$500.00</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Includes unlimited worker access</span>
-                      <span>$0.00</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Custom branding & QR codes</span>
-                      <span>$0.00</span>
-                    </div>
-                    <div className="border-t border-blue-200 pt-2 flex justify-between font-bold">
-                      <span>Total</span>
-                      <span>$500.00</span>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Submit Button */}
                 <Button
                   type="submit"
@@ -258,16 +231,15 @@ const SignupPage = () => {
                   {isProcessing ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Processing Payment...
+                      Setting up facility...
                     </div>
                   ) : (
-                    "Complete Setup & Pay $500"
+                    "Complete Facility Setup"
                   )}
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">
                   By completing setup, you agree to our Terms of Service and Privacy Policy.
-                  Your 18-month license begins immediately upon payment.
                 </p>
               </form>
             </Card>
