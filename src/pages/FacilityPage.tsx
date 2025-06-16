@@ -10,6 +10,8 @@ import SDSSearch from "@/components/SDSSearch";
 import LabelPrinter from "@/components/LabelPrinter";
 import AIAssistant from "@/components/AIAssistant";
 import QRCodeGenerator from "@/components/QRCodeGenerator";
+import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
+import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import { interactionLogger } from "@/services/interactionLogger";
 
 const FacilityPage = () => {
@@ -17,6 +19,8 @@ const FacilityPage = () => {
   const [searchParams] = useSearchParams();
   const isSetup = searchParams.get('setup') === 'true';
   const [activeTab, setActiveTab] = useState("search");
+  const [isAIPopupOpen, setIsAIPopupOpen] = useState(false);
+  const [isLabelPopupOpen, setIsLabelPopupOpen] = useState(false);
 
   // Mock facility data - in real app, this would come from API
   const facilityData = {
@@ -25,6 +29,9 @@ const FacilityPage = () => {
     logoUrl: null,
     setupMode: isSetup
   };
+
+  // Generate facility URL for QR code
+  const facilityUrl = `${window.location.origin}/facility/${facilitySlug}`;
 
   useEffect(() => {
     // Set facility context for interaction logging
@@ -81,11 +88,33 @@ const FacilityPage = () => {
               </div>
             </div>
             
-            {isSetup && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                Setup Mode
-              </Badge>
-            )}
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAIPopupOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Bot className="w-4 h-4" />
+                <span>AI Assistant</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLabelPopupOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Labels</span>
+              </Button>
+              
+              {isSetup && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  Setup Mode
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -154,11 +183,26 @@ const FacilityPage = () => {
                   Generate QR codes for quick access to safety information and documentation
                 </p>
               </div>
-              <QRCodeGenerator />
+              <QRCodeGenerator 
+                facilityData={facilityData}
+                facilityUrl={facilityUrl}
+              />
             </Card>
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Popups */}
+      <AIAssistantPopup
+        isOpen={isAIPopupOpen}
+        onClose={() => setIsAIPopupOpen(false)}
+        facilityData={facilityData}
+      />
+      
+      <LabelPrinterPopup
+        isOpen={isLabelPopupOpen}
+        onClose={() => setIsLabelPopupOpen(false)}
+      />
     </div>
   );
 };

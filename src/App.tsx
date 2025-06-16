@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,8 +24,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/facility/:slug" element={<FacilityPage />} />
-          <Route path="/facility/:slug/print" element={<QRCodePrintPage />} />
+          <Route path="/facility/:facilitySlug" element={<FacilityPage />} />
+          <Route path="/facility/:facilitySlug/print" element={<QRCodePrintPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
