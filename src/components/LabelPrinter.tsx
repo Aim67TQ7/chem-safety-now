@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,24 +21,65 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
     pictograms: [] as string[],
     precautionaryStatements: "",
     manufacturer: "",
-    dateCreated: new Date().toLocaleDateString()
+    dateCreated: new Date().toLocaleDateString(),
+    hmisHealth: "",
+    hmisFlammability: "",
+    hmisPhysical: "",
+    hmisSpecial: "",
+    signalWord: "",
+    labelSize: "4x6"
   });
   const { toast } = useToast();
 
   const availableHazardCodes = [
+    { code: "H200", description: "Unstable explosive" },
     { code: "H222", description: "Extremely flammable aerosol" },
     { code: "H225", description: "Highly flammable liquid and vapour" },
+    { code: "H226", description: "Flammable liquid and vapour" },
+    { code: "H228", description: "Flammable solid" },
+    { code: "H300", description: "Fatal if swallowed" },
+    { code: "H301", description: "Toxic if swallowed" },
+    { code: "H302", description: "Harmful if swallowed" },
+    { code: "H310", description: "Fatal in contact with skin" },
+    { code: "H311", description: "Toxic in contact with skin" },
+    { code: "H312", description: "Harmful in contact with skin" },
     { code: "H315", description: "Causes skin irritation" },
+    { code: "H317", description: "May cause allergic skin reaction" },
+    { code: "H318", description: "Causes serious eye damage" },
     { code: "H319", description: "Causes serious eye irritation" },
+    { code: "H330", description: "Fatal if inhaled" },
+    { code: "H331", description: "Toxic if inhaled" },
+    { code: "H332", description: "Harmful if inhaled" },
+    { code: "H334", description: "May cause allergy or asthma symptoms or breathing difficulties if inhaled" },
     { code: "H335", description: "May cause respiratory irritation" },
-    { code: "H336", description: "May cause drowsiness or dizziness" }
+    { code: "H336", description: "May cause drowsiness or dizziness" },
+    { code: "H340", description: "May cause genetic defects" },
+    { code: "H350", description: "May cause cancer" },
+    { code: "H360", description: "May damage fertility or the unborn child" },
+    { code: "H370", description: "Causes damage to organs" },
+    { code: "H372", description: "Causes damage to organs through prolonged or repeated exposure" },
+    { code: "H400", description: "Very toxic to aquatic life" },
+    { code: "H410", description: "Very toxic to aquatic life with long lasting effects" }
   ];
 
   const availablePictograms = [
-    { code: "GHS02", name: "Flame", symbol: "🔥" },
-    { code: "GHS04", name: "Gas Cylinder", symbol: "⚠️" },
-    { code: "GHS07", name: "Exclamation Mark", symbol: "❗" },
-    { code: "GHS08", name: "Health Hazard", symbol: "☣️" }
+    { code: "GHS01", name: "Explosive", symbol: "💥", description: "Explosive" },
+    { code: "GHS02", name: "Flammable", symbol: "🔥", description: "Flammable" },
+    { code: "GHS03", name: "Oxidizing", symbol: "🔴", description: "Oxidizing" },
+    { code: "GHS04", name: "Compressed Gas", symbol: "⚗️", description: "Compressed Gas" },
+    { code: "GHS05", name: "Corrosive", symbol: "⚠️", description: "Corrosive" },
+    { code: "GHS06", name: "Toxic", symbol: "☠️", description: "Toxic" },
+    { code: "GHS07", name: "Harmful", symbol: "❗", description: "Harmful/Irritant" },
+    { code: "GHS08", name: "Health Hazard", symbol: "☣️", description: "Health Hazard" },
+    { code: "GHS09", name: "Environmental", symbol: "🌊", description: "Environmental Hazard" }
+  ];
+
+  const labelSizes = [
+    { value: "2x4", label: "2\" × 4\" (Small Container)" },
+    { value: "3x5", label: "3\" × 5\" (Medium Container)" },
+    { value: "4x6", label: "4\" × 6\" (Large Container)" },
+    { value: "6x8", label: "6\" × 8\" (Drum/Tank)" },
+    { value: "8x10", label: "8\" × 10\" (Large Equipment)" }
   ];
 
   const handleHazardCodeToggle = async (code: string) => {
@@ -50,7 +92,6 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       hazardCodes: newCodes
     }));
 
-    // Log hazard code selection
     await interactionLogger.logFacilityUsage({
       eventType: 'label_hazard_code_toggled',
       eventDetail: {
@@ -71,7 +112,6 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       pictograms: newPictograms
     }));
 
-    // Log pictogram selection
     await interactionLogger.logFacilityUsage({
       eventType: 'label_pictogram_toggled',
       eventDetail: {
@@ -92,7 +132,6 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       return;
     }
 
-    // Log label generation
     await interactionLogger.logLabelGeneration({
       productName: labelData.productName,
       manufacturer: labelData.manufacturer,
@@ -101,7 +140,14 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       actionType: 'generate',
       metadata: {
         precautionaryStatements: labelData.precautionaryStatements,
-        dateCreated: labelData.dateCreated
+        dateCreated: labelData.dateCreated,
+        hmisRatings: {
+          health: labelData.hmisHealth,
+          flammability: labelData.hmisFlammability,
+          physical: labelData.hmisPhysical,
+          special: labelData.hmisSpecial
+        },
+        labelSize: labelData.labelSize
       }
     });
 
@@ -110,7 +156,8 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       eventDetail: {
         productName: labelData.productName,
         hazardCodeCount: labelData.hazardCodes.length,
-        pictogramCount: labelData.pictograms.length
+        pictogramCount: labelData.pictograms.length,
+        labelSize: labelData.labelSize
       }
     });
 
@@ -130,7 +177,6 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       return;
     }
 
-    // Log label printing
     await interactionLogger.logLabelGeneration({
       productName: labelData.productName,
       manufacturer: labelData.manufacturer,
@@ -157,7 +203,6 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
       return;
     }
 
-    // Log label download
     await interactionLogger.logLabelGeneration({
       productName: labelData.productName,
       manufacturer: labelData.manufacturer,
@@ -172,47 +217,14 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
     });
   };
 
-  const loadFromSDS = async (productName: string) => {
-    // Mock loading data from previously searched SDS
-    const mockData = {
-      "WD-40": {
-        hazardCodes: ["H222", "H229"],
-        pictograms: ["GHS02", "GHS04"],
-        manufacturer: "WD-40 Company",
-        precautionaryStatements: "Keep away from heat/sparks/open flames/hot surfaces. Protect from sunlight."
-      },
-      "Loctite 401": {
-        hazardCodes: ["H315", "H319", "H335"],
-        pictograms: ["GHS07"],
-        manufacturer: "Henkel Corporation",
-        precautionaryStatements: "Avoid breathing vapours. Use only in well-ventilated areas. Wear protective gloves/eye protection."
-      }
-    };
-
-    const data = mockData[productName as keyof typeof mockData];
-    if (data) {
-      setLabelData(prev => ({
-        ...prev,
-        productName,
-        hazardCodes: data.hazardCodes,
-        pictograms: data.pictograms,
-        manufacturer: data.manufacturer,
-        precautionaryStatements: data.precautionaryStatements
-      }));
-
-      // Log SDS data loading
-      await interactionLogger.logFacilityUsage({
-        eventType: 'label_sds_data_loaded',
-        eventDetail: {
-          productName: productName,
-          loadedFrom: 'mock_data'
-        }
-      });
-      
-      toast({
-        title: "SDS Data Loaded",
-        description: `Loaded safety information for ${productName}.`,
-      });
+  const getLabelSizeClass = (size: string) => {
+    switch (size) {
+      case "2x4": return "w-48 h-32";
+      case "3x5": return "w-60 h-40";
+      case "4x6": return "w-72 h-48";
+      case "6x8": return "w-96 h-64";
+      case "8x10": return "w-[30rem] h-80";
+      default: return "w-72 h-48";
     }
   };
 
@@ -223,20 +235,23 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
         <div className="space-y-4">
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-              <Printer className="w-8 h-8 text-green-600 mr-3" />
-              🏷️ Secondary Container Label Generator
+              <Printer className="w-8 h-8 text-gray-600 mr-3" />
+              GHS Compliant Label Generator
             </h3>
             <p className="text-gray-600">
-              Create GHS-compliant labels for secondary containers with your facility branding.
+              Create professional secondary container labels with full GHS compliance including HMIS ratings.
             </p>
           </div>
 
           <div className="flex items-center space-x-4">
             <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-              ✓ GHS Compliant
+              GHS Compliant
             </Badge>
-            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-              ✓ OSHA Approved Format
+            <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">
+              OSHA Approved Format
+            </Badge>
+            <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">
+              HMIS Integration
             </Badge>
           </div>
         </div>
@@ -250,27 +265,6 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
           </h4>
 
           <div className="space-y-4">
-            {/* Quick Load from SDS */}
-            <div>
-              <Label>Quick Load from Previous Search</Label>
-              <div className="flex gap-2 mt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadFromSDS("WD-40")}
-                >
-                  WD-40
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadFromSDS("Loctite 401")}
-                >
-                  Loctite 401
-                </Button>
-              </div>
-            </div>
-
             {/* Product Name */}
             <div>
               <Label htmlFor="productName">Product Name *</Label>
@@ -295,20 +289,104 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
               />
             </div>
 
-            {/* Hazard Codes */}
+            {/* Label Size Selection */}
+            <div>
+              <Label htmlFor="labelSize">Label Size</Label>
+              <Select value={labelData.labelSize} onValueChange={(value) => setLabelData(prev => ({ ...prev, labelSize: value }))}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select label size" />
+                </SelectTrigger>
+                <SelectContent>
+                  {labelSizes.map((size) => (
+                    <SelectItem key={size.value} value={size.value}>
+                      {size.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Signal Word */}
+            <div>
+              <Label htmlFor="signalWord">Signal Word</Label>
+              <Select value={labelData.signalWord} onValueChange={(value) => setLabelData(prev => ({ ...prev, signalWord: value }))}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select signal word" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DANGER">DANGER</SelectItem>
+                  <SelectItem value="WARNING">WARNING</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* HMIS Ratings */}
+            <div className="grid grid-cols-4 gap-2">
+              <div>
+                <Label htmlFor="hmisHealth">HMIS Health</Label>
+                <Select value={labelData.hmisHealth} onValueChange={(value) => setLabelData(prev => ({ ...prev, hmisHealth: value }))}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="0-4" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["0", "1", "2", "3", "4"].map((rating) => (
+                      <SelectItem key={rating} value={rating}>{rating}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hmisFlammability">HMIS Flammability</Label>
+                <Select value={labelData.hmisFlammability} onValueChange={(value) => setLabelData(prev => ({ ...prev, hmisFlammability: value }))}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="0-4" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["0", "1", "2", "3", "4"].map((rating) => (
+                      <SelectItem key={rating} value={rating}>{rating}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hmisPhysical">HMIS Physical</Label>
+                <Select value={labelData.hmisPhysical} onValueChange={(value) => setLabelData(prev => ({ ...prev, hmisPhysical: value }))}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="0-4" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["0", "1", "2", "3", "4"].map((rating) => (
+                      <SelectItem key={rating} value={rating}>{rating}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hmisSpecial">HMIS Special</Label>
+                <Input
+                  id="hmisSpecial"
+                  value={labelData.hmisSpecial}
+                  onChange={(e) => setLabelData(prev => ({ ...prev, hmisSpecial: e.target.value }))}
+                  placeholder="OX, W, etc."
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* Hazard Codes - Scrollable */}
             <div>
               <Label>Hazard Statements (H-Codes)</Label>
-              <div className="grid grid-cols-1 gap-2 mt-2">
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded p-2 mt-2 space-y-1">
                 {availableHazardCodes.map((hazard) => (
                   <Button
                     key={hazard.code}
                     variant={labelData.hazardCodes.includes(hazard.code) ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleHazardCodeToggle(hazard.code)}
-                    className="text-left justify-start h-auto p-3 whitespace-normal"
+                    className="text-left justify-start h-auto p-2 w-full text-xs"
                   >
                     <span className="font-medium">{hazard.code}:</span>
-                    <span className="ml-2">{hazard.description}</span>
+                    <span className="ml-1 truncate">{hazard.description}</span>
                   </Button>
                 ))}
               </div>
@@ -317,19 +395,19 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
             {/* Pictograms */}
             <div>
               <Label>GHS Pictograms</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="grid grid-cols-3 gap-2 mt-2">
                 {availablePictograms.map((pictogram) => (
                   <Button
                     key={pictogram.code}
                     variant={labelData.pictograms.includes(pictogram.code) ? "default" : "outline"}
                     size="sm"
                     onClick={() => handlePictogramToggle(pictogram.code)}
-                    className="text-left justify-start h-auto p-3"
+                    className="text-left justify-start h-auto p-2"
                   >
-                    <span className="text-lg mr-2">{pictogram.symbol}</span>
-                    <div>
+                    <span className="text-lg mr-1">{pictogram.symbol}</span>
+                    <div className="text-xs">
                       <div className="font-medium">{pictogram.code}</div>
-                      <div className="text-xs">{pictogram.name}</div>
+                      <div>{pictogram.name}</div>
                     </div>
                   </Button>
                 ))}
@@ -345,7 +423,7 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
                 onChange={(e) => setLabelData(prev => ({ ...prev, precautionaryStatements: e.target.value }))}
                 placeholder="Enter precautionary statements (P-codes)"
                 rows={3}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
           </div>
@@ -359,50 +437,74 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
           </h4>
 
           {/* Label Preview Area */}
-          <div className="border-2 border-gray-300 rounded-lg p-6 bg-white" id="label-preview">
-            <div className="space-y-4">
-              {/* Facility Header */}
-              <div className="text-center border-b border-gray-300 pb-3">
-                <div className="text-sm font-bold text-blue-600">{facilityData.facilityName}</div>
-                <div className="text-xs text-gray-600">Secondary Container Label</div>
+          <div className={`border-4 border-gray-900 rounded-lg bg-white ${getLabelSizeClass(labelData.labelSize)} mx-auto p-4 text-xs`} id="label-preview">
+            <div className="h-full flex flex-col">
+              {/* Company Header */}
+              <div className="text-center border-b-2 border-gray-900 pb-2 mb-2">
+                <div className="font-bold text-gray-900 text-sm">{facilityData.facilityName}</div>
+                <div className="text-xs text-gray-700">Secondary Container Label</div>
               </div>
 
-              {/* Product Name */}
-              <div className="text-center">
-                <h5 className="text-lg font-bold text-gray-900">
+              {/* Product Name and Signal Word */}
+              <div className="text-center mb-2">
+                <h5 className="font-bold text-gray-900 text-lg leading-tight">
                   {labelData.productName || "Product Name"}
                 </h5>
+                {labelData.signalWord && (
+                  <div className={`font-bold text-lg ${labelData.signalWord === 'DANGER' ? 'text-red-600' : 'text-orange-600'} border-2 ${labelData.signalWord === 'DANGER' ? 'border-red-600' : 'border-orange-600'} inline-block px-2 py-1 mt-1`}>
+                    {labelData.signalWord}
+                  </div>
+                )}
                 {labelData.manufacturer && (
-                  <p className="text-sm text-gray-600">Manufacturer: {labelData.manufacturer}</p>
+                  <p className="text-xs text-gray-600 mt-1">Manufacturer: {labelData.manufacturer}</p>
                 )}
               </div>
 
-              {/* Pictograms */}
-              {labelData.pictograms.length > 0 && (
-                <div className="flex justify-center space-x-4">
-                  {labelData.pictograms.map((code) => {
-                    const pictogram = availablePictograms.find(p => p.code === code);
-                    return pictogram ? (
-                      <div key={code} className="text-center">
-                        <div className="w-12 h-12 border-2 border-red-500 rounded flex items-center justify-center text-2xl">
+              {/* Pictograms and HMIS */}
+              <div className="flex justify-between items-center mb-2">
+                {/* Pictograms */}
+                {labelData.pictograms.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {labelData.pictograms.slice(0, 4).map((code) => {
+                      const pictogram = availablePictograms.find(p => p.code === code);
+                      return pictogram ? (
+                        <div key={code} className="w-8 h-8 border-2 border-red-600 rounded flex items-center justify-center text-sm bg-white">
                           {pictogram.symbol}
                         </div>
-                        <div className="text-xs mt-1">{pictogram.code}</div>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+
+                {/* HMIS Diamond */}
+                {(labelData.hmisHealth || labelData.hmisFlammability || labelData.hmisPhysical) && (
+                  <div className="border-2 border-gray-900 p-1">
+                    <div className="text-center">
+                      <div className="text-xs font-bold">HMIS</div>
+                      <div className="grid grid-cols-3 gap-px bg-gray-900 text-white text-xs">
+                        <div className="bg-blue-600 w-6 h-6 flex items-center justify-center font-bold">{labelData.hmisHealth || "0"}</div>
+                        <div className="bg-red-600 w-6 h-6 flex items-center justify-center font-bold">{labelData.hmisFlammability || "0"}</div>
+                        <div className="bg-yellow-500 w-6 h-6 flex items-center justify-center font-bold">{labelData.hmisPhysical || "0"}</div>
                       </div>
-                    ) : null;
-                  })}
-                </div>
-              )}
+                      {labelData.hmisSpecial && (
+                        <div className="bg-white text-gray-900 w-6 h-6 flex items-center justify-center text-xs font-bold border border-gray-900 mx-auto">
+                          {labelData.hmisSpecial}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Hazard Statements */}
               {labelData.hazardCodes.length > 0 && (
-                <div>
-                  <h6 className="text-sm font-semibold text-red-600 mb-2">HAZARD STATEMENTS:</h6>
-                  <div className="text-xs space-y-1">
+                <div className="mb-2 flex-1">
+                  <h6 className="font-bold text-red-600 text-xs mb-1">HAZARD STATEMENTS:</h6>
+                  <div className="text-xs space-y-px max-h-20 overflow-y-auto">
                     {labelData.hazardCodes.map((code) => {
                       const hazard = availableHazardCodes.find(h => h.code === code);
                       return hazard ? (
-                        <div key={code}>
+                        <div key={code} className="leading-tight">
                           <strong>{hazard.code}:</strong> {hazard.description}
                         </div>
                       ) : null;
@@ -413,19 +515,19 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
 
               {/* Precautionary Statements */}
               {labelData.precautionaryStatements && (
-                <div>
-                  <h6 className="text-sm font-semibold text-blue-600 mb-2">PRECAUTIONARY STATEMENTS:</h6>
-                  <div className="text-xs">{labelData.precautionaryStatements}</div>
+                <div className="mb-2">
+                  <h6 className="font-bold text-blue-600 text-xs mb-1">PRECAUTIONARY STATEMENTS:</h6>
+                  <div className="text-xs leading-tight">{labelData.precautionaryStatements}</div>
                 </div>
               )}
 
               {/* Footer */}
-              <div className="border-t border-gray-300 pt-3 text-center">
+              <div className="border-t-2 border-gray-900 pt-1 mt-auto text-center">
                 <div className="text-xs text-gray-600">
-                  Date Created: {labelData.dateCreated}
+                  Date: {labelData.dateCreated}
                 </div>
                 <div className="text-xs text-gray-600">
-                  For complete safety information, consult the Safety Data Sheet
+                  Consult SDS for complete safety information
                 </div>
               </div>
             </div>
@@ -435,7 +537,7 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
           <div className="flex flex-col sm:flex-row gap-3 mt-6">
             <Button 
               onClick={generateLabel}
-              className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white"
+              className="bg-gray-800 hover:bg-gray-900 text-white"
             >
               <AlertTriangle className="w-4 h-4 mr-2" />
               Generate Label
@@ -454,10 +556,10 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
         </Card>
       </div>
 
-      {/* Label Guidelines */}
-      <Card className="p-6 bg-blue-50 border-blue-200">
+      {/* Compliance Information */}
+      <Card className="p-6 bg-gray-50 border-gray-200">
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
-          📋 GHS Label Requirements
+          GHS Compliance Requirements
         </h4>
         
         <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
@@ -465,23 +567,24 @@ const LabelPrinter = ({ facilityData }: LabelPrinterProps) => {
             <h5 className="font-medium text-gray-900 mb-2">Required Elements:</h5>
             <ul className="space-y-1">
               <li>• Product identifier (chemical name)</li>
-              <li>• Signal words (Danger/Warning)</li>
+              <li>• Signal words (DANGER/WARNING)</li>
               <li>• Hazard statements (H-codes)</li>
               <li>• Precautionary statements (P-codes)</li>
               <li>• GHS pictograms</li>
               <li>• Supplier information</li>
+              <li>• HMIS ratings (recommended)</li>
             </ul>
           </div>
           
           <div>
-            <h5 className="font-medium text-gray-900 mb-2">Best Practices:</h5>
+            <h5 className="font-medium text-gray-900 mb-2">Implementation Standards:</h5>
             <ul className="space-y-1">
-              <li>• Use durable, weather-resistant labels</li>
-              <li>• Ensure text is legible and permanent</li>
-              <li>• Apply labels before first use</li>
-              <li>• Replace damaged or faded labels</li>
-              <li>• Keep labels clean and visible</li>
-              <li>• Include facility contact information</li>
+              <li>• Use durable, chemical-resistant labels</li>
+              <li>• Ensure text legibility and permanence</li>
+              <li>• Apply labels before container use</li>
+              <li>• Replace damaged labels immediately</li>
+              <li>• Maintain label visibility and cleanliness</li>
+              <li>• Include facility identification</li>
             </ul>
           </div>
         </div>

@@ -120,7 +120,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
               {facilityData.facilityName} QR Code
             </h3>
             <p className="text-gray-600">
-              Post these QR codes throughout your facility for instant worker access
+              Deploy QR codes throughout your facility for instant worker access to safety data
             </p>
           </div>
 
@@ -134,7 +134,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-900">{facilityData.facilityName}</p>
                 <p className="text-xs text-gray-500">Chemical Safety Portal</p>
-                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">
                   Scan with Phone Camera
                 </Badge>
               </div>
@@ -145,10 +145,10 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               onClick={printPoster}
-              className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white"
+              className="bg-gray-800 hover:bg-gray-900 text-white"
             >
               <Printer className="w-4 h-4 mr-2" />
-              Print Poster
+              Print Professional Poster
             </Button>
 
             <Button 
@@ -178,56 +178,56 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
       {/* Setup Instructions */}
       <Card className="p-6">
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
-          📋 Setup Instructions
+          Setup Instructions
         </h4>
         
         <div className="space-y-4 text-sm text-gray-600">
           <div className="flex items-start space-x-3">
-            <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-0.5">1</Badge>
+            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">1</Badge>
             <div>
               <p className="font-medium text-gray-900">Print Professional Posters</p>
-              <p>Click "Print Poster" to create branded, professional QR code posters with your company logo.</p>
+              <p>Generate branded QR code posters with your company logo for facility deployment.</p>
             </div>
           </div>
           
           <div className="flex items-start space-x-3">
-            <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-0.5">2</Badge>
+            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">2</Badge>
             <div>
               <p className="font-medium text-gray-900">Strategic Placement</p>
-              <p>Post QR codes in high-traffic areas: break rooms, tool cribs, chemical storage areas, and workstations.</p>
+              <p>Position QR codes in high-traffic areas: break rooms, tool storage, chemical areas, and workstations.</p>
             </div>
           </div>
           
           <div className="flex items-start space-x-3">
-            <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-0.5">3</Badge>
+            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">3</Badge>
             <div>
               <p className="font-medium text-gray-900">Worker Training</p>
-              <p>Show workers how to scan with their phone camera app - no special app download required.</p>
+              <p>Train personnel to scan with standard camera apps - no additional software required.</p>
             </div>
           </div>
           
           <div className="flex items-start space-x-3">
-            <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-0.5">4</Badge>
+            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">4</Badge>
             <div>
-              <p className="font-medium text-gray-900">Monitor Usage</p>
-              <p>All scans and searches are automatically logged for OSHA compliance and audit trails.</p>
+              <p className="font-medium text-gray-900">Compliance Monitoring</p>
+              <p>All interactions are logged automatically for OSHA compliance and audit documentation.</p>
             </div>
           </div>
         </div>
       </Card>
 
       {/* Usage Guidelines */}
-      <Card className="p-6 bg-yellow-50 border-yellow-200">
+      <Card className="p-6 bg-orange-50 border-orange-200">
         <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          ⚠️ Important Guidelines
+          Important Guidelines
         </h4>
         
         <ul className="space-y-2 text-sm text-gray-700">
-          <li>• Protect QR codes from moisture and direct sunlight</li>
-          <li>• Replace damaged or faded QR codes immediately</li>
-          <li>• Ensure codes are posted at appropriate heights for easy scanning</li>
-          <li>• Keep backup printed copies in your EHS office</li>
-          <li>• Test QR codes regularly to ensure they're working properly</li>
+          <li>• Protect QR codes from moisture and direct sunlight exposure</li>
+          <li>• Replace damaged or faded QR codes immediately to maintain accessibility</li>
+          <li>• Ensure codes are positioned at appropriate heights for easy scanning</li>
+          <li>• Maintain backup printed copies in your EHS office</li>
+          <li>• Conduct regular testing to verify QR code functionality</li>
         </ul>
       </Card>
     </div>
