@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,22 @@ const parseJsonArray = (jsonData: any, fallback: any[] = []): any[] => {
   } catch {
     return fallback;
   }
+};
+
+// Helper function to safely render badge text
+const renderBadgeText = (item: any): string => {
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object' && item !== null) {
+    // Handle different object structures
+    if (item.code && item.description) return `${item.code}: ${item.description}`;
+    if (item.code && item.statement) return `${item.code}: ${item.statement}`;
+    if (item.ghs_code && item.name) return `${item.ghs_code} - ${item.name}`;
+    if (item.description) return item.description;
+    if (item.statement) return item.statement;
+    if (item.name) return item.name;
+    return JSON.stringify(item);
+  }
+  return String(item);
 };
 
 const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
@@ -232,7 +249,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                       <div className="flex flex-wrap gap-2">
                         {result.h_codes.map((hcode, index) => (
                           <Badge key={index} variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
-                            {hcode.code ? `${hcode.code}: ${hcode.description}` : hcode.description || hcode}
+                            {renderBadgeText(hcode)}
                           </Badge>
                         ))}
                       </div>
@@ -246,7 +263,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                       <div className="flex flex-wrap gap-2">
                         {result.hazard_statements.map((hazard, index) => (
                           <Badge key={index} variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
-                            {hazard.code ? `${hazard.code}: ${hazard.statement}` : hazard.statement || hazard}
+                            {renderBadgeText(hazard)}
                           </Badge>
                         ))}
                       </div>
@@ -261,7 +278,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                         {result.pictograms.map((pictogram, index) => (
                           <Badge key={index} variant="outline" className="bg-red-50 text-red-800 border-red-300 flex items-center">
                             <AlertTriangle className="w-3 h-3 mr-1" />
-                            {pictogram.ghs_code ? `${pictogram.ghs_code} - ${pictogram.name}` : pictogram.name || pictogram}
+                            {renderBadgeText(pictogram)}
                           </Badge>
                         ))}
                       </div>
@@ -275,7 +292,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
                       <div className="flex flex-wrap gap-2">
                         {result.precautionary_statements.slice(0, 3).map((precaution, index) => (
                           <Badge key={index} variant="outline" className="bg-blue-50 text-blue-800 border-blue-300">
-                            {precaution.code ? `${precaution.code}: ${precaution.statement}` : precaution.statement || precaution}
+                            {renderBadgeText(precaution)}
                           </Badge>
                         ))}
                         {result.precautionary_statements.length > 3 && (
