@@ -44,6 +44,28 @@ const SignupPage = () => {
       + '-' + Math.random().toString(36).substring(2, 8);
   };
 
+  const uploadLogo = async (file: File, facilitySlug: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${facilitySlug}-logo.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('facility-logos')
+      .upload(filePath, file);
+
+    if (error) {
+      console.error('Error uploading logo:', error);
+      throw new Error('Failed to upload logo');
+    }
+
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('facility-logos')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -54,6 +76,12 @@ const SignupPage = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const facilitySlug = generateSlug(formData.facilityName);
+      
+      // Upload logo if provided
+      let logoUrl = null;
+      if (formData.logo) {
+        logoUrl = await uploadLogo(formData.logo, facilitySlug);
+      }
       
       // Save facility data to Supabase using correct column names
       const { data: facility, error } = await supabase
@@ -66,6 +94,7 @@ const SignupPage = () => {
           contact_name: formData.contactName,
           email: formData.email,
           address: formData.address,
+          logo_url: logoUrl,
         })
         .select()
         .single();

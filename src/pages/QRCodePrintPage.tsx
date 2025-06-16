@@ -1,16 +1,19 @@
 
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import QRCodeLib from 'qrcode';
 
 interface FacilityData {
-  email: string;
-  facilityName: string;
-  contactName: string;
-  address: string;
-  logo: File | null;
+  id: string;
   slug: string;
-  createdAt: string;
+  name: string;
+  facility_name: string;
+  contact_name: string;
+  email: string;
+  address: string;
+  logo_url?: string;
+  created_at: string;
 }
 
 const QRCodePrintPage = () => {
@@ -19,16 +22,29 @@ const QRCodePrintPage = () => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
   useEffect(() => {
-    // Load facility data
-    const data = localStorage.getItem(`facility_${slug}`);
-    if (data) {
-      setFacilityData(JSON.parse(data));
-    }
+    const loadFacilityData = async () => {
+      if (!slug) return;
+
+      const { data, error } = await supabase
+        .from('facilities')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (error) {
+        console.error('Error loading facility data:', error);
+        return;
+      }
+
+      setFacilityData(data);
+    };
+
+    loadFacilityData();
   }, [slug]);
 
   useEffect(() => {
     if (facilityData) {
-      const facilityUrl = `https://chemlabel-gpt.com/facility/${slug}`;
+      const facilityUrl = `https://chemlabel-gpt.lovable.app/facility/${slug}`;
       
       // Generate QR code as data URL
       QRCodeLib.toDataURL(facilityUrl, {
@@ -104,17 +120,17 @@ const QRCodePrintPage = () => {
         
         {/* Header with customer logo and name */}
         <div className="text-center mb-8">
-          {facilityData.logo && (
+          {facilityData.logo_url && (
             <div className="mb-6">
               <img 
-                src={URL.createObjectURL(facilityData.logo)} 
-                alt={`${facilityData.facilityName} Logo`}
+                src={facilityData.logo_url} 
+                alt={`${facilityData.facility_name || facilityData.name} Logo`}
                 className="h-20 mx-auto object-contain"
               />
             </div>
           )}
           <h1 className="text-5xl font-bold text-gray-900 mb-3">
-            {facilityData.facilityName}
+            {facilityData.facility_name || facilityData.name}
           </h1>
           <p className="text-2xl text-gray-700 font-medium">Chemical Safety Portal</p>
         </div>
@@ -133,11 +149,11 @@ const QRCodePrintPage = () => {
                     className="w-96 h-96 mx-auto border-4 border-gray-800 rounded-xl"
                   />
                   {/* Customer logo overlay in center of QR code */}
-                  {facilityData.logo && (
+                  {facilityData.logo_url && (
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-xl shadow-lg border-4 border-gray-800">
                       <img 
-                        src={URL.createObjectURL(facilityData.logo)} 
-                        alt={`${facilityData.facilityName} Logo`}
+                        src={facilityData.logo_url} 
+                        alt={`${facilityData.facility_name || facilityData.name} Logo`}
                         className="w-20 h-20 object-contain"
                       />
                     </div>

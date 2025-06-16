@@ -133,10 +133,22 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
           {/* QR Code Display Area */}
           <div className="bg-white border-2 border-gray-200 rounded-lg p-8 inline-block">
             <div className="text-center space-y-4">
-              <canvas 
-                ref={canvasRef} 
-                className="mx-auto border border-gray-200 rounded"
-              />
+              <div className="relative inline-block">
+                <canvas 
+                  ref={canvasRef} 
+                  className="mx-auto border border-gray-200 rounded"
+                />
+                {/* Company logo overlay in center of QR code */}
+                {facilityData.logo_url && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-lg shadow-lg border-2 border-gray-800">
+                    <img 
+                      src={facilityData.logo_url} 
+                      alt={`${facilityData.name} Logo`}
+                      className="w-12 h-12 object-contain"
+                    />
+                  </div>
+                )}
+              </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-900">{facilityData.name}</p>
                 <p className="text-xs text-gray-500">Chemical Safety Portal</p>
