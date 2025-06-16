@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -112,7 +111,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
       }
     });
 
-    // Open print page in new window
+    // Open print page in new window with correct parameter name
     const printUrl = `/facility/${facilityData.slug}/print`;
     window.open(printUrl, '_blank');
   };
