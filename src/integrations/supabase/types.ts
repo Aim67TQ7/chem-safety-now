@@ -55,7 +55,11 @@ export type Database = {
       }
       facilities: {
         Row: {
+          address: string | null
+          contact_name: string | null
           created_at: string
+          email: string | null
+          facility_name: string | null
           id: string
           logo_url: string | null
           name: string
@@ -65,7 +69,11 @@ export type Database = {
           username: string
         }
         Insert: {
+          address?: string | null
+          contact_name?: string | null
           created_at?: string
+          email?: string | null
+          facility_name?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -75,7 +83,11 @@ export type Database = {
           username: string
         }
         Update: {
+          address?: string | null
+          contact_name?: string | null
           created_at?: string
+          email?: string | null
+          facility_name?: string | null
           id?: string
           logo_url?: string | null
           name?: string

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,10 @@ const SignupPage = () => {
           slug: facilitySlug,
           name: formData.facilityName,
           username: formData.contactName,
+          facility_name: formData.facilityName,
+          contact_name: formData.contactName,
+          email: formData.email,
+          address: formData.address,
         })
         .select()
         .single();
