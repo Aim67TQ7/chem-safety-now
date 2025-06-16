@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle } from "lucide-react";
+import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
@@ -76,6 +76,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
   const [backendHealth, setBackendHealth] = useState<'checking' | 'healthy' | 'unhealthy'>('checking');
+  const [connectionError, setConnectionError] = useState<string>('');
   const { toast } = useToast();
 
   // Health check on component mount
@@ -84,26 +85,67 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   }, []);
 
   const checkBackendHealth = async () => {
+    setBackendHealth('checking');
+    setConnectionError('');
+    
     try {
-      console.log('Checking backend health at:', `${API_BASE_URL}/health`);
+      console.log('🔍 Checking backend health at:', `${API_BASE_URL}/health`);
+      
+      // Add a timeout to the fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
+      console.log('📡 Health check response status:', response.status);
+      console.log('📡 Health check response headers:', Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         const healthData = await response.json();
-        console.log('Backend health check successful:', healthData);
+        console.log('✅ Backend health check successful:', healthData);
         setBackendHealth('healthy');
+        setConnectionError('');
+        
+        toast({
+          title: "Backend Connected",
+          description: "Successfully connected to the SDS search backend.",
+          variant: "default"
+        });
       } else {
-        console.error('Backend health check failed:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('❌ Backend health check failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          responseText: errorText,
+          url: `${API_BASE_URL}/health`
+        });
         setBackendHealth('unhealthy');
+        setConnectionError(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Backend health check error:', error);
+      console.error('❌ Backend health check error:', error);
       setBackendHealth('unhealthy');
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          setConnectionError('Request timeout - backend may be slow or unavailable');
+        } else if (error.message.includes('Failed to fetch')) {
+          setConnectionError('Network error - backend may be offline or CORS misconfigured');
+        } else {
+          setConnectionError(error.message);
+        }
+      } else {
+        setConnectionError('Unknown connection error');
+      }
     }
   };
 
@@ -121,8 +163,8 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     });
 
     try {
-      console.log('Starting search with query:', searchQuery.trim());
-      console.log('Making POST request to:', `${API_BASE_URL}/api/search`);
+      console.log('🔍 Starting search with query:', searchQuery.trim());
+      console.log('📡 Making POST request to:', `${API_BASE_URL}/api/search`);
       
       const response = await fetch(`${API_BASE_URL}/api/search`, {
         method: 'POST',
@@ -136,29 +178,29 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         })
       });
 
-      console.log('Search response status:', response.status);
-      console.log('Search response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📡 Search response status:', response.status);
+      console.log('📡 Search response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         throw new Error(`Search failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('Search response data:', data);
+      console.log('📊 Search response data:', data);
       
       // Handle immediate results or job-based results
       if (data.results) {
         // Immediate results
         const results = Array.isArray(data.results) ? data.results : [data.results];
-        console.log('Setting immediate search results:', results);
+        console.log('✅ Setting immediate search results:', results);
         setSearchResults(results);
       } else if (data.job_id) {
         // Job-based processing - poll for results
-        console.log('Polling for job results:', data.job_id);
+        console.log('⏳ Polling for job results:', data.job_id);
         await pollJobResults(data.job_id);
       } else {
         // Fallback to documents list
-        console.log('No direct results, falling back to document list');
+        console.log('📋 No direct results, falling back to document list');
         await fetchAllDocuments();
       }
       
@@ -171,11 +213,11 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       });
 
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('❌ Search error:', error);
       
       // Fallback to searching existing documents
       try {
-        console.log('Attempting fallback to document list');
+        console.log('🔄 Attempting fallback to document list');
         await fetchAllDocuments();
         toast({
           title: "Search Notice",
@@ -183,7 +225,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
           variant: "default"
         });
       } catch (fallbackError) {
-        console.error('Fallback search error:', fallbackError);
+        console.error('❌ Fallback search error:', fallbackError);
         toast({
           title: "Search Error",
           description: "Unable to search SDS documents. Please check your connection and try again.",
@@ -196,7 +238,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   };
 
   const fetchAllDocuments = async () => {
-    console.log('Fetching all documents from:', `${API_BASE_URL}/api/documents`);
+    console.log('📋 Fetching all documents from:', `${API_BASE_URL}/api/documents`);
     
     const response = await fetch(`${API_BASE_URL}/api/documents`, {
       method: 'GET',
@@ -205,14 +247,14 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       },
     });
     
-    console.log('Documents response status:', response.status);
+    console.log('📡 Documents response status:', response.status);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch documents: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log('Documents response data:', data);
+    console.log('📊 Documents response data:', data);
     
     // Handle the correct API response structure
     let documents: SDSDocument[] = [];
@@ -221,7 +263,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     } else if (Array.isArray(data)) {
       documents = data;
     } else {
-      console.warn('Unexpected documents response structure:', data);
+      console.warn('⚠️ Unexpected documents response structure:', data);
       documents = [];
     }
     
@@ -234,7 +276,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         )
       : documents;
     
-    console.log('Setting filtered documents:', filteredDocuments);
+    console.log('✅ Setting filtered documents:', filteredDocuments);
     setSearchResults(filteredDocuments);
   };
 
@@ -244,12 +286,12 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
 
     const poll = async (): Promise<void> => {
       try {
-        console.log(`Polling job ${jobId}, attempt ${attempts + 1}`);
+        console.log(`⏳ Polling job ${jobId}, attempt ${attempts + 1}`);
         const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/status`);
         if (!response.ok) throw new Error('Job status check failed');
         
         const jobStatus = await response.json();
-        console.log('Job status:', jobStatus);
+        console.log('📊 Job status:', jobStatus);
         
         if (jobStatus.status === 'completed' && jobStatus.results) {
           const results = Array.isArray(jobStatus.results) ? jobStatus.results : [jobStatus.results];
@@ -268,7 +310,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
           throw new Error('Job timeout');
         }
       } catch (error) {
-        console.error('Job polling error:', error);
+        console.error('❌ Job polling error:', error);
         // Fallback to document list
         await fetchAllDocuments();
       }
@@ -374,14 +416,27 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       {backendHealth !== 'healthy' && (
         <Alert variant={backendHealth === 'unhealthy' ? 'destructive' : 'default'}>
           {backendHealth === 'checking' ? (
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4 animate-spin" />
           ) : (
             <AlertCircle className="h-4 w-4" />
           )}
-          <AlertDescription>
-            {backendHealth === 'checking' 
-              ? 'Checking backend connection...' 
-              : 'Backend connection failed. Search functionality may be limited.'}
+          <AlertDescription className="flex items-center justify-between w-full">
+            <div>
+              {backendHealth === 'checking' 
+                ? 'Checking backend connection...' 
+                : `Backend connection failed: ${connectionError || 'Unknown error'}`}
+            </div>
+            {backendHealth === 'unhealthy' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={checkBackendHealth}
+                className="ml-4 flex items-center space-x-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Retry</span>
+              </Button>
+            )}
           </AlertDescription>
         </Alert>
       )}
