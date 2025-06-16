@@ -206,12 +206,13 @@ class InteractionLogger {
         .single();
 
       if (session) {
-        const pageViews = session.page_views || [];
-        pageViews.push({ page, timestamp: new Date().toISOString() });
+        // Ensure page_views is an array, handle the case where it might be other types
+        const currentPageViews = Array.isArray(session.page_views) ? session.page_views : [];
+        const updatedPageViews = [...currentPageViews, { page, timestamp: new Date().toISOString() }];
 
         await supabase
           .from('facility_user_sessions')
-          .update({ page_views: pageViews })
+          .update({ page_views: updatedPageViews })
           .eq('session_token', this.sessionId);
       }
     } catch (error) {
