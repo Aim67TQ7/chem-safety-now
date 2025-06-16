@@ -1,14 +1,14 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Bot, Printer, Download, FileText, ExternalLink } from "lucide-react";
+import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import { interactionLogger } from "@/services/interactionLogger";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SDSSearchProps {
   facilityData: any;
@@ -66,9 +66,7 @@ interface SDSDocument {
   created_at: string;
 }
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-url.com' 
-  : 'http://localhost:5000';
+const API_BASE_URL = 'https://chemlabel.replit.app';
 
 const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,7 +75,37 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
+  const [backendHealth, setBackendHealth] = useState<'checking' | 'healthy' | 'unhealthy'>('checking');
   const { toast } = useToast();
+
+  // Health check on component mount
+  useEffect(() => {
+    checkBackendHealth();
+  }, []);
+
+  const checkBackendHealth = async () => {
+    try {
+      console.log('Checking backend health at:', `${API_BASE_URL}/health`);
+      const response = await fetch(`${API_BASE_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const healthData = await response.json();
+        console.log('Backend health check successful:', healthData);
+        setBackendHealth('healthy');
+      } else {
+        console.error('Backend health check failed:', response.status, response.statusText);
+        setBackendHealth('unhealthy');
+      }
+    } catch (error) {
+      console.error('Backend health check error:', error);
+      setBackendHealth('unhealthy');
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -93,10 +121,14 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     });
 
     try {
+      console.log('Starting search with query:', searchQuery.trim());
+      console.log('Making POST request to:', `${API_BASE_URL}/api/search`);
+      
       const response = await fetch(`${API_BASE_URL}/api/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           product_name: searchQuery.trim(),
@@ -104,21 +136,29 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         })
       });
 
+      console.log('Search response status:', response.status);
+      console.log('Search response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`Search failed: ${response.status}`);
+        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('Search response data:', data);
       
       // Handle immediate results or job-based results
       if (data.results) {
         // Immediate results
-        setSearchResults(Array.isArray(data.results) ? data.results : [data.results]);
+        const results = Array.isArray(data.results) ? data.results : [data.results];
+        console.log('Setting immediate search results:', results);
+        setSearchResults(results);
       } else if (data.job_id) {
         // Job-based processing - poll for results
+        console.log('Polling for job results:', data.job_id);
         await pollJobResults(data.job_id);
       } else {
         // Fallback to documents list
+        console.log('No direct results, falling back to document list');
         await fetchAllDocuments();
       }
       
@@ -135,6 +175,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       
       // Fallback to searching existing documents
       try {
+        console.log('Attempting fallback to document list');
         await fetchAllDocuments();
         toast({
           title: "Search Notice",
@@ -155,11 +196,34 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   };
 
   const fetchAllDocuments = async () => {
-    const response = await fetch(`${API_BASE_URL}/api/documents`);
+    console.log('Fetching all documents from:', `${API_BASE_URL}/api/documents`);
+    
+    const response = await fetch(`${API_BASE_URL}/api/documents`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    console.log('Documents response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch documents: ${response.status}`);
+      throw new Error(`Failed to fetch documents: ${response.status} ${response.statusText}`);
     }
-    const documents = await response.json();
+    
+    const data = await response.json();
+    console.log('Documents response data:', data);
+    
+    // Handle the correct API response structure
+    let documents: SDSDocument[] = [];
+    if (data.documents && Array.isArray(data.documents)) {
+      documents = data.documents;
+    } else if (Array.isArray(data)) {
+      documents = data;
+    } else {
+      console.warn('Unexpected documents response structure:', data);
+      documents = [];
+    }
     
     // Filter documents by search query if provided
     const filteredDocuments = searchQuery.trim() 
@@ -170,6 +234,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         )
       : documents;
     
+    console.log('Setting filtered documents:', filteredDocuments);
     setSearchResults(filteredDocuments);
   };
 
@@ -179,13 +244,16 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
 
     const poll = async (): Promise<void> => {
       try {
+        console.log(`Polling job ${jobId}, attempt ${attempts + 1}`);
         const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/status`);
         if (!response.ok) throw new Error('Job status check failed');
         
         const jobStatus = await response.json();
+        console.log('Job status:', jobStatus);
         
         if (jobStatus.status === 'completed' && jobStatus.results) {
-          setSearchResults(Array.isArray(jobStatus.results) ? jobStatus.results : [jobStatus.results]);
+          const results = Array.isArray(jobStatus.results) ? jobStatus.results : [jobStatus.results];
+          setSearchResults(results);
           return;
         }
         
@@ -302,6 +370,31 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Backend Health Status */}
+      {backendHealth !== 'healthy' && (
+        <Alert variant={backendHealth === 'unhealthy' ? 'destructive' : 'default'}>
+          {backendHealth === 'checking' ? (
+            <Search className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          <AlertDescription>
+            {backendHealth === 'checking' 
+              ? 'Checking backend connection...' 
+              : 'Backend connection failed. Search functionality may be limited.'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {backendHealth === 'healthy' && (
+        <Alert>
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>
+            Backend connected successfully. Search functionality is available.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Search Header */}
       <Card className="p-6">
         <div className="space-y-4">
@@ -327,7 +420,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
             </div>
             <Button 
               onClick={handleSearch}
-              disabled={!searchQuery.trim() || isLoading}
+              disabled={!searchQuery.trim() || isLoading || backendHealth === 'unhealthy'}
               className="bg-gray-800 hover:bg-gray-900 text-white px-6"
             >
               <Search className="w-4 h-4 mr-2" />
