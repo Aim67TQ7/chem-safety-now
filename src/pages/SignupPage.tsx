@@ -36,12 +36,17 @@ const SignupPage = () => {
   };
 
   const generateSlug = (name: string) => {
-    return name.toLowerCase()
+    const baseSlug = name.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-      .trim()
-      + '-' + Math.random().toString(36).substring(2, 8);
+      .trim();
+    
+    // Add timestamp and random string for better uniqueness
+    const timestamp = Date.now().toString().slice(-6);
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    
+    return `${baseSlug}-${timestamp}-${randomSuffix}`;
   };
 
   const uploadLogo = async (file: File, facilitySlug: string) => {
@@ -83,13 +88,11 @@ const SignupPage = () => {
         logoUrl = await uploadLogo(formData.logo, facilitySlug);
       }
       
-      // Save facility data to Supabase using correct column names
+      // Save facility data to Supabase with updated column names
       const { data: facility, error } = await supabase
         .from('facilities')
         .insert({
           slug: facilitySlug,
-          name: formData.facilityName,
-          username: formData.contactName,
           facility_name: formData.facilityName,
           contact_name: formData.contactName,
           email: formData.email,
@@ -100,7 +103,22 @@ const SignupPage = () => {
         .single();
 
       if (error) {
-        throw new Error('Failed to create facility: ' + error.message);
+        console.error('Database error:', error);
+        
+        // Handle specific constraint violations with user-friendly messages
+        if (error.code === '23505') {
+          if (error.message.includes('slug')) {
+            throw new Error('A facility with a similar name already exists. Please try a different facility name.');
+          } else if (error.message.includes('email')) {
+            throw new Error('This email address is already registered. Please use a different email or contact support.');
+          } else {
+            throw new Error('This facility information conflicts with an existing registration. Please try different details.');
+          }
+        } else if (error.code === '23514') {
+          throw new Error('Invalid facility name format. Please use only letters, numbers, and spaces.');
+        } else {
+          throw new Error(`Failed to create facility: ${error.message}`);
+        }
       }
       
       toast({

@@ -62,11 +62,9 @@ export type Database = {
           facility_name: string | null
           id: string
           logo_url: string | null
-          name: string
           slug: string
           updated_at: string
           user_id: string | null
-          username: string
         }
         Insert: {
           address?: string | null
@@ -76,11 +74,9 @@ export type Database = {
           facility_name?: string | null
           id?: string
           logo_url?: string | null
-          name: string
           slug: string
           updated_at?: string
           user_id?: string | null
-          username: string
         }
         Update: {
           address?: string | null
@@ -90,11 +86,9 @@ export type Database = {
           facility_name?: string | null
           id?: string
           logo_url?: string | null
-          name?: string
           slug?: string
           updated_at?: string
           user_id?: string | null
-          username?: string
         }
         Relationships: []
       }
