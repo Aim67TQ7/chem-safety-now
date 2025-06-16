@@ -9,6 +9,7 @@ import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import { interactionLogger } from "@/services/interactionLogger";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SDSSearchProps {
   facilityData: any;
@@ -89,60 +90,34 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     setConnectionError('');
     
     try {
-      console.log('🔍 Checking backend health at:', `${API_BASE_URL}/health`);
+      console.log('🔍 Checking Supabase Edge Functions health');
       
-      // Add a timeout to the fetch request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      const response = await fetch(`${API_BASE_URL}/health`, {
+      // Test the Supabase connection by calling the documents endpoint
+      const { data, error } = await supabase.functions.invoke('sds-documents', {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
-      console.log('📡 Health check response status:', response.status);
-      console.log('📡 Health check response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (response.ok) {
-        const healthData = await response.json();
-        console.log('✅ Backend health check successful:', healthData);
+      if (error) {
+        console.error('❌ Supabase function error:', error);
+        setBackendHealth('unhealthy');
+        setConnectionError(`Supabase function error: ${error.message}`);
+      } else {
+        console.log('✅ Supabase Edge Functions connected successfully');
         setBackendHealth('healthy');
         setConnectionError('');
         
         toast({
           title: "Backend Connected",
-          description: "Successfully connected to the SDS search backend.",
+          description: "Successfully connected to Supabase Edge Functions.",
           variant: "default"
         });
-      } else {
-        const errorText = await response.text();
-        console.error('❌ Backend health check failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          responseText: errorText,
-          url: `${API_BASE_URL}/health`
-        });
-        setBackendHealth('unhealthy');
-        setConnectionError(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('❌ Backend health check error:', error);
+      console.error('❌ Health check error:', error);
       setBackendHealth('unhealthy');
       
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          setConnectionError('Request timeout - backend may be slow or unavailable');
-        } else if (error.message.includes('Failed to fetch')) {
-          setConnectionError('Network error - backend may be offline or CORS misconfigured');
-        } else {
-          setConnectionError(error.message);
-        }
+        setConnectionError(error.message);
       } else {
         setConnectionError('Unknown connection error');
       }
@@ -164,28 +139,18 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
 
     try {
       console.log('🔍 Starting search with query:', searchQuery.trim());
-      console.log('📡 Making POST request to:', `${API_BASE_URL}/api/search`);
       
-      const response = await fetch(`${API_BASE_URL}/api/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('sds-search', {
+        body: {
           product_name: searchQuery.trim(),
           max_results: 10
-        })
+        }
       });
 
-      console.log('📡 Search response status:', response.status);
-      console.log('📡 Search response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
+      if (error) {
+        throw new Error(`Search failed: ${error.message}`);
       }
 
-      const data = await response.json();
       console.log('📊 Search response data:', data);
       
       // Handle immediate results or job-based results
@@ -238,22 +203,16 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   };
 
   const fetchAllDocuments = async () => {
-    console.log('📋 Fetching all documents from:', `${API_BASE_URL}/api/documents`);
+    console.log('📋 Fetching all documents from Supabase');
     
-    const response = await fetch(`${API_BASE_URL}/api/documents`, {
+    const { data, error } = await supabase.functions.invoke('sds-documents', {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
     });
     
-    console.log('📡 Documents response status:', response.status);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch documents: ${response.status} ${response.statusText}`);
+    if (error) {
+      throw new Error(`Failed to fetch documents: ${error.message}`);
     }
     
-    const data = await response.json();
     console.log('📊 Documents response data:', data);
     
     // Handle the correct API response structure
@@ -287,10 +246,13 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     const poll = async (): Promise<void> => {
       try {
         console.log(`⏳ Polling job ${jobId}, attempt ${attempts + 1}`);
-        const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/status`);
-        if (!response.ok) throw new Error('Job status check failed');
         
-        const jobStatus = await response.json();
+        const { data: jobStatus, error } = await supabase.functions.invoke('sds-job-status', {
+          method: 'GET',
+        });
+        
+        if (error) throw new Error('Job status check failed');
+        
         console.log('📊 Job status:', jobStatus);
         
         if (jobStatus.status === 'completed' && jobStatus.results) {
@@ -423,8 +385,8 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
           <AlertDescription className="flex items-center justify-between w-full">
             <div>
               {backendHealth === 'checking' 
-                ? 'Checking backend connection...' 
-                : `Backend connection failed: ${connectionError || 'Unknown error'}`}
+                ? 'Checking Supabase connection...' 
+                : `Supabase connection failed: ${connectionError || 'Unknown error'}`}
             </div>
             {backendHealth === 'unhealthy' && (
               <Button
@@ -445,7 +407,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         <Alert>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
-            Backend connected successfully. Search functionality is available.
+            Supabase connected successfully. Search functionality is available.
           </AlertDescription>
         </Alert>
       )}
