@@ -149,7 +149,7 @@ const QRCodePrintPage = () => {
   const PosterContent = () => (
     <div className="poster-content w-full h-full flex flex-col justify-between">
       
-      {/* Header without logo - just company name */}
+      {/* Header without logo - just main title */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
           Chemical Safety Portal
@@ -248,7 +248,6 @@ const QRCodePrintPage = () => {
             />
             <div className="text-center">
               <p className="text-sm text-gray-800 font-bold">ChemLabel-GPT</p>
-              <p className="text-xs text-gray-600">OSHA Compliant Chemical Safety Platform</p>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-1">No app required • Works with any smartphone • Real-time compliance tracking</p>

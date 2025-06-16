@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Smartphone, Bot, FileText, BarChart3, Shield, Zap, CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock } from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -99,40 +99,28 @@ const LandingPage = () => {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Smartphone className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">📱 Mobile SDS Access</h3>
+              <h3 className="text-xl font-semibold mb-3">Mobile SDS Access</h3>
               <p className="text-gray-600">
                 Scan QR codes for instant SDS access. No app downloads, no login required.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bot className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">🤖 AI Assistant</h3>
+              <h3 className="text-xl font-semibold mb-3">AI Assistant</h3>
               <p className="text-gray-600">
                 Ask questions about your SDS sheets and get instant safety guidance from our AI assistant.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-yellow-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">🏷️ Instant Label Generation</h3>
+              <h3 className="text-xl font-semibold mb-3">Instant Label Generation</h3>
               <p className="text-gray-600">
                 Generate GHS-compliant secondary container labels with your facility branding.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">📊 Facility Analytics</h3>
+              <h3 className="text-xl font-semibold mb-3">Facility Analytics</h3>
               <p className="text-gray-600">
                 Professional audit trails and usage analytics impress safety inspectors.
               </p>
