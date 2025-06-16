@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Printer, Bot, QrCode, Settings } from "lucide-react";
+import { Search, Printer, Bot, QrCode, AlertCircle } from "lucide-react";
 import SDSSearch from "@/components/SDSSearch";
 import LabelPrinter from "@/components/LabelPrinter";
 import AIAssistant from "@/components/AIAssistant";
@@ -13,6 +13,21 @@ import QRCodeGenerator from "@/components/QRCodeGenerator";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import { interactionLogger } from "@/services/interactionLogger";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface FacilityData {
+  id: string;
+  slug: string;
+  facility_name: string;
+  contact_name: string;
+  email: string;
+  address: string;
+  logo_url?: string;
+  subscription_status: string;
+  subscription_expires_at?: string;
+  created_at: string;
+}
 
 const FacilityPage = () => {
   const { facilitySlug } = useParams();
@@ -21,44 +36,108 @@ const FacilityPage = () => {
   const [activeTab, setActiveTab] = useState("search");
   const [isAIPopupOpen, setIsAIPopupOpen] = useState(false);
   const [isLabelPopupOpen, setIsLabelPopupOpen] = useState(false);
-
-  // Mock facility data - in real app, this would come from API
-  const facilityData = {
-    facilityName: "Bunting Magnetics",
-    facilitySlug: facilitySlug,
-    logoUrl: null,
-    setupMode: isSetup
-  };
+  const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Generate facility URL for QR code
   const facilityUrl = `${window.location.origin}/facility/${facilitySlug}`;
 
   useEffect(() => {
-    // Set facility context for interaction logging
-    interactionLogger.setUserContext(null, facilityData.facilitySlug);
-    
-    // Log facility page visit
-    interactionLogger.logFacilityUsage({
-      eventType: 'facility_page_visit',
-      eventDetail: {
-        facilitySlug,
-        setupMode: isSetup,
-        tab: activeTab
+    const fetchFacilityData = async () => {
+      if (!facilitySlug) {
+        setError("No facility slug provided");
+        setLoading(false);
+        return;
       }
-    });
+
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('facilities')
+          .select('*')
+          .eq('slug', facilitySlug)
+          .single();
+
+        if (fetchError) {
+          if (fetchError.code === 'PGRST116') {
+            setError("Facility not found");
+          } else {
+            setError("Failed to load facility data");
+          }
+          setLoading(false);
+          return;
+        }
+
+        setFacilityData(data);
+        
+        // Set facility context for interaction logging
+        interactionLogger.setUserContext(null, data.id);
+        
+        // Log facility page visit
+        interactionLogger.logFacilityUsage({
+          eventType: 'facility_page_visit',
+          eventDetail: {
+            facilitySlug,
+            setupMode: isSetup,
+            tab: activeTab
+          }
+        });
+
+      } catch (err) {
+        console.error('Error fetching facility:', err);
+        setError("An unexpected error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFacilityData();
   }, [facilitySlug, isSetup, activeTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     
-    interactionLogger.logFacilityUsage({
-      eventType: 'facility_tab_change',
-      eventDetail: {
-        previousTab: activeTab,
-        newTab: value
-      }
-    });
+    if (facilityData) {
+      interactionLogger.logFacilityUsage({
+        eventType: 'facility_tab_change',
+        eventDetail: {
+          previousTab: activeTab,
+          newTab: value
+        }
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600">Loading facility...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !facilityData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="p-8 max-w-md w-full mx-4">
+          <div className="text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+            <h1 className="text-2xl font-bold text-gray-900">Facility Not Found</h1>
+            <p className="text-gray-600">
+              {error || "The facility you're looking for doesn't exist or may have been removed."}
+            </p>
+            <Button onClick={() => window.location.href = '/'}>
+              Return to Home
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -67,22 +146,22 @@ const FacilityPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              {facilityData.logoUrl ? (
+              {facilityData.logo_url ? (
                 <img 
-                  src={facilityData.logoUrl} 
-                  alt={facilityData.facilityName}
+                  src={facilityData.logo_url} 
+                  alt={facilityData.facility_name}
                   className="h-10 w-auto"
                 />
               ) : (
                 <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
-                    {facilityData.facilityName.charAt(0)}
+                    {facilityData.facility_name.charAt(0)}
                   </span>
                 </div>
               )}
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  {facilityData.facilityName}
+                  {facilityData.facility_name}
                 </h1>
                 <p className="text-sm text-gray-600">Chemical Safety Platform</p>
               </div>
@@ -112,6 +191,12 @@ const FacilityPage = () => {
               {isSetup && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   Setup Mode
+                </Badge>
+              )}
+              
+              {facilityData.subscription_status === 'active' && (
+                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                  Active License
                 </Badge>
               )}
             </div>

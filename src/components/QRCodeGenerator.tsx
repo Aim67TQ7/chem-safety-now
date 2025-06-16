@@ -9,7 +9,16 @@ import QRCodeLib from 'qrcode';
 import { interactionLogger } from "@/services/interactionLogger";
 
 interface QRCodeGeneratorProps {
-  facilityData: any;
+  facilityData: {
+    id: string;
+    slug: string;
+    facility_name: string;
+    contact_name: string;
+    email: string;
+    address: string;
+    logo_url?: string;
+    subscription_status: string;
+  };
   facilityUrl: string;
   isSetup?: boolean;
 }
@@ -36,7 +45,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
   const downloadQRCode = async () => {
     if (canvasRef.current) {
       const link = document.createElement('a');
-      link.download = `${facilityData.facilityName}-QR-Code.png`;
+      link.download = `${facilityData.facility_name}-QR-Code.png`;
       link.href = canvasRef.current.toDataURL();
       link.click();
 
@@ -44,16 +53,16 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
       await interactionLogger.logQRCodeInteraction({
         actionType: 'download',
         metadata: {
-          facilityName: facilityData.facilityName,
-          fileName: `${facilityData.facilityName}-QR-Code.png`
+          facilityName: facilityData.facility_name,
+          fileName: `${facilityData.facility_name}-QR-Code.png`
         }
       });
 
       await interactionLogger.logFacilityUsage({
         eventType: 'qr_code_downloaded',
         eventDetail: {
-          facilityName: facilityData.facilityName,
-          fileName: `${facilityData.facilityName}-QR-Code.png`
+          facilityName: facilityData.facility_name,
+          fileName: `${facilityData.facility_name}-QR-Code.png`
         }
       });
       
@@ -72,7 +81,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
       actionType: 'copy_url',
       metadata: {
         facilityUrl: facilityUrl,
-        facilityName: facilityData.facilityName
+        facilityName: facilityData.facility_name
       }
     });
 
@@ -95,14 +104,14 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
       actionType: 'print',
       metadata: {
         action: 'print_poster',
-        facilityName: facilityData.facilityName
+        facilityName: facilityData.facility_name
       }
     });
 
     await interactionLogger.logFacilityUsage({
       eventType: 'qr_print_poster_requested',
       eventDetail: {
-        facilityName: facilityData.facilityName
+        facilityName: facilityData.facility_name
       }
     });
 
@@ -117,7 +126,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
         <div className="text-center space-y-6">
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              {facilityData.facilityName} QR Code
+              {facilityData.facility_name} QR Code
             </h3>
             <p className="text-gray-600">
               Deploy QR codes throughout your facility for instant worker access to safety data
@@ -132,7 +141,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
                 className="mx-auto border border-gray-200 rounded"
               />
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-900">{facilityData.facilityName}</p>
+                <p className="text-sm font-medium text-gray-900">{facilityData.facility_name}</p>
                 <p className="text-xs text-gray-500">Chemical Safety Portal</p>
                 <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">
                   Scan with Phone Camera

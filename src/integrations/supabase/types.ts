@@ -86,6 +86,38 @@ export type Database = {
         }
         Relationships: []
       }
+      facility_qr_codes: {
+        Row: {
+          created_at: string
+          facility_id: string
+          facility_url: string
+          id: string
+          qr_code_url: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          facility_url: string
+          id?: string
+          qr_code_url: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          facility_url?: string
+          id?: string
+          qr_code_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_qr_codes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_usage_logs: {
         Row: {
           created_at: string
