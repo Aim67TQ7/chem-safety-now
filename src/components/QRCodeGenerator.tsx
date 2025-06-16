@@ -89,25 +89,26 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
     });
   };
 
-  const printInstructions = async () => {
-    // Log print instructions
+  const printPoster = async () => {
+    // Log print poster action
     await interactionLogger.logQRCodeInteraction({
       actionType: 'print',
       metadata: {
-        action: 'print_instructions',
+        action: 'print_poster',
         facilityName: facilityData.facilityName
       }
     });
 
     await interactionLogger.logFacilityUsage({
-      eventType: 'qr_print_instructions_requested',
+      eventType: 'qr_print_poster_requested',
       eventDetail: {
         facilityName: facilityData.facilityName
       }
     });
 
-    // Trigger print dialog
-    window.print();
+    // Open print page in new window
+    const printUrl = `/facility/${facilityData.slug}/print`;
+    window.open(printUrl, '_blank');
   };
 
   return (
@@ -143,8 +144,16 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={downloadQRCode}
+              onClick={printPoster}
               className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Print Poster
+            </Button>
+
+            <Button 
+              onClick={downloadQRCode}
+              variant="outline"
             >
               <Download className="w-4 h-4 mr-2" />
               Download QR Code
@@ -153,11 +162,6 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
             <Button variant="outline" onClick={copyUrl}>
               <Share className="w-4 h-4 mr-2" />
               Copy URL
-            </Button>
-            
-            <Button variant="outline" onClick={printInstructions}>
-              <Printer className="w-4 h-4 mr-2" />
-              Print Instructions
             </Button>
           </div>
 
@@ -181,8 +185,8 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
           <div className="flex items-start space-x-3">
             <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-0.5">1</Badge>
             <div>
-              <p className="font-medium text-gray-900">Download and Print</p>
-              <p>Download the QR code image and print multiple copies on standard 8.5x11" paper.</p>
+              <p className="font-medium text-gray-900">Print Professional Posters</p>
+              <p>Click "Print Poster" to create branded, professional QR code posters with your company logo.</p>
             </div>
           </div>
           
