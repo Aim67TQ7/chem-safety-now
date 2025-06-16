@@ -10,6 +10,7 @@ class InteractionLogger {
   private sessionId: string;
   private currentUserId: string | null = null;
   private currentFacilityId: string | null = null;
+  private facilityIdCache: Map<string, string> = new Map();
 
   constructor() {
     // Use crypto.randomUUID() for proper UUID format
@@ -17,10 +18,55 @@ class InteractionLogger {
     console.log('InteractionLogger initialized with session ID:', this.sessionId);
   }
 
-  // Set current user context
-  setUserContext(userId: string | null, facilityId: string | null = null) {
-    this.currentUserId = userId;
-    this.currentFacilityId = facilityId;
+  // Convert facility slug to UUID
+  private async getFacilityIdFromSlug(facilitySlug: string): Promise<string | null> {
+    // Check cache first
+    if (this.facilityIdCache.has(facilitySlug)) {
+      return this.facilityIdCache.get(facilitySlug) || null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('facilities')
+        .select('id')
+        .eq('slug', facilitySlug)
+        .single();
+
+      if (error || !data) {
+        console.error('Failed to get facility ID from slug:', error);
+        return null;
+      }
+
+      // Cache the result
+      this.facilityIdCache.set(facilitySlug, data.id);
+      return data.id;
+    } catch (error) {
+      console.error('Error getting facility ID from slug:', error);
+      return null;
+    }
+  }
+
+  // Set current user context - now handles both slugs and UUIDs
+  async setUserContext(userIdOrFacilitySlug: string | null, facilityIdOrSlug: string | null = null) {
+    this.currentUserId = userIdOrFacilitySlug;
+    
+    if (facilityIdOrSlug) {
+      // Check if it's a UUID or a slug
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      
+      if (uuidRegex.test(facilityIdOrSlug)) {
+        // It's already a UUID
+        this.currentFacilityId = facilityIdOrSlug;
+      } else {
+        // It's a slug, convert to UUID
+        this.currentFacilityId = await this.getFacilityIdFromSlug(facilityIdOrSlug);
+      }
+    }
+  }
+
+  // Set facility context by slug
+  async setFacilityBySlug(facilitySlug: string) {
+    this.currentFacilityId = await this.getFacilityIdFromSlug(facilitySlug);
   }
 
   // Log facility usage with proper error handling
@@ -30,11 +76,19 @@ class InteractionLogger {
     lat?: number;
     lng?: number;
     durationMs?: number;
+    facilitySlug?: string; // Allow passing facility slug directly
   }) {
     try {
+      let facilityId = this.currentFacilityId;
+      
+      // If facility slug is provided, convert it to UUID
+      if (params.facilitySlug && !facilityId) {
+        facilityId = await this.getFacilityIdFromSlug(params.facilitySlug);
+      }
+
       const payload = {
         session_id: this.sessionId,
-        facility_id: this.currentFacilityId,
+        facility_id: facilityId,
         user_id: this.currentUserId,
         event_type: params.eventType,
         event_detail: params.eventDetail || {},
@@ -64,13 +118,20 @@ class InteractionLogger {
     actionType: 'view' | 'download' | 'generate_label' | 'ask_ai';
     searchQuery?: string;
     metadata?: any;
+    facilitySlug?: string;
   }) {
     try {
+      let facilityId = this.currentFacilityId;
+      
+      if (params.facilitySlug && !facilityId) {
+        facilityId = await this.getFacilityIdFromSlug(params.facilitySlug);
+      }
+
       const { error } = await supabase
         .from('sds_interactions')
         .insert({
           session_id: this.sessionId,
-          facility_id: this.currentFacilityId,
+          facility_id: facilityId,
           user_id: this.currentUserId,
           sds_document_id: params.sdsDocumentId,
           action_type: params.actionType,
@@ -177,12 +238,12 @@ class InteractionLogger {
   }
 
   // Update page view tracking
-  async updatePageView(page: string) {
+  async updatePageView(page: string, facilitySlug?: string) {
     try {
-      // For now, just log as facility usage since page view tracking needs session management
       await this.logFacilityUsage({
         eventType: 'page_view',
-        eventDetail: { page }
+        eventDetail: { page },
+        facilitySlug
       });
     } catch (error) {
       console.error('Error updating page view:', error);

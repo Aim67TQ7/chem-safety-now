@@ -1,208 +1,95 @@
-
-import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Search, Printer, Bot, QrCode, Settings } from "lucide-react";
-import SDSSearch from "@/components/SDSSearch";
-import LabelPrinter from "@/components/LabelPrinter";
-import AIAssistant from "@/components/AIAssistant";
-import QRCodeGenerator from "@/components/QRCodeGenerator";
-import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
-import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
+import { SDSSearch } from '@/components/SDSSearch';
+import { QRCodeGenerator } from '@/components/QRCodeGenerator';
 import { interactionLogger } from "@/services/interactionLogger";
 
 const FacilityPage = () => {
   const { facilitySlug } = useParams();
   const [searchParams] = useSearchParams();
-  const isSetup = searchParams.get('setup') === 'true';
   const [activeTab, setActiveTab] = useState("search");
-  const [isAIPopupOpen, setIsAIPopupOpen] = useState(false);
-  const [isLabelPopupOpen, setIsLabelPopupOpen] = useState(false);
+  
+  const isSetupMode = searchParams.get('setup') === 'true';
 
-  // Mock facility data - in real app, this would come from API
+  // Mock facility data - in real app this would come from API
   const facilityData = {
-    facilityName: "Bunting Magnetics",
-    facilitySlug: facilitySlug,
-    logoUrl: null,
-    setupMode: isSetup
+    id: "facility-123",
+    name: "Bunting Magnetics",
+    slug: facilitySlug || "",
+    logoUrl: null
   };
 
-  // Generate facility URL for QR code
   const facilityUrl = `${window.location.origin}/facility/${facilitySlug}`;
 
   useEffect(() => {
-    // Set facility context for interaction logging
-    interactionLogger.setUserContext(null, facilityData.facilitySlug);
-    
-    // Log facility page visit
-    interactionLogger.logFacilityUsage({
-      eventType: 'facility_page_visit',
-      eventDetail: {
-        facilitySlug,
-        setupMode: isSetup,
-        tab: activeTab
+    const initializeLogging = async () => {
+      if (facilitySlug) {
+        // Set facility context using slug
+        await interactionLogger.setFacilityBySlug(facilitySlug);
+        
+        // Log page visit
+        await interactionLogger.logFacilityUsage({
+          eventType: 'facility_page_visit',
+          eventDetail: { 
+            facilitySlug,
+            setupMode: isSetupMode,
+            tab: activeTab
+          },
+          facilitySlug
+        });
       }
-    });
-  }, [facilitySlug, isSetup, activeTab]);
+    };
 
-  const handleTabChange = (value: string) => {
+    initializeLogging();
+  }, [facilitySlug, isSetupMode, activeTab]);
+
+  const handleTabChange = async (value: string) => {
     setActiveTab(value);
     
-    interactionLogger.logFacilityUsage({
+    // Log tab change
+    await interactionLogger.logFacilityUsage({
       eventType: 'facility_tab_change',
-      eventDetail: {
-        previousTab: activeTab,
-        newTab: value
-      }
+      eventDetail: { 
+        previousTab: activeTab, 
+        newTab: value 
+      },
+      facilitySlug
     });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              {facilityData.logoUrl ? (
-                <img 
-                  src={facilityData.logoUrl} 
-                  alt={facilityData.facilityName}
-                  className="h-10 w-auto"
-                />
-              ) : (
-                <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
-                    {facilityData.facilityName.charAt(0)}
-                  </span>
-                </div>
-              )}
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  {facilityData.facilityName}
-                </h1>
-                <p className="text-sm text-gray-600">Chemical Safety Platform</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAIPopupOpen(true)}
-                className="flex items-center space-x-2"
-              >
-                <Bot className="w-4 h-4" />
-                <span>AI Assistant</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsLabelPopupOpen(true)}
-                className="flex items-center space-x-2"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print Labels</span>
-              </Button>
-              
-              {isSetup && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  Setup Mode
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="search" className="flex items-center space-x-2">
-              <Search className="w-4 h-4" />
-              <span>SDS Search</span>
-            </TabsTrigger>
-            <TabsTrigger value="labels" className="flex items-center space-x-2">
-              <Printer className="w-4 h-4" />
-              <span>Print Labels</span>
-            </TabsTrigger>
-            <TabsTrigger value="assistant" className="flex items-center space-x-2">
-              <Bot className="w-4 h-4" />
-              <span>AI Assistant</span>
-            </TabsTrigger>
-            <TabsTrigger value="qr" className="flex items-center space-x-2">
-              <QrCode className="w-4 h-4" />
-              <span>QR Codes</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="search" className="space-y-6">
-            <SDSSearch facilityData={facilityData} />
-          </TabsContent>
-
-          <TabsContent value="labels" className="space-y-6">
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  GHS Label Printer
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Create compliant chemical labels with HMIS ratings, pictograms, and hazard information
-                </p>
-              </div>
-              <LabelPrinter />
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="assistant" className="space-y-6">
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  Chemical Safety Assistant
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Get expert guidance on chemical safety protocols and regulatory compliance
-                </p>
-              </div>
-              <AIAssistant facilityData={facilityData} />
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="qr" className="space-y-6">
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  QR Code Generator
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Generate QR codes for quick access to safety information and documentation
-                </p>
-              </div>
-              <QRCodeGenerator 
-                facilityData={facilityData}
-                facilityUrl={facilityUrl}
-              />
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
-
-      {/* Popups */}
-      <AIAssistantPopup
-        isOpen={isAIPopupOpen}
-        onClose={() => setIsAIPopupOpen(false)}
-        facilityData={facilityData}
-      />
-      
-      <LabelPrinterPopup
-        isOpen={isLabelPopupOpen}
-        onClose={() => setIsLabelPopupOpen(false)}
-      />
+    <div className="container mx-auto py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">{facilityData.name}</CardTitle>
+          <CardDescription>
+            Manage your facility's safety and compliance.
+            {isSetupMode && <Badge className="ml-2">Setup Mode</Badge>}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList>
+              <TabsTrigger value="search">SDS Search</TabsTrigger>
+              <TabsTrigger value="qr">QR Code Generator</TabsTrigger>
+              {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
+            </TabsList>
+            <TabsContent value="search">
+              <SDSSearch />
+            </TabsContent>
+            <TabsContent value="qr">
+              <QRCodeGenerator facilityName={facilityData.name} facilityUrl={facilityUrl} />
+            </TabsContent>
+            {/* <TabsContent value="settings">
+              <h2>Settings Content</h2>
+              <p>Here you can manage facility settings.</p>
+            </TabsContent> */}
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };
