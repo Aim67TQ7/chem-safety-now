@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -150,27 +149,25 @@ const QRCodePrintPage = () => {
   const PosterContent = () => (
     <div className="poster-content w-full h-full flex flex-col justify-between">
       
-      {/* Header with customer logo and name */}
+      {/* Header without logo - just company name */}
       <div className="text-center mb-6">
-        {facilityData.logo_url && (
-          <div className="mb-4">
-            <img 
-              src={facilityData.logo_url} 
-              alt={`${facilityData.facility_name || facilityData.name} Logo`}
-              className="h-12 mx-auto object-contain"
-            />
-          </div>
-        )}
         <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
-          {facilityData.facility_name || facilityData.name}
+          Chemical Safety Portal
         </h1>
-        <p className="text-lg text-gray-700 font-medium mb-1">Chemical Safety Portal</p>
         <p className="text-sm text-gray-600">OSHA Compliant • Instant Access • Mobile Ready</p>
       </div>
 
       {/* Main QR Code Section */}
-      <div className="bg-white border-4 border-gray-800 rounded-xl p-6 shadow-2xl flex-1 flex flex-col justify-center">
-        <div className="text-center space-y-4">
+      <div className="bg-white border-4 border-gray-800 rounded-xl p-6 shadow-2xl flex-1 flex flex-col justify-between">
+        
+        {/* Company name at top of outlined box */}
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            {facilityData.facility_name || facilityData.name}
+          </h2>
+        </div>
+
+        <div className="text-center space-y-4 flex-1 flex flex-col justify-center">
           
           {/* QR Code with embedded logo */}
           <div className="relative inline-block">
@@ -197,25 +194,25 @@ const QRCodePrintPage = () => {
 
           {/* Instructions */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h3 className="text-xl font-bold text-gray-900">
               Scan for Instant Safety Access
-            </h2>
+            </h3>
             
             <div className="bg-gray-100 border-2 border-gray-300 rounded-lg p-4">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="space-y-2">
                   <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto">1</div>
-                  <h3 className="text-sm font-bold text-gray-900">Open Camera</h3>
+                  <h4 className="text-sm font-bold text-gray-900">Open Camera</h4>
                   <p className="text-xs text-gray-700">Use your phone's camera app</p>
                 </div>
                 <div className="space-y-2">
                   <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto">2</div>
-                  <h3 className="text-sm font-bold text-gray-900">Point & Scan</h3>
+                  <h4 className="text-sm font-bold text-gray-900">Point & Scan</h4>
                   <p className="text-xs text-gray-700">Aim at the QR code</p>
                 </div>
                 <div className="space-y-2">
                   <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto">3</div>
-                  <h3 className="text-sm font-bold text-gray-900">Access Data</h3>
+                  <h4 className="text-sm font-bold text-gray-900">Access Data</h4>
                   <p className="text-xs text-gray-700">Tap to view safety information</p>
                 </div>
               </div>
@@ -224,7 +221,7 @@ const QRCodePrintPage = () => {
             {/* Facility Information */}
             {(facilityData.address || facilityData.contact_name || facilityData.email) && (
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-bold text-blue-900 mb-2">Facility Information</h3>
+                <h4 className="text-sm font-bold text-blue-900 mb-2">Facility Information</h4>
                 <div className="space-y-1 text-xs text-blue-800">
                   {facilityData.contact_name && (
                     <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
@@ -240,24 +237,24 @@ const QRCodePrintPage = () => {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="mt-6 text-center">
-        <div className="flex items-center justify-center space-x-3 mb-2">
-          <img 
-            src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-            alt="ChemLabel-GPT Logo" 
-            className="w-6 h-6 object-contain"
-          />
-          <div className="text-left">
-            <p className="text-sm text-gray-800 font-bold">ChemLabel-GPT</p>
-            <p className="text-xs text-gray-600">OSHA Compliant Chemical Safety Platform</p>
+        {/* ChemLabel-GPT branding in lower center of outlined box */}
+        <div className="text-center mt-4">
+          <div className="flex items-center justify-center space-x-2">
+            <img 
+              src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
+              alt="ChemLabel-GPT Logo" 
+              className="w-5 h-5 object-contain"
+            />
+            <div className="text-center">
+              <p className="text-sm text-gray-800 font-bold">ChemLabel-GPT</p>
+              <p className="text-xs text-gray-600">OSHA Compliant Chemical Safety Platform</p>
+            </div>
           </div>
+          <p className="text-xs text-gray-500 mt-1">No app required • Works with any smartphone • Real-time compliance tracking</p>
         </div>
-        <p className="text-xs text-gray-500">No app required • Works with any smartphone • Real-time compliance tracking</p>
-      </div>
 
+      </div>
     </div>
   );
 
