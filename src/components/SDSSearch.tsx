@@ -66,7 +66,7 @@ interface SDSDocument {
   created_at: string;
 }
 
-const API_BASE_URL = 'https://chemlabel.replit.app';
+const API_BASE_URL = 'https://cheerful-fascination.railway.app';
 
 const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
