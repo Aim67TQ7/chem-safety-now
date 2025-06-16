@@ -47,14 +47,15 @@ const LabelPrinter = ({ initialProductName = "", initialManufacturer = "" }: Lab
   ];
 
   const pictograms = [
-    { id: "flame", name: "Flame", symbol: "🔥" },
-    { id: "exclamation", name: "Exclamation Mark", symbol: "⚠️" },
-    { id: "health_hazard", name: "Health Hazard", symbol: "☣️" },
-    { id: "corrosion", name: "Corrosion", symbol: "🧪" },
-    { id: "gas_cylinder", name: "Gas Cylinder", symbol: "🗜️" },
-    { id: "exploding_bomb", name: "Exploding Bomb", symbol: "💥" },
-    { id: "environment", name: "Environment", symbol: "🌍" },
-    { id: "skull_crossbones", name: "Skull and Crossbones", symbol: "☠️" }
+    { id: "exclamation", name: "Exclamation Mark", imageUrl: "/lovable-uploads/c3e43723-722a-4ee7-92e0-9e18aa38e402.png" },
+    { id: "health_hazard", name: "Health Hazard", imageUrl: "/lovable-uploads/c77d1a55-2c1d-48b4-9715-68c6c3249d91.png" },
+    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "/lovable-uploads/0bd57060-18fb-4ad6-8485-e5521c2e7b71.png" },
+    { id: "corrosion", name: "Corrosion", imageUrl: "/lovable-uploads/5146a1d1-bc42-4a39-ae55-cf61a2dc012f.png" },
+    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "/lovable-uploads/4c13f8f5-8a47-4c2d-a5ed-90cdf7a521c0.png" },
+    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "/lovable-uploads/908b3ab5-a4ce-4a8d-a700-8eba7f9f0533.png" },
+    { id: "flame", name: "Flame", imageUrl: "/lovable-uploads/833367f7-138f-4e1f-b4c6-2bfdfd6901b3.png" },
+    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "/lovable-uploads/3c1d4332-95eb-44a9-bfef-207e02156b08.png" },
+    { id: "environment", name: "Environment", imageUrl: "/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png" }
   ];
 
   const labelSizes = [
@@ -245,18 +246,24 @@ const LabelPrinter = ({ initialProductName = "", initialManufacturer = "" }: Lab
       {/* GHS Pictograms */}
       <Card className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">GHS Pictograms</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {pictograms.map((pictogram) => (
             <div
               key={pictogram.id}
               onClick={() => handlePictogramToggle(pictogram.id)}
-              className={`p-3 border-2 rounded-lg cursor-pointer text-center transition-colors ${
+              className={`p-2 border-2 rounded-lg cursor-pointer text-center transition-colors ${
                 selectedPictograms.includes(pictogram.id)
                   ? 'border-gray-800 bg-gray-50'
                   : 'border-gray-200 hover:border-gray-400'
               }`}
             >
-              <div className="text-2xl mb-1">{pictogram.symbol}</div>
+              <div className="w-12 h-12 mx-auto mb-1">
+                <img 
+                  src={pictogram.imageUrl} 
+                  alt={pictogram.name}
+                  className="w-full h-full object-contain"
+                />
+              </div>
               <div className="text-xs font-medium">{pictogram.name}</div>
             </div>
           ))}
@@ -343,7 +350,13 @@ const LabelPrinter = ({ initialProductName = "", initialManufacturer = "" }: Lab
                 {selectedPictograms.map((id) => {
                   const pictogram = pictograms.find(p => p.id === id);
                   return pictogram ? (
-                    <div key={id} className="text-lg">{pictogram.symbol}</div>
+                    <div key={id} className="w-8 h-8">
+                      <img 
+                        src={pictogram.imageUrl} 
+                        alt={pictogram.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                   ) : null;
                 })}
               </div>
@@ -358,12 +371,27 @@ const LabelPrinter = ({ initialProductName = "", initialManufacturer = "" }: Lab
             )}
 
             <div className="border-t border-gray-800 pt-2">
-              <div className="text-xs font-bold">HMIS</div>
-              <div className="flex justify-center space-x-1 text-xs">
-                <span className="bg-blue-500 text-white px-1 rounded">H:{hmisHealth}</span>
-                <span className="bg-red-500 text-white px-1 rounded">F:{hmisFlammability}</span>
-                <span className="bg-yellow-500 text-black px-1 rounded">P:{hmisPhysical}</span>
-                {hmisSpecial && <span className="bg-gray-100 text-black px-1 rounded">{hmisSpecial}</span>}
+              <div className="text-xs font-bold mb-1">HMIS</div>
+              <div className="flex justify-center">
+                <div className="relative w-16 h-16">
+                  {/* HMIS Diamond with 4 triangular sections */}
+                  <svg width="64" height="64" viewBox="0 0 64 64" className="absolute inset-0">
+                    {/* Top triangle - Health (Blue) */}
+                    <path d="M32 4 L52 32 L32 32 Z" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
+                    {/* Right triangle - Flammability (Red) */}
+                    <path d="M52 32 L32 60 L32 32 Z" fill="#EF4444" stroke="#000" strokeWidth="1"/>
+                    {/* Bottom triangle - Physical (Yellow) */}
+                    <path d="M32 60 L12 32 L32 32 Z" fill="#FDE047" stroke="#000" strokeWidth="1"/>
+                    {/* Left triangle - Special (White) */}
+                    <path d="M12 32 L32 4 L32 32 Z" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                    
+                    {/* Numbers and text */}
+                    <text x="32" y="20" textAnchor="middle" className="text-xs font-bold fill-white">{hmisHealth}</text>
+                    <text x="42" y="35" textAnchor="middle" className="text-xs font-bold fill-white">{hmisFlammability}</text>
+                    <text x="32" y="50" textAnchor="middle" className="text-xs font-bold fill-black">{hmisPhysical}</text>
+                    <text x="22" y="35" textAnchor="middle" className="text-xs font-bold fill-black">{hmisSpecial || ""}</text>
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
