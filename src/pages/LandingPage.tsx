@@ -1,10 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Smartphone, MapPin, FileText, BarChart3, Shield, Zap, CheckCircle, Clock } from "lucide-react";
+import { Smartphone, Bot, FileText, BarChart3, Shield, Zap, CheckCircle, Clock } from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ const LandingPage = () => {
       <section className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
-            Why EHS Managers Choose ChemLabel-GPT
+            Why Businesses Choose ChemLabel-GPT
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -103,17 +104,17 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">📱 Mobile SDS Access</h3>
               <p className="text-gray-600">
-                Workers scan QR codes for instant SDS access. No app downloads, no login required.
+                Scan QR codes for instant SDS access. No app downloads, no login required.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-8 h-8 text-red-600" />
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bot className="w-8 h-8 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">📍 GPS Compliance Tracking</h3>
+              <h3 className="text-xl font-semibold mb-3">🤖 AI Assistant</h3>
               <p className="text-gray-600">
-                Automatic location verification ensures OSHA compliance with time-stamped audit trails.
+                Ask questions about your SDS sheets and get instant safety guidance from our AI assistant.
               </p>
             </Card>
 
