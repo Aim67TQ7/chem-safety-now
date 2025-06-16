@@ -151,7 +151,7 @@ class InteractionLogger {
   // Log QR code interactions
   async logQRCodeInteraction(params: {
     qrCodeId?: string;
-    actionType: 'scan' | 'generate' | 'print' | 'view';
+    actionType: 'scan' | 'generate' | 'print' | 'view' | 'download' | 'copy_url';
     metadata?: any;
   }) {
     try {
