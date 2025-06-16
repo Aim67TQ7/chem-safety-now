@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SDSSearch } from '@/components/SDSSearch';
-import { QRCodeGenerator } from '@/components/QRCodeGenerator';
+import QRCodeGenerator from '@/components/QRCodeGenerator';
 import { interactionLogger } from "@/services/interactionLogger";
 
 const FacilityPage = () => {
@@ -81,7 +81,11 @@ const FacilityPage = () => {
               <SDSSearch />
             </TabsContent>
             <TabsContent value="qr">
-              <QRCodeGenerator facilityName={facilityData.name} facilityUrl={facilityUrl} />
+              <QRCodeGenerator 
+                facilityData={facilityData} 
+                facilityUrl={facilityUrl} 
+                isSetup={isSetupMode} 
+              />
             </TabsContent>
             {/* <TabsContent value="settings">
               <h2>Settings Content</h2>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Search, Eye, Download, MessageSquare, Tag } from "lucide-react";
 import { interactionLogger } from "@/services/interactionLogger";
-import { AIAssistantPopup } from "./popups/AIAssistantPopup";
-import { LabelPrinterPopup } from "./popups/LabelPrinterPopup";
+import AIAssistantPopup from "./popups/AIAssistantPopup";
+import LabelPrinterPopup from "./popups/LabelPrinterPopup";
 import { useParams } from "react-router-dom";
 
 // Mock data - replace with actual API calls

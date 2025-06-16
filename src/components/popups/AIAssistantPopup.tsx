@@ -8,10 +8,10 @@ import { Bot, X } from "lucide-react";
 interface AIAssistantPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  facilityData: any;
+  document: any;
 }
 
-const AIAssistantPopup = ({ isOpen, onClose, facilityData }: AIAssistantPopupProps) => {
+const AIAssistantPopup = ({ isOpen, onClose, document }: AIAssistantPopupProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -31,7 +31,7 @@ const AIAssistantPopup = ({ isOpen, onClose, facilityData }: AIAssistantPopupPro
         </DialogHeader>
         
         <div className="flex-1 overflow-hidden">
-          <AIAssistant facilityData={facilityData} />
+          <AIAssistant facilityData={{ document }} />
         </div>
       </DialogContent>
     </Dialog>
