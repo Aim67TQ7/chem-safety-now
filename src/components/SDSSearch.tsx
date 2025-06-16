@@ -209,17 +209,17 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     await poll();
   };
 
-  const handleViewDocument = async (document: SDSDocument) => {
+  const handleViewDocument = async (sdsDocument: SDSDocument) => {
     await interactionLogger.logSDSInteraction({
-      sdsDocumentId: document.id,
+      sdsDocumentId: sdsDocument.id,
       actionType: 'view',
       searchQuery: searchQuery
     });
 
-    if (document.bucket_url) {
-      window.open(document.bucket_url, '_blank');
-    } else if (document.source_url) {
-      window.open(document.source_url, '_blank');
+    if (sdsDocument.bucket_url) {
+      window.open(sdsDocument.bucket_url, '_blank');
+    } else if (sdsDocument.source_url) {
+      window.open(sdsDocument.source_url, '_blank');
     } else {
       toast({
         title: "Document Unavailable",
@@ -229,30 +229,30 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     }
   };
 
-  const handleDownloadDocument = async (document: SDSDocument) => {
+  const handleDownloadDocument = async (sdsDocument: SDSDocument) => {
     await interactionLogger.logSDSInteraction({
-      sdsDocumentId: document.id,
+      sdsDocumentId: sdsDocument.id,
       actionType: 'download',
       searchQuery: searchQuery
     });
 
-    if (document.bucket_url) {
+    if (sdsDocument.bucket_url) {
       try {
-        const response = await fetch(document.bucket_url);
+        const response = await fetch(sdsDocument.bucket_url);
         if (response.ok) {
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
+          const a = globalThis.document.createElement('a');
           a.href = url;
-          a.download = document.file_name || `${document.product_name}_SDS.pdf`;
-          document.body.appendChild(a);
+          a.download = sdsDocument.file_name || `${sdsDocument.product_name}_SDS.pdf`;
+          globalThis.document.body.appendChild(a);
           a.click();
           window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
+          globalThis.document.body.removeChild(a);
           
           toast({
             title: "Download Started",
-            description: `Downloading ${document.product_name} SDS document.`
+            description: `Downloading ${sdsDocument.product_name} SDS document.`
           });
         } else {
           throw new Error('Download failed');
@@ -274,22 +274,22 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     }
   };
 
-  const handleGenerateLabel = async (document: SDSDocument) => {
-    setSelectedDocument(document);
+  const handleGenerateLabel = async (sdsDocument: SDSDocument) => {
+    setSelectedDocument(sdsDocument);
     setShowLabelPrinter(true);
     
     await interactionLogger.logSDSInteraction({
-      sdsDocumentId: document.id,
+      sdsDocumentId: sdsDocument.id,
       actionType: 'generate_label',
       searchQuery: searchQuery
     });
   };
 
-  const handleAskAI = async (document: SDSDocument) => {
+  const handleAskAI = async (sdsDocument: SDSDocument) => {
     setShowAIAssistant(true);
     
     await interactionLogger.logSDSInteraction({
-      sdsDocumentId: document.id,
+      sdsDocumentId: sdsDocument.id,
       actionType: 'ask_ai',
       searchQuery: searchQuery
     });
@@ -363,58 +363,58 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
             Search Results ({searchResults.length})
           </h3>
           
-          {searchResults.map((document) => (
-            <Card key={document.id} className="p-4">
+          {searchResults.map((sdsDocument) => (
+            <Card key={sdsDocument.id} className="p-4">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h4 className="text-lg font-semibold text-gray-900">
-                      {document.product_name}
+                      {sdsDocument.product_name}
                     </h4>
-                    {document.signal_word && (
+                    {sdsDocument.signal_word && (
                       <Badge 
-                        variant={getSignalWordVariant(document.signal_word)}
+                        variant={getSignalWordVariant(sdsDocument.signal_word)}
                         className="text-xs"
                       >
-                        {document.signal_word}
+                        {sdsDocument.signal_word}
                       </Badge>
                     )}
-                    {document.document_type && document.document_type !== 'safety_data_sheet' && (
+                    {sdsDocument.document_type && sdsDocument.document_type !== 'safety_data_sheet' && (
                       <Badge variant="outline" className="text-xs">
-                        {document.document_type.replace(/_/g, ' ')}
+                        {sdsDocument.document_type.replace(/_/g, ' ')}
                       </Badge>
                     )}
                   </div>
                   
                   <div className="space-y-2 text-sm text-gray-600">
-                    {document.manufacturer && (
-                      <p><strong>Manufacturer:</strong> {document.manufacturer}</p>
+                    {sdsDocument.manufacturer && (
+                      <p><strong>Manufacturer:</strong> {sdsDocument.manufacturer}</p>
                     )}
-                    {document.cas_number && (
-                      <p><strong>CAS Number:</strong> {document.cas_number}</p>
+                    {sdsDocument.cas_number && (
+                      <p><strong>CAS Number:</strong> {sdsDocument.cas_number}</p>
                     )}
-                    {document.h_codes && document.h_codes.length > 0 && (
+                    {sdsDocument.h_codes && sdsDocument.h_codes.length > 0 && (
                       <div>
                         <strong>Hazard Codes:</strong>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {document.h_codes.slice(0, 5).map((hCode) => (
+                          {sdsDocument.h_codes.slice(0, 5).map((hCode) => (
                             <Badge key={hCode.code} variant="outline" className="text-xs" title={hCode.description}>
                               {hCode.code}
                             </Badge>
                           ))}
-                          {document.h_codes.length > 5 && (
+                          {sdsDocument.h_codes.length > 5 && (
                             <Badge variant="outline" className="text-xs">
-                              +{document.h_codes.length - 5} more
+                              +{sdsDocument.h_codes.length - 5} more
                             </Badge>
                           )}
                         </div>
                       </div>
                     )}
-                    {document.pictograms && document.pictograms.length > 0 && (
+                    {sdsDocument.pictograms && sdsDocument.pictograms.length > 0 && (
                       <div>
                         <strong>Pictograms:</strong>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {document.pictograms.map((pictogram) => (
+                          {sdsDocument.pictograms.map((pictogram) => (
                             <Badge key={pictogram.ghs_code} variant="secondary" className="text-xs">
                               {pictogram.name}
                             </Badge>
@@ -429,7 +429,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleViewDocument(document)}
+                    onClick={() => handleViewDocument(sdsDocument)}
                     className="w-full"
                   >
                     <FileText className="w-4 h-4 mr-1" />
@@ -438,9 +438,9 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleDownloadDocument(document)}
+                    onClick={() => handleDownloadDocument(sdsDocument)}
                     className="w-full"
-                    disabled={!document.bucket_url}
+                    disabled={!sdsDocument.bucket_url}
                   >
                     <Download className="w-4 h-4 mr-1" />
                     Download
@@ -448,7 +448,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleGenerateLabel(document)}
+                    onClick={() => handleGenerateLabel(sdsDocument)}
                     className="w-full"
                   >
                     <Printer className="w-4 h-4 mr-1" />
@@ -457,7 +457,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleAskAI(document)}
+                    onClick={() => handleAskAI(sdsDocument)}
                     className="w-full"
                   >
                     <Bot className="w-4 h-4 mr-1" />
