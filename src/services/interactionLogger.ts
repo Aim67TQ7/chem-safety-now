@@ -1,256 +1,199 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-interface BaseInteraction {
-  facilityId?: string;
-  sessionId?: string;
-  userId?: string;
-  userAgent?: string;
-  ipAddress?: string;
-  metadata?: Record<string, any>;
-}
-
-interface AIConversationLog extends BaseInteraction {
-  question: string;
-  response: string;
-  responseTimeMs?: number;
-}
-
-interface LabelGenerationLog extends BaseInteraction {
-  productName: string;
-  manufacturer?: string;
-  hazardCodes?: any[];
-  pictograms?: any[];
-  labelType?: string;
-  actionType: 'generate' | 'print' | 'download';
-}
-
-interface QRCodeInteractionLog extends BaseInteraction {
-  qrCodeId?: string;
-  actionType: 'download' | 'print' | 'copy_url' | 'scan';
-}
-
-interface SDSInteractionLog extends BaseInteraction {
-  sdsDocumentId?: string;
-  actionType: 'view' | 'download' | 'generate_label' | 'ask_ai';
-  searchQuery?: string;
-}
-
-interface FacilityUsageLog extends BaseInteraction {
-  eventType: string;
-  eventDetail?: Record<string, any>;
-  lat?: number;
-  lng?: number;
-  durationMs?: number;
-}
+// Generate a proper UUID for session ID
+const generateSessionId = (): string => {
+  return crypto.randomUUID();
+};
 
 class InteractionLogger {
   private sessionId: string;
-  private facilityId?: string;
-  private userId?: string;
+  private currentUserId: string | null = null;
+  private currentFacilityId: string | null = null;
 
   constructor() {
-    this.sessionId = this.generateSessionId();
-    this.setupSessionTracking();
+    // Use crypto.randomUUID() for proper UUID format
+    this.sessionId = generateSessionId();
+    console.log('InteractionLogger initialized with session ID:', this.sessionId);
   }
 
-  private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Set current user context
+  setUserContext(userId: string | null, facilityId: string | null = null) {
+    this.currentUserId = userId;
+    this.currentFacilityId = facilityId;
   }
 
-  private async setupSessionTracking() {
-    const facilityId = this.getFacilityIdFromUrl();
-    if (facilityId) {
-      this.facilityId = facilityId;
-      await this.startSession();
-    }
-  }
-
-  private getFacilityIdFromUrl(): string | undefined {
-    const path = window.location.pathname;
-    const match = path.match(/\/facility\/([^\/]+)/);
-    return match ? match[1] : undefined;
-  }
-
-  private async startSession() {
-    if (!this.facilityId) return;
-
-    const userAgent = navigator.userAgent;
-    let location = { lat: null, lng: null };
-
-    // Try to get location
-    if (navigator.geolocation) {
-      try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-        });
-        location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-      } catch (error) {
-        console.log('Could not get location:', error);
-      }
-    }
-
-    // Create session record
-    await supabase.from('facility_user_sessions').insert({
-      facility_id: this.facilityId,
-      session_token: this.sessionId,
-      user_agent: userAgent,
-      location_lat: location.lat,
-      location_lng: location.lng,
-      page_views: [{ page: window.location.pathname, timestamp: new Date().toISOString() }]
-    });
-  }
-
-  public setUserId(userId: string) {
-    this.userId = userId;
-  }
-
-  public async logAIConversation(data: AIConversationLog) {
-    const startTime = Date.now();
+  // Log facility usage with proper error handling
+  async logFacilityUsage(params: {
+    eventType: string;
+    eventDetail?: any;
+    lat?: number;
+    lng?: number;
+    durationMs?: number;
+  }) {
     try {
-      await supabase.from('ai_conversations').insert({
-        facility_id: this.facilityId,
+      const payload = {
         session_id: this.sessionId,
-        user_id: this.userId,
-        question: data.question,
-        response: data.response,
-        response_time_ms: data.responseTimeMs,
-        metadata: data.metadata || {}
-      });
-    } catch (error) {
-      console.error('Failed to log AI conversation:', error);
-    }
-  }
-
-  public async logLabelGeneration(data: LabelGenerationLog) {
-    try {
-      await supabase.from('label_generations').insert({
-        facility_id: this.facilityId,
-        session_id: this.sessionId,
-        user_id: this.userId,
-        product_name: data.productName,
-        manufacturer: data.manufacturer,
-        hazard_codes: data.hazardCodes || [],
-        pictograms: data.pictograms || [],
-        label_type: data.labelType || 'secondary_container',
-        action_type: data.actionType,
-        metadata: data.metadata || {}
-      });
-    } catch (error) {
-      console.error('Failed to log label generation:', error);
-    }
-  }
-
-  public async logQRCodeInteraction(data: QRCodeInteractionLog) {
-    try {
-      await supabase.from('qr_code_interactions').insert({
-        facility_id: this.facilityId,
-        qr_code_id: data.qrCodeId,
-        session_id: this.sessionId,
-        user_id: this.userId,
-        action_type: data.actionType,
-        user_agent: navigator.userAgent,
-        metadata: data.metadata || {}
-      });
-    } catch (error) {
-      console.error('Failed to log QR code interaction:', error);
-    }
-  }
-
-  public async logSDSInteraction(data: SDSInteractionLog) {
-    try {
-      await supabase.from('sds_interactions').insert({
-        facility_id: this.facilityId,
-        sds_document_id: data.sdsDocumentId,
-        session_id: this.sessionId,
-        user_id: this.userId,
-        action_type: data.actionType,
-        search_query: data.searchQuery,
-        metadata: data.metadata || {}
-      });
-    } catch (error) {
-      console.error('Failed to log SDS interaction:', error);
-    }
-  }
-
-  public async logFacilityUsage(data: FacilityUsageLog) {
-    try {
-      await supabase.from('facility_usage_logs').insert({
-        facility_id: this.facilityId,
-        session_id: this.sessionId,
-        user_id: this.userId,
-        event_type: data.eventType,
-        event_detail: data.eventDetail || {},
-        lat: data.lat,
-        lng: data.lng,
-        duration_ms: data.durationMs,
+        facility_id: this.currentFacilityId,
+        user_id: this.currentUserId,
+        event_type: params.eventType,
+        event_detail: params.eventDetail || {},
+        lat: params.lat,
+        lng: params.lng,
+        duration_ms: params.durationMs,
         user_agent: navigator.userAgent
+      };
+
+      console.log('Logging facility usage:', payload);
+
+      const { error } = await supabase
+        .from('facility_usage_logs')
+        .insert(payload);
+
+      if (error) {
+        console.error('Failed to log facility usage:', error);
+      }
+    } catch (error) {
+      console.error('Error logging facility usage:', error);
+    }
+  }
+
+  // Log SDS interactions
+  async logSDSInteraction(params: {
+    sdsDocumentId: string;
+    actionType: 'view' | 'download' | 'generate_label' | 'ask_ai';
+    searchQuery?: string;
+    metadata?: any;
+  }) {
+    try {
+      const { error } = await supabase
+        .from('sds_interactions')
+        .insert({
+          session_id: this.sessionId,
+          facility_id: this.currentFacilityId,
+          user_id: this.currentUserId,
+          sds_document_id: params.sdsDocumentId,
+          action_type: params.actionType,
+          search_query: params.searchQuery,
+          metadata: params.metadata || {}
+        });
+
+      if (error) {
+        console.error('Failed to log SDS interaction:', error);
+      }
+    } catch (error) {
+      console.error('Error logging SDS interaction:', error);
+    }
+  }
+
+  // Log AI conversations
+  async logAIConversation(params: {
+    question: string;
+    response: string;
+    responseTimeMs: number;
+    metadata?: any;
+  }) {
+    try {
+      const { error } = await supabase
+        .from('ai_conversations')
+        .insert({
+          session_id: this.sessionId,
+          facility_id: this.currentFacilityId,
+          user_id: this.currentUserId,
+          question: params.question,
+          response: params.response,
+          response_time_ms: params.responseTimeMs,
+          metadata: params.metadata || {}
+        });
+
+      if (error) {
+        console.error('Failed to log AI conversation:', error);
+      }
+    } catch (error) {
+      console.error('Error logging AI conversation:', error);
+    }
+  }
+
+  // Log label generations
+  async logLabelGeneration(params: {
+    productName: string;
+    manufacturer?: string;
+    actionType: 'generate' | 'download' | 'print';
+    labelType?: string;
+    hazardCodes?: any[];
+    pictograms?: any[];
+    metadata?: any;
+  }) {
+    try {
+      const { error } = await supabase
+        .from('label_generations')
+        .insert({
+          session_id: this.sessionId,
+          facility_id: this.currentFacilityId,
+          user_id: this.currentUserId,
+          product_name: params.productName,
+          manufacturer: params.manufacturer,
+          action_type: params.actionType,
+          label_type: params.labelType || 'secondary_container',
+          hazard_codes: params.hazardCodes || [],
+          pictograms: params.pictograms || [],
+          metadata: params.metadata || {}
+        });
+
+      if (error) {
+        console.error('Failed to log label generation:', error);
+      }
+    } catch (error) {
+      console.error('Error logging label generation:', error);
+    }
+  }
+
+  // Log QR code interactions
+  async logQRCodeInteraction(params: {
+    qrCodeId?: string;
+    actionType: 'scan' | 'generate' | 'print' | 'view';
+    metadata?: any;
+  }) {
+    try {
+      const { error } = await supabase
+        .from('qr_code_interactions')
+        .insert({
+          session_id: this.sessionId,
+          facility_id: this.currentFacilityId,
+          user_id: this.currentUserId,
+          qr_code_id: params.qrCodeId,
+          action_type: params.actionType,
+          metadata: params.metadata || {},
+          user_agent: navigator.userAgent,
+          ip_address: null // Will be set by database if needed
+        });
+
+      if (error) {
+        console.error('Failed to log QR code interaction:', error);
+      }
+    } catch (error) {
+      console.error('Error logging QR code interaction:', error);
+    }
+  }
+
+  // Update page view tracking
+  async updatePageView(page: string) {
+    try {
+      // For now, just log as facility usage since page view tracking needs session management
+      await this.logFacilityUsage({
+        eventType: 'page_view',
+        eventDetail: { page }
       });
     } catch (error) {
-      console.error('Failed to log facility usage:', error);
+      console.error('Error updating page view:', error);
     }
   }
 
-  public async updatePageView(page: string) {
-    if (!this.facilityId) return;
-
-    try {
-      // Get current session
-      const { data: session } = await supabase
-        .from('facility_user_sessions')
-        .select('page_views')
-        .eq('session_token', this.sessionId)
-        .single();
-
-      if (session) {
-        // Ensure page_views is an array, handle the case where it might be other types
-        const currentPageViews = Array.isArray(session.page_views) ? session.page_views : [];
-        const updatedPageViews = [...currentPageViews, { page, timestamp: new Date().toISOString() }];
-
-        await supabase
-          .from('facility_user_sessions')
-          .update({ page_views: updatedPageViews })
-          .eq('session_token', this.sessionId);
-      }
-    } catch (error) {
-      console.error('Failed to update page view:', error);
-    }
-  }
-
-  public async endSession() {
-    if (!this.facilityId) return;
-
-    try {
-      const { data: session } = await supabase
-        .from('facility_user_sessions')
-        .select('start_time')
-        .eq('session_token', this.sessionId)
-        .single();
-
-      if (session) {
-        const totalDuration = Date.now() - new Date(session.start_time).getTime();
-        
-        await supabase
-          .from('facility_user_sessions')
-          .update({ 
-            end_time: new Date().toISOString(),
-            total_duration_ms: totalDuration
-          })
-          .eq('session_token', this.sessionId);
-      }
-    } catch (error) {
-      console.error('Failed to end session:', error);
-    }
+  // Get current session ID
+  getSessionId(): string {
+    return this.sessionId;
   }
 }
 
-// Create singleton instance
+// Export singleton instance
 export const interactionLogger = new InteractionLogger();
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => {
-  interactionLogger.endSession();
-});

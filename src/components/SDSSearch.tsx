@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -84,30 +83,53 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
 
       console.log('Searching SDS database for:', searchQuery);
 
-      // Log search to facility_search_history table
-      if (facilityData.id) {
-        await supabase.from('facility_search_history').insert({
+      // Log search to facility_search_history table if we have a facility
+      if (facilityData?.id) {
+        const { error: historyError } = await supabase.from('facility_search_history').insert({
           facility_id: facilityData.id,
           search_query: searchQuery,
           lat: currentLocation?.lat,
           lng: currentLocation?.lng
         });
+        
+        if (historyError) {
+          console.error('Failed to log search history:', historyError);
+        }
       }
 
-      // Search the sds_documents table
-      const { data: sdsData, error } = await supabase
+      // Search the sds_documents table with improved query
+      const { data: sdsData, error, count } = await supabase
         .from('sds_documents')
-        .select('*')
+        .select('*', { count: 'exact' })
         .or(`product_name.ilike.%${searchQuery}%,manufacturer.ilike.%${searchQuery}%,cas_number.ilike.%${searchQuery}%`)
         .limit(20);
+
+      console.log('Search query executed. Count:', count, 'Data length:', sdsData?.length);
 
       if (error) {
         console.error('Supabase search error:', error);
         throw error;
       }
 
+      // If no results, try a broader search
+      let finalData = sdsData;
+      if (!sdsData || sdsData.length === 0) {
+        console.log('No results found, trying broader search...');
+        const { data: broadData, error: broadError } = await supabase
+          .from('sds_documents')
+          .select('*')
+          .textSearch('product_name', searchQuery)
+          .limit(20);
+          
+        if (broadError) {
+          console.error('Broad search error:', broadError);
+        } else {
+          finalData = broadData;
+        }
+      }
+
       // Transform the data
-      const results: SearchResult[] = (sdsData || []).map(doc => ({
+      const results: SearchResult[] = (finalData || []).map(doc => ({
         id: doc.id,
         product_name: doc.product_name,
         manufacturer: doc.manufacturer || 'Unknown Manufacturer',
@@ -137,7 +159,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
       if (results.length === 0) {
         toast({
           title: "No Results Found",
-          description: "Try searching with a different product name, manufacturer, or CAS number.",
+          description: "Try searching with a different product name, manufacturer, or CAS number. The database may need to be populated with SDS documents.",
         });
       } else {
         toast({
@@ -412,14 +434,18 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
             No Results Found
           </h4>
           <p className="text-gray-600 mb-4">
-            We couldn't find any SDS documents matching "{searchQuery}". Try:
+            We couldn't find any SDS documents matching "{searchQuery}". This could mean:
           </p>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Check spelling and try different keywords</li>
+          <ul className="text-sm text-gray-600 space-y-1 mb-4">
+            <li>• The SDS database needs to be populated with documents</li>
+            <li>• Try different spelling or keywords</li>
             <li>• Search by manufacturer name instead</li>
             <li>• Use the CAS number if available</li>
             <li>• Try common chemical names</li>
           </ul>
+          <p className="text-xs text-gray-500">
+            Contact your administrator if the database needs to be populated with SDS documents.
+          </p>
         </Card>
       )}
 
@@ -434,7 +460,7 @@ const SDSSearch = ({ facilityData, currentLocation }: SDSSearchProps) => {
           <li>• Try manufacturer names if you can't find a product</li>
           <li>• Use CAS numbers for precise chemical identification</li>
           <li>• All searches are logged automatically for OSHA compliance</li>
-          <li>• Database contains thousands of real SDS documents</li>
+          <li>• Database contains real SDS documents when populated</li>
         </ul>
       </Card>
     </div>
