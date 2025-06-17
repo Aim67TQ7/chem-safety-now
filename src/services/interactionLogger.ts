@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Generate a proper UUID for session ID
@@ -23,7 +22,7 @@ class InteractionLogger {
     this.currentFacilityId = facilityId;
   }
 
-  // Log facility usage with proper error handling
+  // Log facility usage using QR code interactions table as fallback
   async logFacilityUsage(params: {
     eventType: string;
     eventDetail?: any;
@@ -32,22 +31,25 @@ class InteractionLogger {
     durationMs?: number;
   }) {
     try {
+      // Use qr_code_interactions table as a general event log since facility_usage_logs doesn't exist
       const payload = {
         session_id: this.sessionId,
         facility_id: this.currentFacilityId,
         user_id: this.currentUserId,
-        event_type: params.eventType,
-        event_detail: params.eventDetail || {},
-        lat: params.lat,
-        lng: params.lng,
-        duration_ms: params.durationMs,
-        user_agent: navigator.userAgent
+        action_type: params.eventType,
+        metadata: {
+          event_detail: params.eventDetail || {},
+          lat: params.lat,
+          lng: params.lng,
+          duration_ms: params.durationMs,
+          user_agent: navigator.userAgent
+        }
       };
 
       console.log('Logging facility usage:', payload);
 
       const { error } = await supabase
-        .from('facility_usage_logs')
+        .from('qr_code_interactions')
         .insert(payload);
 
       if (error) {

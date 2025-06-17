@@ -304,8 +304,9 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     
     await interactionLogger.logSDSInteraction({
       sdsDocumentId: selectedDoc.id,
-      actionType: 'save_with_identifiers',
-      searchQuery: searchQuery
+      actionType: 'view', // Changed from 'save_with_identifiers' to valid action type
+      searchQuery: searchQuery,
+      metadata: { additionalInfo, action: 'save_with_identifiers' } // Store the original action in metadata
     });
 
     toast({

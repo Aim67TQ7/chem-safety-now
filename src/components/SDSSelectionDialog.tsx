@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +23,7 @@ interface SDSDocument {
   signal_word?: string;
   hazard_statements?: string[];
   precautionary_statements?: string[];
+  regulatory_notes?: string[]; // Added missing property
 }
 
 interface SDSSelectionDialogProps {
