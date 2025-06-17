@@ -1,11 +1,13 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { interactionLogger } from "@/services/interactionLogger";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AIAssistantProps {
   facilityData: any;
@@ -21,22 +23,15 @@ interface Message {
 
 const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
   const getInitialMessage = () => {
-    let content = `# Chemical Safety Assistant\n\n**Facility:** ${facilityData.facilityName}`;
+    let content = `Hi there! I'm Sarah, your Chemical Safety Manager. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
     
     if (selectedDocument) {
-      content += `\n**Chemical:** ${selectedDocument.product_name}`;
-      if (selectedDocument.manufacturer) {
-        content += `\n**Manufacturer:** ${selectedDocument.manufacturer}`;
-      }
-      if (selectedDocument.cas_number) {
-        content += `\n**CAS Number:** ${selectedDocument.cas_number}`;
-      }
-      content += `\n\nI have the complete SDS data for ${selectedDocument.product_name} and can provide specific guidance on handling, storage, PPE, and safety protocols for this chemical.`;
+      content += `\n\nI can see you're working with **${selectedDocument.product_name}**${selectedDocument.manufacturer ? ` from ${selectedDocument.manufacturer}` : ''}. I have the complete SDS data for this chemical, so I can give you specific guidance on handling, storage, PPE requirements, and emergency procedures.`;
     } else {
-      content += `\n\nProviding precise guidance on chemical hazards, PPE requirements, safety protocols, and OSHA compliance.`;
+      content += `\n\nFeel free to search for a specific chemical to get detailed guidance, or ask me general safety questions. I'm here to help keep you and your team safe!`;
     }
     
-    content += ` How may I assist you?`;
+    content += `\n\nWhat can I help you with today?`;
     return content;
   };
 
@@ -56,22 +51,22 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
     if (selectedDocument) {
       const productName = selectedDocument.product_name;
       return [
-        `PPE requirements for ${productName}`,
-        `Storage requirements for ${productName}`,
-        `First aid protocol for ${productName} exposure`,
-        `Ventilation requirements when using ${productName}`,
-        `Disposal procedures for ${productName}`,
-        `Emergency response for ${productName} spills`
+        `What PPE do I need when handling ${productName}?`,
+        `How should I store ${productName} safely?`,
+        `What should I do if ${productName} spills?`,
+        `Are there any special ventilation requirements for ${productName}?`,
+        `What's the first aid procedure if someone gets ${productName} on their skin?`,
+        `Can I mix ${productName} with other chemicals?`
       ];
     }
     
     return [
-      "PPE requirements for acetone handling",
-      "Storage requirements for flammable solvents",
-      "First aid protocol for chemical splash",
-      "Ventilation requirements for spray operations",
-      "Disposal procedures for contaminated materials",
-      "Emergency response for chemical spills"
+      "What PPE should I use for handling corrosive chemicals?",
+      "How do I set up proper ventilation for spray operations?",
+      "What's the best way to train new employees on chemical safety?",
+      "How often should we review our emergency procedures?",
+      "What are the key things to look for during a safety inspection?",
+      "How do I determine if two chemicals are compatible?"
     ];
   };
 
@@ -105,114 +100,30 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
     setIsProcessing(true);
 
     try {
-      // Process with professional response delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Prepare conversation history for the AI
+      const conversationHistory = messages.slice(1).map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
 
-      // Enhanced responses with document-specific context
-      let aiResponse = `## Safety Protocol Assessment\n\n`;
-      
-      if (selectedDocument) {
-        aiResponse += `**Product:** ${selectedDocument.product_name}\n`;
-        if (selectedDocument.manufacturer) {
-          aiResponse += `**Manufacturer:** ${selectedDocument.manufacturer}\n`;
+      console.log('🤖 Calling AI Safety Chat function...');
+
+      const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
+        body: {
+          message: questionContent,
+          conversation_history: conversationHistory,
+          sds_document: selectedDocument,
+          facility_data: facilityData
         }
-        aiResponse += `\nBased on the SDS data and current safety regulations:\n\n`;
-      } else {
-        aiResponse += `Based on current safety data and OSHA regulations:\n\n`;
+      });
+
+      if (error) {
+        console.error('❌ AI function error:', error);
+        throw new Error(error.message || 'Failed to get AI response');
       }
 
-      // Enhanced response logic with document context
-      const productName = selectedDocument?.product_name?.toLowerCase() || '';
-      const questionLower = questionContent.toLowerCase();
-
-      if (questionLower.includes('ppe') || questionLower.includes('personal protective')) {
-        aiResponse += `## PPE Requirements`;
-        if (selectedDocument) {
-          aiResponse += ` for ${selectedDocument.product_name}`;
-          
-          // Use actual SDS data if available
-          if (selectedDocument.h_codes) {
-            aiResponse += `\n\n**Based on SDS Hazard Codes:**\n`;
-            selectedDocument.h_codes.slice(0, 3).forEach((hCode: any) => {
-              aiResponse += `- ${hCode.code}: ${hCode.description}\n`;
-            });
-          }
-          
-          if (selectedDocument.hmis_codes) {
-            aiResponse += `\n**HMIS Ratings:**\n`;
-            aiResponse += `- Health: ${selectedDocument.hmis_codes.health || 'N/A'}\n`;
-            aiResponse += `- Flammability: ${selectedDocument.hmis_codes.flammability || 'N/A'}\n`;
-            aiResponse += `- Physical: ${selectedDocument.hmis_codes.physical || 'N/A'}\n`;
-          }
-        }
-        
-        aiResponse += `\n\n**Minimum PPE Standards:**\n`;
-        aiResponse += `- **Eyes:** ANSI Z87.1 safety glasses with side shields\n`;
-        aiResponse += `- **Hands:** Chemical-resistant nitrile gloves\n`;
-        aiResponse += `- **Respiratory:** Local exhaust ventilation required\n`;
-        aiResponse += `- **Body:** Chemical-resistant apron for splash hazards`;
-        
-      } else if (questionLower.includes('storage') || questionLower.includes('store')) {
-        aiResponse += `## Storage Requirements`;
-        if (selectedDocument) {
-          aiResponse += ` for ${selectedDocument.product_name}`;
-        }
-        
-        aiResponse += `\n\n**Compatibility and Segregation:**\n`;
-        aiResponse += `- Store away from incompatible materials\n`;
-        aiResponse += `- Maintain proper ventilation\n`;
-        aiResponse += `- Keep containers tightly closed\n`;
-        aiResponse += `- Store in original labeled containers\n\n`;
-        
-        if (selectedDocument?.signal_word === 'DANGER') {
-          aiResponse += `**⚠️ DANGER Signal Word:** Enhanced storage precautions required\n`;
-        }
-        
-      } else if (questionLower.includes('spill') || questionLower.includes('emergency')) {
-        aiResponse += `## Emergency Response Protocol`;
-        if (selectedDocument) {
-          aiResponse += ` for ${selectedDocument.product_name}`;
-        }
-        
-        aiResponse += `\n\n**Immediate Actions:**\n`;
-        aiResponse += `1. Evacuate non-essential personnel\n`;
-        aiResponse += `2. Eliminate ignition sources\n`;
-        aiResponse += `3. Don appropriate PPE before response\n\n`;
-        
-        if (selectedDocument?.first_aid) {
-          aiResponse += `**First Aid (from SDS):**\n`;
-          if (selectedDocument.first_aid.skin_contact) {
-            aiResponse += `- **Skin Contact:** ${selectedDocument.first_aid.skin_contact}\n`;
-          }
-          if (selectedDocument.first_aid.eye_contact) {
-            aiResponse += `- **Eye Contact:** ${selectedDocument.first_aid.eye_contact}\n`;
-          }
-        }
-        
-      } else {
-        // General response enhanced with document context
-        if (selectedDocument) {
-          aiResponse += `## Chemical Information for ${selectedDocument.product_name}\n\n`;
-          
-          if (selectedDocument.signal_word) {
-            aiResponse += `**Signal Word:** ${selectedDocument.signal_word}\n`;
-          }
-          
-          if (selectedDocument.h_codes && selectedDocument.h_codes.length > 0) {
-            aiResponse += `**Primary Hazards:**\n`;
-            selectedDocument.h_codes.slice(0, 3).forEach((hCode: any) => {
-              aiResponse += `- ${hCode.code}: ${hCode.description}\n`;
-            });
-          }
-          
-          aiResponse += `\n**Recommended Actions:**\n`;
-          aiResponse += `- Review complete SDS document\n`;
-          aiResponse += `- Ensure proper PPE selection\n`;
-          aiResponse += `- Verify ventilation requirements\n`;
-          aiResponse += `- Confirm emergency procedures`;
-        } else {
-          aiResponse += `Please specify your safety question or search for a specific chemical to get detailed guidance.`;
-        }
+      if (!data?.response) {
+        throw new Error('No response received from AI');
       }
 
       const responseTime = Date.now() - questionStartTime;
@@ -220,7 +131,7 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: aiResponse,
+        content: data.response,
         timestamp: new Date()
       };
 
@@ -229,13 +140,14 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
       // Log the AI conversation with document context
       await interactionLogger.logAIConversation({
         question: questionContent,
-        response: aiResponse,
+        response: data.response,
         responseTimeMs: responseTime,
         metadata: {
           messageCount: messages.length + 2,
-          responseType: 'document_specific_guidance',
+          responseType: 'conversational_ai',
           productName: selectedDocument?.product_name,
-          documentId: selectedDocument?.id
+          documentId: selectedDocument?.id,
+          usage: data.usage
         }
       });
 
@@ -250,9 +162,18 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
         }
       });
 
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: "I'm sorry, I'm having trouble responding right now. Please try again in a moment, or contact your safety officer if you have an urgent safety concern.",
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+
       toast({
-        title: "System Error",
-        description: "Unable to process request. Please try again.",
+        title: "Connection Issue",
+        description: "Unable to get AI response. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -280,25 +201,24 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
     });
   };
 
-  // Markdown renderer for message content
+  // Enhanced markdown renderer for better formatting
   const renderMarkdown = (content: string) => {
     return content
-      .replace(/^# (.*$)/gm, '<h1 class="text-lg font-bold mb-2">$1</h1>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-base font-semibold mb-2">$1</h2>')
-      .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
-      .replace(/^- (.*$)/gm, '<li class="ml-4">• $1</li>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n\n/g, '<br><br>')
       .replace(/\n/g, '<br>');
   };
 
   return (
     <div className="space-y-4">
-      {/* AI Assistant Header with Document Context */}
+      {/* AI Assistant Header with Enhanced Context */}
       <Card className="p-4">
         <div className="space-y-3">
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center">
-              <Bot className="w-5 h-5 text-gray-600 mr-2" />
-              Chemical Safety Assistant
+              <Bot className="w-5 h-5 text-blue-600 mr-2" />
+              Sarah - Chemical Safety Manager
               {selectedDocument && (
                 <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-300 text-xs">
                   {selectedDocument.product_name}
@@ -307,60 +227,65 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
             </h3>
             <p className="text-sm text-gray-600">
               {selectedDocument 
-                ? `Providing specific guidance for ${selectedDocument.product_name} based on SDS data and safety protocols.`
-                : "Professional guidance on chemical hazards, safety protocols, and regulatory compliance."
+                ? `Ready to help with specific guidance for ${selectedDocument.product_name} based on its SDS data and my safety experience.`
+                : "Your conversational safety expert - here to help with chemical safety, PPE, procedures, and workplace safety questions."
               }
             </p>
           </div>
 
           <div className="flex items-center space-x-3">
             <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs">
-              SDS Database Connected
+              AI-Powered
             </Badge>
-            <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300 text-xs">
-              OSHA Current
+            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300 text-xs">
+              15+ Years Experience
             </Badge>
             {selectedDocument && (
-              <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300 text-xs">
-                Document Context Active
+              <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
+                SDS Context Active
               </Badge>
             )}
           </div>
         </div>
       </Card>
 
-      {/* Chat Interface */}
+      {/* Enhanced Chat Interface */}
       <Card className="p-0 overflow-hidden">
-        <div className="h-80 overflow-y-auto p-4 space-y-3">
+        <div className="h-96 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex items-start space-x-2 max-w-[85%] ${
+              <div className={`flex items-start space-x-3 max-w-[85%] ${
                 message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
               }`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.type === 'user' 
-                    ? 'bg-gray-600' 
-                    : 'bg-gray-800'
+                    ? 'bg-blue-600' 
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600'
                 }`}>
                   {message.type === 'user' ? (
-                    <User className="w-3 h-3 text-white" />
+                    <User className="w-4 h-4 text-white" />
                   ) : (
-                    <Bot className="w-3 h-3 text-white" />
+                    <Bot className="w-4 h-4 text-white" />
                   )}
                 </div>
                 
-                <div className={`rounded-lg p-3 ${
+                <div className={`rounded-lg p-4 ${
                   message.type === 'user'
-                    ? 'bg-gray-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-50 text-gray-900 border border-gray-200'
                 }`}>
                   <div 
                     className="text-sm leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
                   />
+                  <div className={`text-xs mt-2 opacity-70 ${
+                    message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                  }`}>
+                    {message.timestamp.toLocaleTimeString()}
+                  </div>
                 </div>
               </div>
             </div>
@@ -368,13 +293,18 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
           
           {isProcessing && (
             <div className="flex justify-start">
-              <div className="flex items-start space-x-2">
-                <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center">
-                  <Bot className="w-3 h-3 text-white" />
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
-                    <div className="animate-pulse text-sm">Processing...</div>
+                    <div className="animate-pulse text-sm text-gray-600">Sarah is thinking...</div>
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -382,21 +312,22 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
           )}
         </div>
 
-        {/* Message Input */}
-        <div className="border-t border-gray-200 p-3">
+        {/* Enhanced Message Input */}
+        <div className="border-t border-gray-200 p-4 bg-gray-50">
           <div className="flex space-x-3">
             <Input
               type="text"
-              placeholder="Enter chemical safety query..."
+              placeholder="Ask Sarah about chemical safety, PPE, procedures..."
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="flex-1 text-sm"
+              className="flex-1 text-sm bg-white"
+              disabled={isProcessing}
             />
             <Button 
               onClick={handleSendMessage}
               disabled={!currentMessage.trim() || isProcessing}
-              className="bg-gray-800 hover:bg-gray-900 text-white px-3"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4"
             >
               <Send className="w-4 h-4" />
             </Button>
@@ -404,10 +335,11 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
         </div>
       </Card>
 
-      {/* Example Queries - Contextual to selected document */}
+      {/* Contextual Example Queries */}
       <Card className="p-4">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">
-          {selectedDocument ? `Common Questions for ${selectedDocument.product_name}` : 'Common Safety Queries'}
+        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+          <AlertCircle className="w-4 h-4 mr-2 text-blue-600" />
+          {selectedDocument ? `Common Questions About ${selectedDocument.product_name}` : 'Popular Safety Topics'}
         </h4>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -416,7 +348,8 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
               key={index}
               variant="outline"
               onClick={() => useExampleQuery(query)}
-              className="text-left justify-start h-auto p-2 whitespace-normal text-xs"
+              className="text-left justify-start h-auto p-3 whitespace-normal text-xs hover:bg-blue-50 hover:border-blue-300"
+              disabled={isProcessing}
             >
               {query}
             </Button>
@@ -424,16 +357,17 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
         </div>
       </Card>
 
-      {/* Professional Disclaimer */}
-      <Card className="p-4 bg-gray-50 border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-2">
-          Professional Notice
+      {/* Enhanced Professional Disclaimer */}
+      <Card className="p-4 bg-amber-50 border-amber-200">
+        <h4 className="text-sm font-semibold text-amber-900 mb-2 flex items-center">
+          <AlertCircle className="w-4 h-4 mr-2" />
+          Safety Notice
         </h4>
         
-        <p className="text-xs text-gray-700">
-          This assistant provides technical guidance based on current safety data and regulatory standards. 
-          Always consult official Safety Data Sheets, facility procedures, and qualified safety professionals 
-          for site-specific applications. This system supplements but does not replace professional safety training.
+        <p className="text-xs text-amber-800">
+          Sarah provides guidance based on SDS data and general safety practices. For site-specific applications, 
+          emergency situations, or complex scenarios, always consult your facility's safety procedures and qualified safety professionals. 
+          This assistant supplements but does not replace proper safety training and local expertise.
         </p>
       </Card>
     </div>
