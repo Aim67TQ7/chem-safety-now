@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Save, X } from "lucide-react";
+import { FileText, Save, X, Download, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,9 +46,69 @@ const SDSSelectionDialog = ({
   const [lotNumber, setLotNumber] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState<{[key: string]: 'downloading' | 'completed' | 'error'}>({});
   const { toast } = useToast();
 
   const selectedDoc = sdsDocuments.find(doc => doc.id === selectedDocId);
+
+  const downloadPDF = async (document: SDSDocument) => {
+    if (!document.source_url || downloadStatus[document.id] === 'downloading') {
+      return;
+    }
+
+    setIsDownloading(true);
+    setDownloadStatus(prev => ({ ...prev, [document.id]: 'downloading' }));
+
+    try {
+      console.log('🔄 Starting PDF download for:', document.product_name);
+      
+      const { data, error } = await supabase.functions.invoke('download-sds-pdf', {
+        body: {
+          document_id: document.id,
+          source_url: document.source_url,
+          file_name: document.file_name
+        }
+      });
+
+      if (error) {
+        throw new Error(`Download failed: ${error.message}`);
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Download failed');
+      }
+
+      console.log('✅ PDF downloaded successfully:', data.bucket_url);
+      
+      setDownloadStatus(prev => ({ ...prev, [document.id]: 'completed' }));
+      
+      // Update the document in our local state with the new bucket URL
+      const updatedDoc = { ...document, bucket_url: data.bucket_url, file_size: data.file_size };
+      
+      toast({
+        title: "PDF Downloaded",
+        description: `${document.product_name} PDF has been downloaded and stored successfully.`,
+        variant: "default"
+      });
+
+      return updatedDoc;
+
+    } catch (error) {
+      console.error('❌ PDF download error:', error);
+      setDownloadStatus(prev => ({ ...prev, [document.id]: 'error' }));
+      
+      toast({
+        title: "Download Error",
+        description: `Failed to download PDF for ${document.product_name}. You can still save the document without the PDF.`,
+        variant: "destructive"
+      });
+      
+      return document; // Return original document if download fails
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!selectedDoc) {
@@ -62,6 +123,19 @@ const SDSSelectionDialog = ({
     setIsSaving(true);
 
     try {
+      // First, try to download the PDF if it doesn't have a bucket_url yet
+      let documentToSave = selectedDoc;
+      
+      if (!selectedDoc.bucket_url && selectedDoc.source_url) {
+        toast({
+          title: "Downloading PDF",
+          description: "Downloading and storing the PDF document...",
+          variant: "default"
+        });
+        
+        documentToSave = await downloadPDF(selectedDoc) || selectedDoc;
+      }
+
       const additionalInfo = {
         brand: brand.trim() || null,
         product_id: productId.trim() || null,
@@ -82,22 +156,22 @@ const SDSSelectionDialog = ({
           .from('sds_documents')
           .update({
             regulatory_notes: [
-              ...(selectedDoc.regulatory_notes || []),
+              ...(documentToSave.regulatory_notes || []),
               `User-provided identifiers: ${identifiers}`
             ]
           })
-          .eq('id', selectedDoc.id);
+          .eq('id', documentToSave.id);
 
         if (error) {
           throw error;
         }
       }
 
-      onSaveSelected(selectedDoc, additionalInfo);
+      onSaveSelected(documentToSave, additionalInfo);
       
       toast({
         title: "SDS Saved Successfully",
-        description: `${selectedDoc.product_name} has been saved${identifiers ? ' with your additional identifiers' : ''}.`,
+        description: `${documentToSave.product_name} has been saved${identifiers ? ' with your additional identifiers' : ''}.`,
         variant: "default"
       });
 
@@ -107,6 +181,7 @@ const SDSSelectionDialog = ({
       setProductId("");
       setLotNumber("");
       setAdditionalNotes("");
+      setDownloadStatus({});
       onClose();
 
     } catch (error) {
@@ -126,6 +201,17 @@ const SDSSelectionDialog = ({
     return signalWord.toLowerCase() === 'danger' ? 'destructive' : 'secondary';
   };
 
+  const getDownloadStatusIcon = (docId: string, hasUrl: boolean) => {
+    if (hasUrl) return <CheckCircle className="w-4 h-4 text-green-600" />;
+    
+    const status = downloadStatus[docId];
+    if (status === 'downloading') return <Download className="w-4 h-4 text-blue-600 animate-pulse" />;
+    if (status === 'completed') return <CheckCircle className="w-4 h-4 text-green-600" />;
+    if (status === 'error') return <X className="w-4 h-4 text-red-600" />;
+    
+    return null;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -136,6 +222,7 @@ const SDSSelectionDialog = ({
           </DialogTitle>
           <DialogDescription>
             Multiple SDS documents were found. Please select the correct one and provide additional identifiers to ensure accuracy.
+            {isDownloading && " PDF is being downloaded and stored..."}
           </DialogDescription>
         </DialogHeader>
 
@@ -163,6 +250,7 @@ const SDSSelectionDialog = ({
                             {doc.signal_word}
                           </Badge>
                         )}
+                        {getDownloadStatusIcon(doc.id, !!doc.bucket_url)}
                       </div>
                       
                       <div className="space-y-1 text-sm text-gray-600">
@@ -173,6 +261,9 @@ const SDSSelectionDialog = ({
                           <p><strong>CAS Number:</strong> {doc.cas_number}</p>
                         )}
                         <p><strong>Source:</strong> {new URL(doc.source_url).hostname}</p>
+                        {doc.bucket_url && (
+                          <p className="text-green-600"><strong>Status:</strong> PDF stored locally</p>
+                        )}
                       </div>
 
                       {doc.h_codes && doc.h_codes.length > 0 && (
@@ -267,11 +358,11 @@ const SDSSelectionDialog = ({
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={!selectedDocId || isSaving}
+              disabled={!selectedDocId || isSaving || isDownloading}
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : 'Save Selected SDS'}
+              {isSaving ? 'Saving...' : isDownloading ? 'Downloading...' : 'Save Selected SDS'}
             </Button>
           </div>
         </div>
