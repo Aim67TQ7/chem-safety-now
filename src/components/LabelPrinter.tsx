@@ -13,9 +13,14 @@ import { interactionLogger } from "@/services/interactionLogger";
 interface LabelPrinterProps {
   initialProductName?: string;
   initialManufacturer?: string;
+  selectedDocument?: any;
 }
 
-const LabelPrinter = ({ initialProductName = "", initialManufacturer = "" }: LabelPrinterProps) => {
+const LabelPrinter = ({ 
+  initialProductName = "", 
+  initialManufacturer = "", 
+  selectedDocument 
+}: LabelPrinterProps) => {
   const [productName, setProductName] = useState(initialProductName);
   const [manufacturer, setManufacturer] = useState(initialManufacturer);
   const [labelSize, setLabelSize] = useState("4x6");
@@ -32,7 +37,17 @@ const LabelPrinter = ({ initialProductName = "", initialManufacturer = "" }: Lab
   useEffect(() => {
     if (initialProductName) setProductName(initialProductName);
     if (initialManufacturer) setManufacturer(initialManufacturer);
-  }, [initialProductName, initialManufacturer]);
+    
+    // Auto-populate from selected document if available
+    if (selectedDocument) {
+      if (selectedDocument.product_name && !initialProductName) {
+        setProductName(selectedDocument.product_name);
+      }
+      if (selectedDocument.manufacturer && !initialManufacturer) {
+        setManufacturer(selectedDocument.manufacturer);
+      }
+    }
+  }, [initialProductName, initialManufacturer, selectedDocument]);
 
   const hazardCodes = [
     { code: "H225", description: "Highly flammable liquid and vapor" },
