@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Dialog,
@@ -7,8 +8,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +16,7 @@ interface SDSSelectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   sdsDocuments: any[];
-  onSaveSelected: (selectedDoc: any, additionalInfo: any) => void;
+  onSaveSelected: (selectedDoc: any) => void;
 }
 
 interface MatchResult {
@@ -81,19 +80,12 @@ interface SDSDocument {
 
 const SDSSelectionDialog = ({ isOpen, onClose, sdsDocuments, onSaveSelected }: SDSSelectionDialogProps) => {
   const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
-  const [additionalIdentifiers, setAdditionalIdentifiers] = useState({
-    internalId: '',
-    location: '',
-    supplier: '',
-    notes: ''
-  });
 
   const handleSave = () => {
     if (selectedDocument) {
-      onSaveSelected(selectedDocument, additionalIdentifiers);
+      onSaveSelected(selectedDocument);
       onClose();
       setSelectedDocument(null);
-      setAdditionalIdentifiers({ internalId: '', location: '', supplier: '', notes: '' });
     }
   };
 
@@ -117,7 +109,7 @@ const SDSSelectionDialog = ({ isOpen, onClose, sdsDocuments, onSaveSelected }: S
         <DialogHeader>
           <DialogTitle>Select the Correct SDS Document</DialogTitle>
           <DialogDescription>
-            Multiple safety data sheets were found. Please select the correct one and provide additional identifiers.
+            Multiple safety data sheets were found. Please select the correct one.
           </DialogDescription>
         </DialogHeader>
 
@@ -227,45 +219,6 @@ const SDSSelectionDialog = ({ isOpen, onClose, sdsDocuments, onSaveSelected }: S
               </div>
             </Card>
           ))}
-        </div>
-
-        <div className="grid gap-4 py-4">
-          <div>
-            <Label htmlFor="internalId">Internal ID</Label>
-            <Input
-              id="internalId"
-              placeholder="Enter internal ID"
-              value={additionalIdentifiers.internalId}
-              onChange={(e) => setAdditionalIdentifiers({ ...additionalIdentifiers, internalId: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              placeholder="Enter location"
-              value={additionalIdentifiers.location}
-              onChange={(e) => setAdditionalIdentifiers({ ...additionalIdentifiers, location: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="supplier">Supplier</Label>
-            <Input
-              id="supplier"
-              placeholder="Enter supplier"
-              value={additionalIdentifiers.supplier}
-              onChange={(e) => setAdditionalIdentifiers({ ...additionalIdentifiers, supplier: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Input
-              id="notes"
-              placeholder="Enter notes"
-              value={additionalIdentifiers.notes}
-              onChange={(e) => setAdditionalIdentifiers({ ...additionalIdentifiers, notes: e.target.value })}
-            />
-          </div>
         </div>
 
         <DialogFooter>

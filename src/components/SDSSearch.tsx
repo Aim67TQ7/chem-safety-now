@@ -324,8 +324,8 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     await poll();
   };
 
-  const handleSaveSelectedSDS = async (selectedDoc: SDSDocument, additionalInfo: any) => {
-    console.log('💾 Saving selected SDS with additional info:', { selectedDoc, additionalInfo });
+  const handleSaveSelectedSDS = async (selectedDoc: SDSDocument) => {
+    console.log('💾 Saving selected SDS:', selectedDoc);
     
     // Add the selected document to the main results
     setSearchResults([selectedDoc]);
@@ -336,8 +336,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       actionType: 'view',
       searchQuery: searchQuery,
       metadata: { 
-        additionalInfo, 
-        action: 'save_with_identifiers',
+        action: 'document_selected',
         confidenceScore: selectedDoc.confidence?.score || 0,
         matchReasons: selectedDoc.confidence?.reasons || []
       }
@@ -348,8 +347,8 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       : '';
     
     toast({
-      title: "SDS Document Saved",
-      description: `${selectedDoc.product_name}${confidenceText} has been saved with your additional identifiers.`,
+      title: "SDS Document Selected",
+      description: `${selectedDoc.product_name}${confidenceText} has been selected.`,
       variant: "default"
     });
   };
