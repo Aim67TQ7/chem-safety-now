@@ -159,15 +159,27 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       // Handle immediate results or job-based results
       if (data.results) {
         const results = Array.isArray(data.results) ? data.results : [data.results];
-        console.log('✅ Setting immediate search results:', results);
+        console.log('✅ Setting search results:', results);
         
-        // If multiple results found, show selection dialog
-        if (results.length > 1) {
+        // Handle auto-selected results
+        if (data.auto_selected && results.length === 1) {
+          const autoSelectedDoc = results[0];
+          setSearchResults(results);
+          
+          toast({
+            title: "Perfect Match Found!",
+            description: `Auto-selected "${autoSelectedDoc.product_name}" with ${(data.confidence_score * 100).toFixed(1)}% confidence. Matched on: ${data.match_reasons?.join(', ') || 'multiple criteria'}.`,
+            variant: "default"
+          });
+        } else if (results.length > 1) {
+          // Multiple results found - show with confidence indicators
           setMultipleResults(results);
           setShowSelectionDialog(true);
+          
+          const topScore = results[0]?.confidence?.score || 0;
           toast({
-            title: "Multiple SDS Documents Found",
-            description: `Found ${results.length} potential matches. Please select the correct one and provide additional identifiers.`,
+            title: "Multiple Matches Found",
+            description: `Found ${results.length} potential matches. Top match: ${(topScore * 100).toFixed(1)}% confidence. Please select the correct one.`,
             variant: "default"
           });
         } else {
@@ -187,7 +199,9 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         eventType: 'sds_search_completed',
         eventDetail: {
           searchQuery: searchQuery.trim(),
-          resultsCount: searchResults.length
+          resultsCount: searchResults.length,
+          autoSelected: data.auto_selected || false,
+          confidenceScore: data.confidence_score || 0
         }
       });
 
@@ -304,14 +318,23 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     
     await interactionLogger.logSDSInteraction({
       sdsDocumentId: selectedDoc.id,
-      actionType: 'view', // Changed from 'save_with_identifiers' to valid action type
+      actionType: 'view',
       searchQuery: searchQuery,
-      metadata: { additionalInfo, action: 'save_with_identifiers' } // Store the original action in metadata
+      metadata: { 
+        additionalInfo, 
+        action: 'save_with_identifiers',
+        confidenceScore: selectedDoc.confidence?.score || 0,
+        matchReasons: selectedDoc.confidence?.reasons || []
+      }
     });
 
+    const confidenceText = selectedDoc.confidence?.score 
+      ? ` (${(selectedDoc.confidence.score * 100).toFixed(1)}% confidence)` 
+      : '';
+    
     toast({
       title: "SDS Document Saved",
-      description: `${selectedDoc.product_name} has been saved with your additional identifiers.`,
+      description: `${selectedDoc.product_name}${confidenceText} has been saved with your additional identifiers.`,
       variant: "default"
     });
   };
@@ -405,6 +428,20 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   const getSignalWordVariant = (signalWord?: string) => {
     if (!signalWord) return 'secondary';
     return signalWord.toLowerCase() === 'danger' ? 'destructive' : 'secondary';
+  };
+
+  const getConfidenceBadgeVariant = (score?: number) => {
+    if (!score) return 'secondary';
+    if (score >= 0.9) return 'default'; // Green
+    if (score >= 0.7) return 'secondary'; // Yellow
+    return 'destructive'; // Red
+  };
+
+  const getConfidenceColor = (score?: number) => {
+    if (!score) return 'text-gray-500';
+    if (score >= 0.9) return 'text-green-600';
+    if (score >= 0.7) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   return (
@@ -532,6 +569,17 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                     <h4 className="text-lg font-semibold text-gray-900">
                       {sdsDocument.product_name}
                     </h4>
+                    
+                    {/* Confidence Score Badge */}
+                    {sdsDocument.confidence?.score && (
+                      <Badge 
+                        variant={getConfidenceBadgeVariant(sdsDocument.confidence.score)}
+                        className="text-xs"
+                      >
+                        {(sdsDocument.confidence.score * 100).toFixed(1)}% match
+                      </Badge>
+                    )}
+                    
                     {sdsDocument.signal_word && (
                       <Badge 
                         variant={getSignalWordVariant(sdsDocument.signal_word)}
@@ -546,6 +594,15 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                       </Badge>
                     )}
                   </div>
+                  
+                  {/* Match Reasons */}
+                  {sdsDocument.confidence?.reasons && sdsDocument.confidence.reasons.length > 0 && (
+                    <div className="mb-2">
+                      <span className={`text-xs font-medium ${getConfidenceColor(sdsDocument.confidence.score)}`}>
+                        Matched on: {sdsDocument.confidence.reasons.join(', ')}
+                      </span>
+                    </div>
+                  )}
                   
                   <div className="space-y-2 text-sm text-gray-600">
                     {sdsDocument.manufacturer && (

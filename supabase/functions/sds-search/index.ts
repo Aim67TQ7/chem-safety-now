@@ -1,11 +1,14 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import ConfidenceScorer from '../_shared/confidence-scorer.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
+
+const confidenceScorer = new ConfidenceScorer();
 
 interface SearchRequest {
   product_name: string;
@@ -283,12 +286,45 @@ Deno.serve(async (req) => {
 
     console.log('📊 Found existing documents:', existingDocs?.length || 0);
 
-    // Step 2: If we have results, return them immediately
+    // Step 2: If we have results, rank them by confidence
     if (existingDocs && existingDocs.length > 0) {
+      console.log('🎯 Calculating confidence scores for existing documents...');
+      
+      const rankedDocs = confidenceScorer.rankDocuments(product_name, existingDocs);
+      
+      // Log confidence scores for debugging
+      rankedDocs.forEach((doc, index) => {
+        console.log(`📋 Document ${index + 1}: ${doc.product_name} - Score: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
+      });
+      
+      const topMatch = rankedDocs[0];
+      
+      // Auto-select if confidence is high enough
+      if (topMatch.confidence.autoSelect && topMatch.confidence.score >= 0.9) {
+        console.log('✅ Auto-selecting top match with high confidence:', topMatch.confidence.score);
+        
+        return new Response(
+          JSON.stringify({ 
+            results: [topMatch],
+            source: 'database',
+            auto_selected: true,
+            confidence_score: topMatch.confidence.score,
+            match_reasons: topMatch.confidence.reasons,
+            message: `Auto-selected best match (${(topMatch.confidence.score * 100).toFixed(1)}% confidence)`
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
+      // Return ranked results for user selection
       return new Response(
         JSON.stringify({ 
-          results: existingDocs,
-          source: 'database'
+          results: rankedDocs,
+          source: 'database',
+          auto_selected: false,
+          message: `Found ${rankedDocs.length} potential matches - please select the best one`
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -350,25 +386,58 @@ Deno.serve(async (req) => {
           throw insertError;
         }
 
-        // Step 6: Update job status to completed
+        // Step 6: Rank the new documents by confidence
+        console.log('🎯 Calculating confidence scores for new documents...');
+        const rankedNewDocs = confidenceScorer.rankDocuments(product_name, insertedDocs || []);
+        
+        // Log confidence scores for debugging
+        rankedNewDocs.forEach((doc, index) => {
+          console.log(`📋 New Document ${index + 1}: ${doc.product_name} - Score: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
+        });
+        
+        const topNewMatch = rankedNewDocs[0];
+        
+        // Step 7: Update job status to completed
         await supabase
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: `Successfully found and stored ${insertedDocs?.length || 0} PDF SDS documents`,
+            message: `Successfully found and stored ${rankedNewDocs.length} PDF SDS documents`,
             progress: 100
           })
           .eq('id', jobData.id);
 
         console.log('✅ Job completed successfully');
 
+        // Auto-select if confidence is high enough
+        if (topNewMatch && topNewMatch.confidence.autoSelect && topNewMatch.confidence.score >= 0.9) {
+          console.log('✅ Auto-selecting top new match with high confidence:', topNewMatch.confidence.score);
+          
+          return new Response(
+            JSON.stringify({ 
+              job_id: jobData.id,
+              status: 'completed',
+              results: [topNewMatch],
+              source: 'google_cse_pdf_search',
+              auto_selected: true,
+              confidence_score: topNewMatch.confidence.score,
+              match_reasons: topNewMatch.confidence.reasons,
+              message: `Auto-selected best match (${(topNewMatch.confidence.score * 100).toFixed(1)}% confidence)`
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          );
+        }
+
         return new Response(
           JSON.stringify({ 
             job_id: jobData.id,
             status: 'completed',
-            results: insertedDocs || [],
+            results: rankedNewDocs,
             source: 'google_cse_pdf_search',
-            message: `Found ${insertedDocs?.length || 0} PDF SDS documents`
+            auto_selected: false,
+            message: `Found ${rankedNewDocs.length} PDF SDS documents - please select the best one`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -391,6 +460,7 @@ Deno.serve(async (req) => {
             status: 'completed',
             results: [],
             source: 'google_cse_pdf_search',
+            auto_selected: false,
             message: 'No PDF SDS documents found for this search term'
           }),
           { 
