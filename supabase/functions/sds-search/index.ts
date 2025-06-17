@@ -42,13 +42,13 @@ async function searchGoogleCSE(productName: string, maxResults: number = 10): Pr
     throw new Error('Google API credentials not configured');
   }
 
-  // Construct search query for SDS documents
-  const searchQuery = `"${productName}" safety data sheet filetype:pdf OR "SDS" OR "MSDS"`;
+  // Enhanced search query specifically for PDF SDS documents
+  const searchQuery = `"${productName}" "safety data sheet" filetype:pdf OR "${productName}" "SDS" filetype:pdf OR "${productName}" "MSDS" filetype:pdf`;
   const encodedQuery = encodeURIComponent(searchQuery);
   
   const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodedQuery}&num=${Math.min(maxResults, 10)}`;
   
-  console.log('🔍 Searching Google CSE for:', productName);
+  console.log('🔍 Searching Google CSE for PDF SDS documents:', productName);
   
   try {
     const response = await fetch(searchUrl);
@@ -133,13 +133,42 @@ function extractSDSDataFromContent(content: string, productName: string, sourceU
   };
 }
 
+function isPDFDocument(url: string, title: string, fileFormat?: string): boolean {
+  // Check if it's explicitly marked as PDF
+  if (fileFormat === 'PDF') return true;
+  
+  // Check URL for PDF extension
+  if (url.toLowerCase().includes('.pdf')) return true;
+  
+  // Check title for PDF indicators
+  if (title.toLowerCase().includes('.pdf')) return true;
+  
+  // Reject common web page patterns
+  const webPagePatterns = [
+    'wikipedia.org',
+    'google.com',
+    'facebook.com',
+    'twitter.com',
+    'linkedin.com',
+    'youtube.com',
+    '/search',
+    '/products',
+    '/catalog',
+    '/category'
+  ];
+  
+  const urlLower = url.toLowerCase();
+  return !webPagePatterns.some(pattern => urlLower.includes(pattern));
+}
+
 async function downloadAndParseDocument(url: string, productName: string): Promise<ScrapedSDSDocument | null> {
   try {
-    console.log('📥 Attempting to download:', url);
+    console.log('📥 Attempting to download PDF document:', url);
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SDS-Scraper/1.0)'
+        'User-Agent': 'Mozilla/5.0 (compatible; SDS-Scraper/1.0)',
+        'Accept': 'application/pdf,*/*'
       }
     });
     
@@ -150,19 +179,19 @@ async function downloadAndParseDocument(url: string, productName: string): Promi
     
     const contentType = response.headers.get('content-type') || '';
     
-    if (contentType.includes('application/pdf')) {
-      // For PDF files, we can't parse content directly in edge function
-      // Return basic document info with source URL for future processing
+    if (contentType.includes('application/pdf') || url.toLowerCase().includes('.pdf')) {
+      // For PDF files, return basic document info
+      console.log('✅ Found PDF document:', url);
       return {
         product_name: productName,
         source_url: url,
         file_name: `${productName.replace(/[^a-zA-Z0-9]/g, '_')}_SDS.pdf`,
         document_type: 'safety_data_sheet'
       };
-    } else if (contentType.includes('text/html') || contentType.includes('text/plain')) {
-      // Parse HTML/text content for SDS information
-      const content = await response.text();
-      return extractSDSDataFromContent(content, productName, url);
+    } else if (contentType.includes('text/html')) {
+      // Skip HTML pages - we only want actual documents
+      console.log('⚠️ Skipping HTML page:', url);
+      return null;
     }
     
     return null;
@@ -173,10 +202,10 @@ async function downloadAndParseDocument(url: string, productName: string): Promi
 }
 
 async function scrapeSDSDocuments(productName: string, maxResults: number = 10): Promise<ScrapedSDSDocument[]> {
-  console.log('🔍 Starting Google CSE SDS scraping for:', productName);
+  console.log('🔍 Starting Google CSE SDS document search for:', productName);
   
   try {
-    // Step 1: Search using Google CSE
+    // Step 1: Search using Google CSE with PDF focus
     const searchResults = await searchGoogleCSE(productName, maxResults);
     
     if (searchResults.length === 0) {
@@ -184,37 +213,35 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 10):
       return [];
     }
     
-    // Step 2: Filter results for likely SDS documents
-    const sdsResults = searchResults.filter(result => {
-      const titleLower = result.title.toLowerCase();
-      const snippetLower = result.snippet.toLowerCase();
-      const linkLower = result.link.toLowerCase();
+    // Step 2: Filter results for actual PDF documents only
+    const pdfResults = searchResults.filter(result => {
+      const isPDF = isPDFDocument(result.link, result.title, result.fileFormat);
       
-      return (
-        titleLower.includes('safety data sheet') ||
-        titleLower.includes('sds') ||
-        titleLower.includes('msds') ||
-        snippetLower.includes('safety data sheet') ||
-        snippetLower.includes('hazard') ||
-        linkLower.includes('sds') ||
-        linkLower.includes('msds') ||
-        result.fileFormat === 'PDF'
-      );
+      if (!isPDF) {
+        console.log(`⚠️ Filtering out non-PDF result: ${result.title} - ${result.link}`);
+      }
+      
+      return isPDF;
     });
     
-    console.log(`📋 Filtered to ${sdsResults.length} potential SDS documents`);
+    console.log(`📋 Filtered to ${pdfResults.length} PDF documents from ${searchResults.length} total results`);
     
-    // Step 3: Download and parse documents
+    if (pdfResults.length === 0) {
+      console.log('❌ No PDF documents found in search results');
+      return [];
+    }
+    
+    // Step 3: Process PDF documents
     const scrapedDocs: ScrapedSDSDocument[] = [];
     
-    for (let i = 0; i < Math.min(sdsResults.length, maxResults); i++) {
-      const result = sdsResults[i];
+    for (let i = 0; i < Math.min(pdfResults.length, maxResults); i++) {
+      const result = pdfResults[i];
       
       try {
         const doc = await downloadAndParseDocument(result.link, productName);
         if (doc) {
           scrapedDocs.push(doc);
-          console.log(`✅ Successfully processed: ${result.title}`);
+          console.log(`✅ Successfully processed PDF: ${result.title}`);
         }
       } catch (error) {
         console.error(`❌ Error processing ${result.link}:`, error);
@@ -222,11 +249,11 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 10):
       }
     }
     
-    console.log(`✅ Scraping completed, processed ${scrapedDocs.length} documents`);
+    console.log(`✅ Document processing completed, found ${scrapedDocs.length} valid PDF documents`);
     return scrapedDocs;
     
   } catch (error) {
-    console.error('❌ SDS scraping error:', error);
+    console.error('❌ SDS document search error:', error);
     throw error;
   }
 }
@@ -240,7 +267,7 @@ Deno.serve(async (req) => {
   try {
     const { product_name, max_results = 10 }: SearchRequest = await req.json();
     
-    console.log('🔍 SDS search request:', { product_name, max_results });
+    console.log('🔍 SDS document search request:', { product_name, max_results });
 
     // Step 1: Search existing documents in the database
     const { data: existingDocs, error: searchError } = await supabase
@@ -269,8 +296,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 3: No existing results found, create job and start scraping
-    console.log('💾 Creating SDS job for:', product_name);
+    // Step 3: No existing results found, create job and start PDF document search
+    console.log('💾 Creating SDS job for PDF document search:', product_name);
     
     const { data: jobData, error: jobError } = await supabase
       .from('sds_jobs')
@@ -278,7 +305,7 @@ Deno.serve(async (req) => {
         product_name,
         max_results,
         status: 'pending',
-        message: 'Starting Google CSE SDS document scraping...'
+        message: 'Starting Google CSE PDF document search...'
       })
       .select()
       .single();
@@ -290,13 +317,13 @@ Deno.serve(async (req) => {
 
     console.log('✅ Created job:', jobData.id);
 
-    // Step 4: Perform scraping using Google CSE
+    // Step 4: Perform PDF document scraping using Google CSE
     try {
       await supabase
         .from('sds_jobs')
         .update({
           status: 'processing',
-          message: 'Searching Google CSE for SDS documents...',
+          message: 'Searching Google CSE for PDF SDS documents...',
           progress: 25
         })
         .eq('id', jobData.id);
@@ -304,8 +331,8 @@ Deno.serve(async (req) => {
       const scrapedDocs = await scrapeSDSDocuments(product_name, max_results);
       
       if (scrapedDocs.length > 0) {
-        // Step 5: Store scraped documents in database
-        console.log('💾 Storing', scrapedDocs.length, 'scraped documents');
+        // Step 5: Store scraped PDF documents in database
+        console.log('💾 Storing', scrapedDocs.length, 'PDF documents');
         
         const documentsToInsert = scrapedDocs.map(doc => ({
           ...doc,
@@ -328,7 +355,7 @@ Deno.serve(async (req) => {
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: `Successfully found and stored ${insertedDocs?.length || 0} SDS documents via Google CSE`,
+            message: `Successfully found and stored ${insertedDocs?.length || 0} PDF SDS documents`,
             progress: 100
           })
           .eq('id', jobData.id);
@@ -340,20 +367,20 @@ Deno.serve(async (req) => {
             job_id: jobData.id,
             status: 'completed',
             results: insertedDocs || [],
-            source: 'google_cse_scraper',
-            message: `Found ${insertedDocs?.length || 0} new SDS documents via Google CSE`
+            source: 'google_cse_pdf_search',
+            message: `Found ${insertedDocs?.length || 0} PDF SDS documents`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       } else {
-        // No documents found via scraping
+        // No PDF documents found via scraping
         await supabase
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: 'No SDS documents found via Google CSE for this search term',
+            message: 'No PDF SDS documents found for this search term',
             progress: 100
           })
           .eq('id', jobData.id);
@@ -363,8 +390,8 @@ Deno.serve(async (req) => {
             job_id: jobData.id,
             status: 'completed',
             results: [],
-            source: 'google_cse_scraper',
-            message: 'No SDS documents found via Google CSE for this search term'
+            source: 'google_cse_pdf_search',
+            message: 'No PDF SDS documents found for this search term'
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -372,7 +399,7 @@ Deno.serve(async (req) => {
         );
       }
     } catch (scrapingError) {
-      console.error('❌ Google CSE scraping process error:', scrapingError);
+      console.error('❌ PDF document search process error:', scrapingError);
       
       // Update job status to failed
       await supabase
@@ -380,7 +407,7 @@ Deno.serve(async (req) => {
         .update({
           status: 'failed',
           error: scrapingError.message,
-          message: 'Google CSE scraping process failed',
+          message: 'PDF document search process failed',
           progress: 0
         })
         .eq('id', jobData.id);
@@ -390,7 +417,7 @@ Deno.serve(async (req) => {
           job_id: jobData.id,
           status: 'failed',
           results: [],
-          error: 'Google CSE scraping process failed',
+          error: 'PDF document search process failed',
           message: scrapingError.message
         }),
         { 
@@ -400,10 +427,10 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('❌ SDS search error:', error);
+    console.error('❌ SDS document search error:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Search failed',
+        error: 'Document search failed',
         details: error.message 
       }),
       { 
