@@ -16,6 +16,12 @@ interface SDSSearchProps {
   facilityData: any;
 }
 
+interface MatchResult {
+  score: number;
+  reasons: string[];
+  autoSelect: boolean;
+}
+
 interface SDSDocument {
   id: string;
   job_id?: string;
@@ -66,6 +72,7 @@ interface SDSDocument {
   cas_number?: string;
   regulatory_notes?: string[];
   created_at: string;
+  confidence?: MatchResult;
 }
 
 const API_BASE_URL = 'https://cheerful-fascination.railway.app';

@@ -20,6 +20,12 @@ interface SDSSelectionDialogProps {
   onSaveSelected: (selectedDoc: any, additionalInfo: any) => void;
 }
 
+interface MatchResult {
+  score: number;
+  reasons: string[];
+  autoSelect: boolean;
+}
+
 interface SDSDocument {
   id: string;
   job_id?: string;
@@ -70,6 +76,7 @@ interface SDSDocument {
   cas_number?: string;
   regulatory_notes?: string[];
   created_at: string;
+  confidence?: MatchResult;
 }
 
 const SDSSelectionDialog = ({ isOpen, onClose, sdsDocuments, onSaveSelected }: SDSSelectionDialogProps) => {
