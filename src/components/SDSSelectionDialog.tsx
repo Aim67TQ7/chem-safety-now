@@ -19,12 +19,14 @@ interface SDSDocument {
   source_url: string;
   file_name: string;
   document_type: string;
+  bucket_url?: string; // Added this property to fix TypeScript errors
+  file_size?: number;  // Added this property for completeness
   h_codes?: Array<{ code: string; description: string }>;
   pictograms?: Array<{ ghs_code: string; name: string; description?: string }>;
   signal_word?: string;
   hazard_statements?: string[];
   precautionary_statements?: string[];
-  regulatory_notes?: string[]; // Added missing property
+  regulatory_notes?: string[];
 }
 
 interface SDSSelectionDialogProps {
@@ -52,9 +54,56 @@ const SDSSelectionDialog = ({
 
   const selectedDoc = sdsDocuments.find(doc => doc.id === selectedDocId);
 
+  const checkForDuplicateDocument = async (sourceUrl: string, productName: string) => {
+    console.log('🔍 Checking for duplicate documents...');
+    
+    const { data: existingDocs, error } = await supabase
+      .from('sds_documents')
+      .select('id, product_name, source_url, bucket_url')
+      .or(`source_url.eq.${sourceUrl},and(product_name.ilike.%${productName}%,source_url.neq.${sourceUrl})`);
+    
+    if (error) {
+      console.error('Error checking for duplicates:', error);
+      return null;
+    }
+    
+    // Check for exact URL match
+    const exactMatch = existingDocs?.find(doc => doc.source_url === sourceUrl);
+    if (exactMatch) {
+      console.log('📋 Found exact duplicate by URL:', exactMatch.id);
+      return exactMatch;
+    }
+    
+    // Check for similar product name
+    const similarMatch = existingDocs?.find(doc => 
+      doc.product_name.toLowerCase().includes(productName.toLowerCase()) ||
+      productName.toLowerCase().includes(doc.product_name.toLowerCase())
+    );
+    
+    if (similarMatch) {
+      console.log('⚠️ Found potential duplicate by product name:', similarMatch.id);
+      return similarMatch;
+    }
+    
+    return null;
+  };
+
   const downloadPDF = async (document: SDSDocument) => {
     if (!document.source_url || downloadStatus[document.id] === 'downloading') {
       return;
+    }
+
+    // Check for duplicates before downloading
+    const existingDoc = await checkForDuplicateDocument(document.source_url, document.product_name);
+    if (existingDoc) {
+      toast({
+        title: "Duplicate Document Found",
+        description: `This document appears to already exist in the system. Using existing version.`,
+        variant: "default"
+      });
+      
+      // Return the existing document instead of downloading
+      return { ...document, bucket_url: existingDoc.bucket_url, id: existingDoc.id };
     }
 
     setIsDownloading(true);
