@@ -100,6 +100,27 @@ Deno.serve(async (req) => {
       console.warn('⚠️ File uploaded but database update failed');
     }
 
+    // Step 6: Trigger text extraction (background task)
+    console.log('🔍 Triggering text extraction...');
+    try {
+      const { data: extractionData, error: extractionError } = await supabase.functions.invoke('extract-sds-text', {
+        body: {
+          document_id: document_id,
+          bucket_url: bucketUrl
+        }
+      });
+
+      if (extractionError) {
+        console.error('❌ Text extraction failed:', extractionError);
+        // Don't fail the whole operation, just log the error
+      } else {
+        console.log('✅ Text extraction completed:', extractionData?.extracted_data);
+      }
+    } catch (extractionError) {
+      console.error('❌ Text extraction error:', extractionError);
+      // Continue without failing the main operation
+    }
+
     console.log('✅ PDF download and storage completed successfully');
 
     return new Response(

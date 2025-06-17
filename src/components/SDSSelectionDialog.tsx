@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,8 +135,8 @@ const SDSSelectionDialog = ({
       const updatedDoc = { ...document, bucket_url: data.bucket_url, file_size: data.file_size };
       
       toast({
-        title: "PDF Downloaded",
-        description: `${document.product_name} PDF has been downloaded and stored successfully.`,
+        title: "PDF Downloaded & Processed",
+        description: `${document.product_name} PDF has been downloaded and SDS data extraction is in progress.`,
         variant: "default"
       });
 
@@ -261,6 +260,25 @@ const SDSSelectionDialog = ({
     return null;
   };
 
+  const getPictogramBadges = (pictograms?: Array<{ ghs_code: string; name: string; description?: string }>) => {
+    if (!pictograms || pictograms.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {pictograms.slice(0, 4).map((pictogram) => (
+          <Badge key={pictogram.ghs_code} variant="outline" className="text-xs bg-yellow-50 border-yellow-200">
+            {pictogram.name}
+          </Badge>
+        ))}
+        {pictograms.length > 4 && (
+          <Badge variant="outline" className="text-xs">
+            +{pictograms.length - 4} more
+          </Badge>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -271,7 +289,7 @@ const SDSSelectionDialog = ({
           </DialogTitle>
           <DialogDescription>
             Multiple SDS documents were found. Please select the correct one and provide additional identifiers to ensure accuracy.
-            {isDownloading && " PDF is being downloaded and stored..."}
+            {isDownloading && " PDF is being downloaded and processed..."}
           </DialogDescription>
         </DialogHeader>
 
@@ -299,6 +317,11 @@ const SDSSelectionDialog = ({
                             {doc.signal_word}
                           </Badge>
                         )}
+                        {doc.document_type && doc.document_type !== 'safety_data_sheet' && (
+                          <Badge variant="outline" className="text-xs">
+                            {doc.document_type.replace(/_/g, ' ')}
+                          </Badge>
+                        )}
                         {getDownloadStatusIcon(doc.id, !!doc.bucket_url)}
                       </div>
                       
@@ -315,22 +338,26 @@ const SDSSelectionDialog = ({
                         )}
                       </div>
 
+                      {/* Enhanced Hazard Information Display */}
                       {doc.h_codes && doc.h_codes.length > 0 && (
                         <div className="mt-2">
                           <div className="flex flex-wrap gap-1">
                             {doc.h_codes.slice(0, 3).map((hCode) => (
-                              <Badge key={hCode.code} variant="outline" className="text-xs">
+                              <Badge key={hCode.code} variant="outline" className="text-xs bg-red-50 border-red-200" title={hCode.description}>
                                 {hCode.code}
                               </Badge>
                             ))}
                             {doc.h_codes.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-                                +{doc.h_codes.length - 3} more
+                                +{doc.h_codes.length - 3} more H-codes
                               </Badge>
                             )}
                           </div>
                         </div>
                       )}
+
+                      {/* Pictogram Display */}
+                      {getPictogramBadges(doc.pictograms)}
                     </div>
                     
                     <div className="flex items-center">
@@ -411,7 +438,7 @@ const SDSSelectionDialog = ({
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : isDownloading ? 'Downloading...' : 'Save Selected SDS'}
+              {isSaving ? 'Saving...' : isDownloading ? 'Processing...' : 'Save Selected SDS'}
             </Button>
           </div>
         </div>
