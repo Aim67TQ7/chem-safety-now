@@ -682,13 +682,13 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="default"
                     onClick={() => handleAskAI(sdsDocument)}
-                    className="w-full"
-                    title={`Ask AI about ${sdsDocument.product_name}`}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    title={`Chat with Sarah, your AI Safety Manager about ${sdsDocument.product_name}`}
                   >
                     <Bot className="w-4 h-4 mr-1" />
-                    Ask AI
+                    Ask Sarah
                   </Button>
                 </div>
               </div>

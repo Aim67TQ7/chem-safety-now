@@ -152,13 +152,14 @@ const FacilityPage = () => {
             
             <div className="flex items-center space-x-3">
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() => setIsAIPopupOpen(true)}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
+                title="Chat with Sarah, your AI Safety Manager"
               >
                 <Bot className="w-4 h-4" />
-                <span>AI Assistant</span>
+                <span>Ask Sarah</span>
               </Button>
               
               <Button
