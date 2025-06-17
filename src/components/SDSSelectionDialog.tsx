@@ -59,15 +59,6 @@ const SDSSelectionDialog = ({
       return;
     }
 
-    if (!brand && !productId && !lotNumber) {
-      toast({
-        title: "Additional Information Required",
-        description: "Please provide at least one identifier (brand, product ID, or lot number).",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSaving(true);
 
     try {
@@ -80,29 +71,33 @@ const SDSSelectionDialog = ({
         total_options: sdsDocuments.length
       };
 
-      // Update the SDS document with additional identification info
-      const { error } = await supabase
-        .from('sds_documents')
-        .update({
-          regulatory_notes: [
-            ...(selectedDoc.regulatory_notes || []),
-            `User-provided identifiers: ${Object.entries(additionalInfo)
-              .filter(([_, value]) => value && value !== true && typeof value === 'string')
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(', ')}`
-          ]
-        })
-        .eq('id', selectedDoc.id);
+      // Update the SDS document with additional identification info (if any provided)
+      const identifiers = Object.entries(additionalInfo)
+        .filter(([_, value]) => value && value !== true && typeof value === 'string')
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
 
-      if (error) {
-        throw error;
+      if (identifiers) {
+        const { error } = await supabase
+          .from('sds_documents')
+          .update({
+            regulatory_notes: [
+              ...(selectedDoc.regulatory_notes || []),
+              `User-provided identifiers: ${identifiers}`
+            ]
+          })
+          .eq('id', selectedDoc.id);
+
+        if (error) {
+          throw error;
+        }
       }
 
       onSaveSelected(selectedDoc, additionalInfo);
       
       toast({
         title: "SDS Saved Successfully",
-        description: `${selectedDoc.product_name} has been saved with your additional identifiers.`,
+        description: `${selectedDoc.product_name} has been saved${identifiers ? ' with your additional identifiers' : ''}.`,
         variant: "default"
       });
 
