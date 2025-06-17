@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import ConfidenceScorer from '../_shared/confidence-scorer.ts'
@@ -261,6 +260,62 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 10):
   }
 }
 
+async function triggerTextExtraction(document: any): Promise<void> {
+  try {
+    console.log('🔍 Triggering text extraction for document:', document.id);
+    
+    // Check if document already has extracted data
+    if (document.h_codes && document.h_codes.length > 0) {
+      console.log('✅ Document already has extracted data, skipping extraction');
+      return;
+    }
+    
+    // Only extract if we have a bucket_url
+    if (!document.bucket_url) {
+      console.log('⚠️ No bucket_url found, skipping text extraction');
+      return;
+    }
+    
+    // Call the extract-sds-text function
+    const { error } = await supabase.functions.invoke('extract-sds-text', {
+      body: {
+        document_id: document.id,
+        bucket_url: document.bucket_url
+      }
+    });
+    
+    if (error) {
+      console.error('❌ Text extraction failed:', error);
+    } else {
+      console.log('✅ Text extraction initiated successfully');
+    }
+  } catch (error) {
+    console.error('❌ Error triggering text extraction:', error);
+  }
+}
+
+async function enhanceDocumentWithExtraction(document: any): Promise<any> {
+  // Check if document needs text extraction
+  const needsExtraction = !document.h_codes || document.h_codes.length === 0;
+  
+  if (needsExtraction && document.bucket_url) {
+    // Trigger extraction in background
+    EdgeRuntime.waitUntil(triggerTextExtraction(document));
+    
+    // Add extraction status to document
+    return {
+      ...document,
+      extraction_status: 'processing',
+      extraction_message: 'Extracting hazard data...'
+    };
+  }
+  
+  return {
+    ...document,
+    extraction_status: document.h_codes?.length > 0 ? 'complete' : 'pending'
+  };
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -303,14 +358,17 @@ Deno.serve(async (req) => {
       if (topMatch.confidence.autoSelect && topMatch.confidence.score >= 0.9) {
         console.log('✅ Auto-selecting top match with high confidence:', topMatch.confidence.score);
         
+        // Enhance document with extraction if needed
+        const enhancedDocument = await enhanceDocumentWithExtraction(topMatch);
+        
         return new Response(
           JSON.stringify({ 
-            results: [topMatch],
+            results: [enhancedDocument],
             source: 'database',
             auto_selected: true,
             confidence_score: topMatch.confidence.score,
             match_reasons: topMatch.confidence.reasons,
-            message: `Auto-selected best match (${(topMatch.confidence.score * 100).toFixed(1)}% confidence)`
+            message: `Auto-selected best match (${(topMatch.confidence.score * 100).toFixed(1)}% confidence)${enhancedDocument.extraction_status === 'processing' ? ' - Extracting additional hazard data...' : ''}`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -318,10 +376,14 @@ Deno.serve(async (req) => {
         );
       }
       
-      // Return ranked results for user selection
+      // Return ranked results for user selection with extraction enhancement
+      const enhancedResults = await Promise.all(
+        rankedDocs.map(doc => enhanceDocumentWithExtraction(doc))
+      );
+      
       return new Response(
         JSON.stringify({ 
-          results: rankedDocs,
+          results: enhancedResults,
           source: 'database',
           auto_selected: false,
           message: `Found ${rankedDocs.length} potential matches - please select the best one`
@@ -413,16 +475,19 @@ Deno.serve(async (req) => {
         if (topNewMatch && topNewMatch.confidence.autoSelect && topNewMatch.confidence.score >= 0.9) {
           console.log('✅ Auto-selecting top new match with high confidence:', topNewMatch.confidence.score);
           
+          // Enhance document with extraction if needed
+          const enhancedDocument = await enhanceDocumentWithExtraction(topNewMatch);
+          
           return new Response(
             JSON.stringify({ 
               job_id: jobData.id,
               status: 'completed',
-              results: [topNewMatch],
+              results: [enhancedDocument],
               source: 'google_cse_pdf_search',
               auto_selected: true,
               confidence_score: topNewMatch.confidence.score,
               match_reasons: topNewMatch.confidence.reasons,
-              message: `Auto-selected best match (${(topNewMatch.confidence.score * 100).toFixed(1)}% confidence)`
+              message: `Auto-selected best match (${(topNewMatch.confidence.score * 100).toFixed(1)}% confidence)${enhancedDocument.extraction_status === 'processing' ? ' - Extracting additional hazard data...' : ''}`
             }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -430,11 +495,16 @@ Deno.serve(async (req) => {
           );
         }
 
+        // Return enhanced results for multiple matches
+        const enhancedNewResults = await Promise.all(
+          rankedNewDocs.map(doc => enhanceDocumentWithExtraction(doc))
+        );
+
         return new Response(
           JSON.stringify({ 
             job_id: jobData.id,
             status: 'completed',
-            results: rankedNewDocs,
+            results: enhancedNewResults,
             source: 'google_cse_pdf_search',
             auto_selected: false,
             message: `Found ${rankedNewDocs.length} PDF SDS documents - please select the best one`

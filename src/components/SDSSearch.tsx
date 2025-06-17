@@ -73,6 +73,8 @@ interface SDSDocument {
   regulatory_notes?: string[];
   created_at: string;
   confidence?: MatchResult;
+  extraction_status?: 'pending' | 'processing' | 'complete';
+  extraction_message?: string;
 }
 
 const API_BASE_URL = 'https://cheerful-fascination.railway.app';
@@ -173,9 +175,15 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
           const autoSelectedDoc = results[0];
           setSearchResults(results);
           
+          let statusMessage = `Auto-selected "${autoSelectedDoc.product_name}" with ${(data.confidence_score * 100).toFixed(1)}% confidence. Matched on: ${data.match_reasons?.join(', ') || 'multiple criteria'}.`;
+          
+          if (autoSelectedDoc.extraction_status === 'processing') {
+            statusMessage += ' Extracting hazard data in background...';
+          }
+          
           toast({
             title: "Perfect Match Found!",
-            description: `Auto-selected "${autoSelectedDoc.product_name}" with ${(data.confidence_score * 100).toFixed(1)}% confidence. Matched on: ${data.match_reasons?.join(', ') || 'multiple criteria'}.`,
+            description: statusMessage,
             variant: "default"
           });
         } else if (results.length > 1) {
@@ -451,6 +459,19 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     return 'text-red-600';
   };
 
+  const getExtractionStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'processing':
+        return <Badge variant="secondary" className="text-xs animate-pulse">Extracting...</Badge>;
+      case 'complete':
+        return <Badge variant="default" className="text-xs">Data Complete</Badge>;
+      case 'pending':
+        return <Badge variant="outline" className="text-xs">Pending Extract</Badge>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Backend Health Status */}
@@ -587,6 +608,9 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                       </Badge>
                     )}
                     
+                    {/* Extraction Status Badge */}
+                    {getExtractionStatusBadge(sdsDocument.extraction_status)}
+                    
                     {sdsDocument.signal_word && (
                       <Badge 
                         variant={getSignalWordVariant(sdsDocument.signal_word)}
@@ -607,6 +631,15 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                     <div className="mb-2">
                       <span className={`text-xs font-medium ${getConfidenceColor(sdsDocument.confidence.score)}`}>
                         Matched on: {sdsDocument.confidence.reasons.join(', ')}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Extraction Message */}
+                  {sdsDocument.extraction_message && (
+                    <div className="mb-2">
+                      <span className="text-xs text-blue-600 italic">
+                        {sdsDocument.extraction_message}
                       </span>
                     </div>
                   )}
