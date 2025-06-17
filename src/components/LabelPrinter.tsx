@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -374,22 +373,22 @@ const LabelPrinter = ({ initialProductName = "", initialManufacturer = "" }: Lab
               <div className="text-xs font-bold mb-1">HMIS</div>
               <div className="flex justify-center">
                 <div className="relative w-16 h-16">
-                  {/* HMIS Diamond with 4 triangular sections */}
+                  {/* HMIS Rectangular format with 2x2 grid */}
                   <svg width="64" height="64" viewBox="0 0 64 64" className="absolute inset-0">
-                    {/* Top triangle - Health (Blue) */}
-                    <path d="M32 4 L52 32 L32 32 Z" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
-                    {/* Right triangle - Flammability (Red) */}
-                    <path d="M52 32 L32 60 L32 32 Z" fill="#EF4444" stroke="#000" strokeWidth="1"/>
-                    {/* Bottom triangle - Physical (Yellow) */}
-                    <path d="M32 60 L12 32 L32 32 Z" fill="#FDE047" stroke="#000" strokeWidth="1"/>
-                    {/* Left triangle - Special (White) */}
-                    <path d="M12 32 L32 4 L32 32 Z" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                    {/* Top-left rectangle - Health (Blue) */}
+                    <rect x="0" y="0" width="32" height="32" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
+                    {/* Top-right rectangle - Flammability (Red) */}
+                    <rect x="32" y="0" width="32" height="32" fill="#EF4444" stroke="#000" strokeWidth="1"/>
+                    {/* Bottom-left rectangle - Physical (Yellow) */}
+                    <rect x="0" y="32" width="32" height="32" fill="#FDE047" stroke="#000" strokeWidth="1"/>
+                    {/* Bottom-right rectangle - Special (White) */}
+                    <rect x="32" y="32" width="32" height="32" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
                     
-                    {/* Numbers and text */}
-                    <text x="32" y="20" textAnchor="middle" className="text-xs font-bold fill-white">{hmisHealth}</text>
-                    <text x="42" y="35" textAnchor="middle" className="text-xs font-bold fill-white">{hmisFlammability}</text>
-                    <text x="32" y="50" textAnchor="middle" className="text-xs font-bold fill-black">{hmisPhysical}</text>
-                    <text x="22" y="35" textAnchor="middle" className="text-xs font-bold fill-black">{hmisSpecial || ""}</text>
+                    {/* Numbers and text in each rectangle */}
+                    <text x="16" y="20" textAnchor="middle" className="text-sm font-bold fill-white">{hmisHealth}</text>
+                    <text x="48" y="20" textAnchor="middle" className="text-sm font-bold fill-white">{hmisFlammability}</text>
+                    <text x="16" y="52" textAnchor="middle" className="text-sm font-bold fill-black">{hmisPhysical}</text>
+                    <text x="48" y="52" textAnchor="middle" className="text-sm font-bold fill-black">{hmisSpecial || ""}</text>
                   </svg>
                 </div>
               </div>
