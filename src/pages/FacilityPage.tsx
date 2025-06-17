@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Printer, Bot, QrCode, AlertCircle } from "lucide-react";
+import { Bot, Printer, QrCode, AlertCircle } from "lucide-react";
 import SDSSearch from "@/components/SDSSearch";
-import LabelPrinter from "@/components/LabelPrinter";
-import AIAssistant from "@/components/AIAssistant";
-import QRCodeGenerator from "@/components/QRCodeGenerator";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
+import QRCodePopup from "@/components/popups/QRCodePopup";
 import { interactionLogger } from "@/services/interactionLogger";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -32,9 +29,9 @@ const FacilityPage = () => {
   const { facilitySlug } = useParams();
   const [searchParams] = useSearchParams();
   const isSetup = searchParams.get('setup') === 'true';
-  const [activeTab, setActiveTab] = useState("search");
   const [isAIPopupOpen, setIsAIPopupOpen] = useState(false);
   const [isLabelPopupOpen, setIsLabelPopupOpen] = useState(false);
+  const [isQRPopupOpen, setIsQRPopupOpen] = useState(false);
   const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +75,7 @@ const FacilityPage = () => {
           eventType: 'facility_page_visit',
           eventDetail: {
             facilitySlug,
-            setupMode: isSetup,
-            tab: activeTab
+            setupMode: isSetup
           }
         });
 
@@ -92,21 +88,7 @@ const FacilityPage = () => {
     };
 
     fetchFacilityData();
-  }, [facilitySlug, isSetup, activeTab]);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    
-    if (facilityData) {
-      interactionLogger.logFacilityUsage({
-        eventType: 'facility_tab_change',
-        eventDetail: {
-          previousTab: activeTab,
-          newTab: value
-        }
-      });
-    }
-  };
+  }, [facilitySlug, isSetup]);
 
   if (loading) {
     return (
@@ -189,6 +171,16 @@ const FacilityPage = () => {
                 <span>Print Labels</span>
               </Button>
               
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsQRPopupOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <QrCode className="w-4 h-4" />
+                <span>QR Codes</span>
+              </Button>
+              
               {isSetup && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   Setup Mode
@@ -203,77 +195,9 @@ const FacilityPage = () => {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content - SDS Search Only */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="search" className="flex items-center space-x-2">
-              <Search className="w-4 h-4" />
-              <span>SDS Search</span>
-            </TabsTrigger>
-            <TabsTrigger value="labels" className="flex items-center space-x-2">
-              <Printer className="w-4 h-4" />
-              <span>Print Labels</span>
-            </TabsTrigger>
-            <TabsTrigger value="assistant" className="flex items-center space-x-2">
-              <Bot className="w-4 h-4" />
-              <span>AI Assistant</span>
-            </TabsTrigger>
-            <TabsTrigger value="qr" className="flex items-center space-x-2">
-              <QrCode className="w-4 h-4" />
-              <span>QR Codes</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="search" className="space-y-6">
-            <SDSSearch facilityData={facilityData} />
-          </TabsContent>
-
-          <TabsContent value="labels" className="space-y-6">
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  GHS Label Printer
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Create compliant chemical labels with HMIS ratings, pictograms, and hazard information
-                </p>
-              </div>
-              <LabelPrinter />
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="assistant" className="space-y-6">
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  Chemical Safety Assistant
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Get expert guidance on chemical safety protocols and regulatory compliance
-                </p>
-              </div>
-              <AIAssistant facilityData={facilityData} />
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="qr" className="space-y-6">
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  QR Code Generator
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Generate QR codes for quick access to safety information and documentation
-                </p>
-              </div>
-              <QRCodeGenerator 
-                facilityData={facilityData}
-                facilityUrl={facilityUrl}
-              />
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <SDSSearch facilityData={facilityData} />
       </main>
 
       {/* Popups */}
@@ -286,6 +210,13 @@ const FacilityPage = () => {
       <LabelPrinterPopup
         isOpen={isLabelPopupOpen}
         onClose={() => setIsLabelPopupOpen(false)}
+      />
+      
+      <QRCodePopup
+        isOpen={isQRPopupOpen}
+        onClose={() => setIsQRPopupOpen(false)}
+        facilityData={facilityData}
+        facilityUrl={facilityUrl}
       />
     </div>
   );
