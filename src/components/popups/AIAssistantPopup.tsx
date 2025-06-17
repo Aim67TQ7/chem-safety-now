@@ -9,9 +9,10 @@ interface AIAssistantPopupProps {
   isOpen: boolean;
   onClose: () => void;
   facilityData: any;
+  selectedDocument?: any;
 }
 
-const AIAssistantPopup = ({ isOpen, onClose, facilityData }: AIAssistantPopupProps) => {
+const AIAssistantPopup = ({ isOpen, onClose, facilityData, selectedDocument }: AIAssistantPopupProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -19,6 +20,11 @@ const AIAssistantPopup = ({ isOpen, onClose, facilityData }: AIAssistantPopupPro
           <DialogTitle className="flex items-center gap-2">
             <Bot className="w-5 h-5" />
             Chemical Safety Assistant
+            {selectedDocument && (
+              <span className="text-sm font-normal text-gray-600">
+                - {selectedDocument.product_name}
+              </span>
+            )}
           </DialogTitle>
           <Button
             variant="ghost"
@@ -31,7 +37,10 @@ const AIAssistantPopup = ({ isOpen, onClose, facilityData }: AIAssistantPopupPro
         </DialogHeader>
         
         <div className="flex-1 overflow-hidden">
-          <AIAssistant facilityData={facilityData} />
+          <AIAssistant 
+            facilityData={facilityData} 
+            selectedDocument={selectedDocument}
+          />
         </div>
       </DialogContent>
     </Dialog>

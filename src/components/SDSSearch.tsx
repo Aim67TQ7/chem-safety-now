@@ -430,6 +430,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   };
 
   const handleAskAI = async (sdsDocument: SDSDocument) => {
+    setSelectedDocument(sdsDocument);
     setShowAIAssistant(true);
     
     await interactionLogger.logSDSInteraction({
@@ -511,7 +512,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         </Alert>
       )}
 
-      {/* Search Header */}
+      {/* Search Header - Simplified to focus on search only */}
       <Card className="p-6">
         <div className="space-y-4">
           <div>
@@ -519,7 +520,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
               Safety Data Sheet Search
             </h2>
             <p className="text-sm text-gray-600">
-              Search for chemical safety information and generate compliance labels
+              Search for chemical safety information. Use the buttons in each result for AI assistance and label generation.
             </p>
           </div>
 
@@ -543,29 +544,10 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
               {isLoading ? 'Searching...' : 'Search'}
             </Button>
           </div>
-
-          <div className="flex space-x-3">
-            <Button 
-              variant="outline"
-              onClick={() => setShowAIAssistant(true)}
-              className="flex items-center space-x-2"
-            >
-              <Bot className="w-4 h-4" />
-              <span>Ask AI Assistant</span>
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => setShowLabelPrinter(true)}
-              className="flex items-center space-x-2"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Create Label</span>
-            </Button>
-          </div>
         </div>
       </Card>
 
-      {/* Search Results */}
+      {/* Search Results - Enhanced with document-specific actions */}
       {searchResults.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -707,6 +689,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                     variant="outline"
                     onClick={() => handleGenerateLabel(sdsDocument)}
                     className="w-full"
+                    title={`Create label for ${sdsDocument.product_name}`}
                   >
                     <Printer className="w-4 h-4 mr-1" />
                     Label
@@ -716,6 +699,7 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
                     variant="outline"
                     onClick={() => handleAskAI(sdsDocument)}
                     className="w-full"
+                    title={`Ask AI about ${sdsDocument.product_name}`}
                   >
                     <Bot className="w-4 h-4 mr-1" />
                     Ask AI
@@ -749,15 +733,23 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       {/* Popups */}
       <AIAssistantPopup
         isOpen={showAIAssistant}
-        onClose={() => setShowAIAssistant(false)}
+        onClose={() => {
+          setShowAIAssistant(false);
+          setSelectedDocument(null);
+        }}
         facilityData={facilityData}
+        selectedDocument={selectedDocument}
       />
 
       <LabelPrinterPopup
         isOpen={showLabelPrinter}
-        onClose={() => setShowLabelPrinter(false)}
+        onClose={() => {
+          setShowLabelPrinter(false);
+          setSelectedDocument(null);
+        }}
         initialProductName={selectedDocument?.product_name}
         initialManufacturer={selectedDocument?.manufacturer}
+        selectedDocument={selectedDocument}
       />
 
       <SDSSelectionDialog

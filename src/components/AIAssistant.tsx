@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { interactionLogger } from "@/services/interactionLogger";
 
 interface AIAssistantProps {
   facilityData: any;
+  selectedDocument?: any;
 }
 
 interface Message {
@@ -19,12 +19,32 @@ interface Message {
   timestamp: Date;
 }
 
-const AIAssistant = ({ facilityData }: AIAssistantProps) => {
+const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
+  const getInitialMessage = () => {
+    let content = `# Chemical Safety Assistant\n\n**Facility:** ${facilityData.facilityName}`;
+    
+    if (selectedDocument) {
+      content += `\n**Chemical:** ${selectedDocument.product_name}`;
+      if (selectedDocument.manufacturer) {
+        content += `\n**Manufacturer:** ${selectedDocument.manufacturer}`;
+      }
+      if (selectedDocument.cas_number) {
+        content += `\n**CAS Number:** ${selectedDocument.cas_number}`;
+      }
+      content += `\n\nI have the complete SDS data for ${selectedDocument.product_name} and can provide specific guidance on handling, storage, PPE, and safety protocols for this chemical.`;
+    } else {
+      content += `\n\nProviding precise guidance on chemical hazards, PPE requirements, safety protocols, and OSHA compliance.`;
+    }
+    
+    content += ` How may I assist you?`;
+    return content;
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'assistant',
-      content: `# Chemical Safety Assistant\n\n**Facility:** ${facilityData.facilityName}\n\nProviding precise guidance on chemical hazards, PPE requirements, safety protocols, and OSHA compliance. How may I assist you?`,
+      content: getInitialMessage(),
       timestamp: new Date()
     }
   ]);
@@ -32,14 +52,28 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  const exampleQueries = [
-    "PPE requirements for acetone handling",
-    "Storage requirements for flammable solvents",
-    "First aid protocol for chemical splash",
-    "Ventilation requirements for spray operations",
-    "Disposal procedures for contaminated materials",
-    "Emergency response for chemical spills"
-  ];
+  const getContextualExampleQueries = () => {
+    if (selectedDocument) {
+      const productName = selectedDocument.product_name;
+      return [
+        `PPE requirements for ${productName}`,
+        `Storage requirements for ${productName}`,
+        `First aid protocol for ${productName} exposure`,
+        `Ventilation requirements when using ${productName}`,
+        `Disposal procedures for ${productName}`,
+        `Emergency response for ${productName} spills`
+      ];
+    }
+    
+    return [
+      "PPE requirements for acetone handling",
+      "Storage requirements for flammable solvents",
+      "First aid protocol for chemical splash",
+      "Ventilation requirements for spray operations",
+      "Disposal procedures for contaminated materials",
+      "Emergency response for chemical spills"
+    ];
+  };
 
   const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
@@ -55,12 +89,14 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
 
     setMessages(prev => [...prev, userMessage]);
     
-    // Log the user question
+    // Log the user question with document context
     await interactionLogger.logFacilityUsage({
       eventType: 'ai_question_asked',
       eventDetail: {
         question: currentMessage,
-        messageCount: messages.length + 1
+        messageCount: messages.length + 1,
+        productName: selectedDocument?.product_name,
+        documentId: selectedDocument?.id
       }
     });
 
@@ -72,19 +108,111 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
       // Process with professional response delay
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Professional chemical safety responses
-      let aiResponse = "## Safety Protocol Assessment\n\nBased on current safety data and OSHA regulations:\n\n";
+      // Enhanced responses with document-specific context
+      let aiResponse = `## Safety Protocol Assessment\n\n`;
+      
+      if (selectedDocument) {
+        aiResponse += `**Product:** ${selectedDocument.product_name}\n`;
+        if (selectedDocument.manufacturer) {
+          aiResponse += `**Manufacturer:** ${selectedDocument.manufacturer}\n`;
+        }
+        aiResponse += `\nBased on the SDS data and current safety regulations:\n\n`;
+      } else {
+        aiResponse += `Based on current safety data and OSHA regulations:\n\n`;
+      }
 
-      if (questionContent.toLowerCase().includes('wd-40') || questionContent.toLowerCase().includes('penetrating oil')) {
-        aiResponse = `## WD-40 (Penetrating Oil) - Safety Protocol\n\n**Hazard Classification:**\n- H222: Extremely flammable aerosol\n- H319: Eye irritation\n\n**Required PPE:**\n- Chemical-resistant nitrile gloves\n- Safety glasses with side shields\n- Adequate ventilation required\n\n**Storage Requirements:**\n- Cool, dry location away from ignition sources\n- Compatible with aluminum applications\n\n**Reference:** Current SDS Section 8`;
-      } else if (questionContent.toLowerCase().includes('acetone')) {
-        aiResponse = `## Acetone - Safety Protocol\n\n**Hazard Profile:**\n- H225: Highly flammable liquid\n- H319: Eye irritation\n- H336: CNS depression effects\n\n**Mandatory PPE:**\n- Nitrile gloves (breakthrough time >480 min)\n- Safety glasses with side protection\n- Local exhaust ventilation required\n\n**Exposure Limits:**\n- TWA: 750 ppm\n- STEL: 1000 ppm\n\n**Storage:** Grounded containers, explosion-proof electrical equipment`;
-      } else if (questionContent.toLowerCase().includes('ppe') || questionContent.toLowerCase().includes('personal protective')) {
-        aiResponse = `## PPE Selection Protocol\n\n**Risk Assessment Required:**\n- Chemical compatibility assessment\n- Exposure duration and concentration analysis\n- Route of exposure evaluation\n\n**Minimum Standards:**\n- **Eyes:** ANSI Z87.1 safety glasses\n- **Hands:** Chemical-resistant gloves per breakthrough data\n- **Respiratory:** When engineering controls insufficient\n- **Body:** Chemical-resistant apron for splash hazards\n\n**Reference:** SDS Section 8 for chemical-specific requirements`;
-      } else if (questionContent.toLowerCase().includes('storage') || questionContent.toLowerCase().includes('store')) {
-        aiResponse = `## Chemical Storage Requirements\n\n**Compatibility Groups:**\n- Segregate incompatible materials per OSHA 1910.106\n- Maintain proper separation distances\n- Ensure adequate ventilation systems\n\n**Container Standards:**\n- Original labeled containers mandatory\n- Secondary containment where required\n- Grounding/bonding for flammable liquids\n\n**Environmental Controls:**\n- Temperature/humidity per SDS Section 7`;
-      } else if (questionContent.toLowerCase().includes('spill') || questionContent.toLowerCase().includes('emergency')) {
-        aiResponse = `## Emergency Response Protocol\n\n**Immediate Actions:**\n1. Evacuate non-essential personnel\n2. Eliminate ignition sources\n3. Don appropriate PPE before response\n\n**Containment Procedures:**\n- Use compatible absorbent materials\n- Prevent environmental release\n- Ventilate area if safe to do so\n\n**Notification:** Report per facility emergency procedures\n\n**Reference:** SDS Section 6 for specific cleanup procedures`;
+      // Enhanced response logic with document context
+      const productName = selectedDocument?.product_name?.toLowerCase() || '';
+      const questionLower = questionContent.toLowerCase();
+
+      if (questionLower.includes('ppe') || questionLower.includes('personal protective')) {
+        aiResponse += `## PPE Requirements`;
+        if (selectedDocument) {
+          aiResponse += ` for ${selectedDocument.product_name}`;
+          
+          // Use actual SDS data if available
+          if (selectedDocument.h_codes) {
+            aiResponse += `\n\n**Based on SDS Hazard Codes:**\n`;
+            selectedDocument.h_codes.slice(0, 3).forEach((hCode: any) => {
+              aiResponse += `- ${hCode.code}: ${hCode.description}\n`;
+            });
+          }
+          
+          if (selectedDocument.hmis_codes) {
+            aiResponse += `\n**HMIS Ratings:**\n`;
+            aiResponse += `- Health: ${selectedDocument.hmis_codes.health || 'N/A'}\n`;
+            aiResponse += `- Flammability: ${selectedDocument.hmis_codes.flammability || 'N/A'}\n`;
+            aiResponse += `- Physical: ${selectedDocument.hmis_codes.physical || 'N/A'}\n`;
+          }
+        }
+        
+        aiResponse += `\n\n**Minimum PPE Standards:**\n`;
+        aiResponse += `- **Eyes:** ANSI Z87.1 safety glasses with side shields\n`;
+        aiResponse += `- **Hands:** Chemical-resistant nitrile gloves\n`;
+        aiResponse += `- **Respiratory:** Local exhaust ventilation required\n`;
+        aiResponse += `- **Body:** Chemical-resistant apron for splash hazards`;
+        
+      } else if (questionLower.includes('storage') || questionLower.includes('store')) {
+        aiResponse += `## Storage Requirements`;
+        if (selectedDocument) {
+          aiResponse += ` for ${selectedDocument.product_name}`;
+        }
+        
+        aiResponse += `\n\n**Compatibility and Segregation:**\n`;
+        aiResponse += `- Store away from incompatible materials\n`;
+        aiResponse += `- Maintain proper ventilation\n`;
+        aiResponse += `- Keep containers tightly closed\n`;
+        aiResponse += `- Store in original labeled containers\n\n`;
+        
+        if (selectedDocument?.signal_word === 'DANGER') {
+          aiResponse += `**⚠️ DANGER Signal Word:** Enhanced storage precautions required\n`;
+        }
+        
+      } else if (questionLower.includes('spill') || questionLower.includes('emergency')) {
+        aiResponse += `## Emergency Response Protocol`;
+        if (selectedDocument) {
+          aiResponse += ` for ${selectedDocument.product_name}`;
+        }
+        
+        aiResponse += `\n\n**Immediate Actions:**\n`;
+        aiResponse += `1. Evacuate non-essential personnel\n`;
+        aiResponse += `2. Eliminate ignition sources\n`;
+        aiResponse += `3. Don appropriate PPE before response\n\n`;
+        
+        if (selectedDocument?.first_aid) {
+          aiResponse += `**First Aid (from SDS):**\n`;
+          if (selectedDocument.first_aid.skin_contact) {
+            aiResponse += `- **Skin Contact:** ${selectedDocument.first_aid.skin_contact}\n`;
+          }
+          if (selectedDocument.first_aid.eye_contact) {
+            aiResponse += `- **Eye Contact:** ${selectedDocument.first_aid.eye_contact}\n`;
+          }
+        }
+        
+      } else {
+        // General response enhanced with document context
+        if (selectedDocument) {
+          aiResponse += `## Chemical Information for ${selectedDocument.product_name}\n\n`;
+          
+          if (selectedDocument.signal_word) {
+            aiResponse += `**Signal Word:** ${selectedDocument.signal_word}\n`;
+          }
+          
+          if (selectedDocument.h_codes && selectedDocument.h_codes.length > 0) {
+            aiResponse += `**Primary Hazards:**\n`;
+            selectedDocument.h_codes.slice(0, 3).forEach((hCode: any) => {
+              aiResponse += `- ${hCode.code}: ${hCode.description}\n`;
+            });
+          }
+          
+          aiResponse += `\n**Recommended Actions:**\n`;
+          aiResponse += `- Review complete SDS document\n`;
+          aiResponse += `- Ensure proper PPE selection\n`;
+          aiResponse += `- Verify ventilation requirements\n`;
+          aiResponse += `- Confirm emergency procedures`;
+        } else {
+          aiResponse += `Please specify your safety question or search for a specific chemical to get detailed guidance.`;
+        }
       }
 
       const responseTime = Date.now() - questionStartTime;
@@ -98,26 +226,17 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Log the AI conversation
+      // Log the AI conversation with document context
       await interactionLogger.logAIConversation({
         question: questionContent,
         response: aiResponse,
         responseTimeMs: responseTime,
         metadata: {
           messageCount: messages.length + 2,
-          responseType: 'professional_guidance'
+          responseType: 'document_specific_guidance',
+          productName: selectedDocument?.product_name,
+          documentId: selectedDocument?.id
         }
-      });
-
-      // Log facility usage
-      await interactionLogger.logFacilityUsage({
-        eventType: 'ai_response_generated',
-        eventDetail: {
-          question: questionContent,
-          responseLength: aiResponse.length,
-          responseTimeMs: responseTime
-        },
-        durationMs: responseTime
       });
 
     } catch (error) {
@@ -154,7 +273,9 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
     await interactionLogger.logFacilityUsage({
       eventType: 'ai_example_query_selected',
       eventDetail: {
-        query: query
+        query: query,
+        productName: selectedDocument?.product_name,
+        documentId: selectedDocument?.id
       }
     });
   };
@@ -171,16 +292,24 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
 
   return (
     <div className="space-y-4">
-      {/* AI Assistant Header */}
+      {/* AI Assistant Header with Document Context */}
       <Card className="p-4">
         <div className="space-y-3">
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center">
               <Bot className="w-5 h-5 text-gray-600 mr-2" />
               Chemical Safety Assistant
+              {selectedDocument && (
+                <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-300 text-xs">
+                  {selectedDocument.product_name}
+                </Badge>
+              )}
             </h3>
             <p className="text-sm text-gray-600">
-              Professional guidance on chemical hazards, safety protocols, and regulatory compliance.
+              {selectedDocument 
+                ? `Providing specific guidance for ${selectedDocument.product_name} based on SDS data and safety protocols.`
+                : "Professional guidance on chemical hazards, safety protocols, and regulatory compliance."
+              }
             </p>
           </div>
 
@@ -191,6 +320,11 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
             <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300 text-xs">
               OSHA Current
             </Badge>
+            {selectedDocument && (
+              <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300 text-xs">
+                Document Context Active
+              </Badge>
+            )}
           </div>
         </div>
       </Card>
@@ -270,14 +404,14 @@ const AIAssistant = ({ facilityData }: AIAssistantProps) => {
         </div>
       </Card>
 
-      {/* Example Queries */}
+      {/* Example Queries - Contextual to selected document */}
       <Card className="p-4">
         <h4 className="text-sm font-semibold text-gray-900 mb-3">
-          Common Safety Queries
+          {selectedDocument ? `Common Questions for ${selectedDocument.product_name}` : 'Common Safety Queries'}
         </h4>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {exampleQueries.map((query, index) => (
+          {getContextualExampleQueries().map((query, index) => (
             <Button
               key={index}
               variant="outline"

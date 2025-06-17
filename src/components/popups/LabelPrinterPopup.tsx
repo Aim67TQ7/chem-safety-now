@@ -10,9 +10,16 @@ interface LabelPrinterPopupProps {
   onClose: () => void;
   initialProductName?: string;
   initialManufacturer?: string;
+  selectedDocument?: any;
 }
 
-const LabelPrinterPopup = ({ isOpen, onClose, initialProductName, initialManufacturer }: LabelPrinterPopupProps) => {
+const LabelPrinterPopup = ({ 
+  isOpen, 
+  onClose, 
+  initialProductName, 
+  initialManufacturer, 
+  selectedDocument 
+}: LabelPrinterPopupProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -20,6 +27,11 @@ const LabelPrinterPopup = ({ isOpen, onClose, initialProductName, initialManufac
           <DialogTitle className="flex items-center gap-2">
             <Printer className="w-5 h-5" />
             GHS Label Printer
+            {selectedDocument && (
+              <span className="text-sm font-normal text-gray-600">
+                - {selectedDocument.product_name}
+              </span>
+            )}
           </DialogTitle>
           <Button
             variant="ghost"
@@ -35,6 +47,7 @@ const LabelPrinterPopup = ({ isOpen, onClose, initialProductName, initialManufac
           <LabelPrinter 
             initialProductName={initialProductName}
             initialManufacturer={initialManufacturer}
+            selectedDocument={selectedDocument}
           />
         </div>
       </DialogContent>
