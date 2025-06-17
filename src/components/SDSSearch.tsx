@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
+import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle, RefreshCw, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
+import SDSSelectionDialog from "@/components/SDSSelectionDialog";
 import { interactionLogger } from "@/services/interactionLogger";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +79,8 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
   const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
   const [backendHealth, setBackendHealth] = useState<'checking' | 'healthy' | 'unhealthy'>('checking');
   const [connectionError, setConnectionError] = useState<string>('');
+  const [showSelectionDialog, setShowSelectionDialog] = useState(false);
+  const [multipleResults, setMultipleResults] = useState<SDSDocument[]>([]);
   const { toast } = useToast();
 
   // Health check on component mount
@@ -155,10 +158,21 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       
       // Handle immediate results or job-based results
       if (data.results) {
-        // Immediate results
         const results = Array.isArray(data.results) ? data.results : [data.results];
         console.log('✅ Setting immediate search results:', results);
-        setSearchResults(results);
+        
+        // If multiple results found, show selection dialog
+        if (results.length > 1) {
+          setMultipleResults(results);
+          setShowSelectionDialog(true);
+          toast({
+            title: "Multiple SDS Documents Found",
+            description: `Found ${results.length} potential matches. Please select the correct one and provide additional identifiers.`,
+            variant: "default"
+          });
+        } else {
+          setSearchResults(results);
+        }
       } else if (data.job_id) {
         // Job-based processing - poll for results
         console.log('⏳ Polling for job results:', data.job_id);
@@ -279,6 +293,26 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
     };
 
     await poll();
+  };
+
+  const handleSaveSelectedSDS = async (selectedDoc: SDSDocument, additionalInfo: any) => {
+    console.log('💾 Saving selected SDS with additional info:', { selectedDoc, additionalInfo });
+    
+    // Add the selected document to the main results
+    setSearchResults([selectedDoc]);
+    setMultipleResults([]);
+    
+    await interactionLogger.logSDSInteraction({
+      sdsDocumentId: selectedDoc.id,
+      actionType: 'save_with_identifiers',
+      searchQuery: searchQuery
+    });
+
+    toast({
+      title: "SDS Document Saved",
+      description: `${selectedDoc.product_name} has been saved with your additional identifiers.`,
+      variant: "default"
+    });
   };
 
   const handleViewDocument = async (sdsDocument: SDSDocument) => {
@@ -469,9 +503,25 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
       {/* Search Results */}
       {searchResults.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Search Results ({searchResults.length})
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Search Results ({searchResults.length})
+            </h3>
+            {searchResults.length === 1 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setMultipleResults([searchResults[0]]);
+                  setShowSelectionDialog(true);
+                }}
+                className="flex items-center space-x-2"
+              >
+                <Save className="w-4 h-4" />
+                <span>Add Identifiers</span>
+              </Button>
+            )}
+          </div>
           
           {searchResults.map((sdsDocument) => (
             <Card key={sdsDocument.id} className="p-4">
@@ -611,6 +661,16 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         onClose={() => setShowLabelPrinter(false)}
         initialProductName={selectedDocument?.product_name}
         initialManufacturer={selectedDocument?.manufacturer}
+      />
+
+      <SDSSelectionDialog
+        isOpen={showSelectionDialog}
+        onClose={() => {
+          setShowSelectionDialog(false);
+          setMultipleResults([]);
+        }}
+        sdsDocuments={multipleResults}
+        onSaveSelected={handleSaveSelectedSDS}
       />
     </div>
   );
