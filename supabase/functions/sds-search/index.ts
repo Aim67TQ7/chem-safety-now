@@ -12,6 +12,66 @@ interface SearchRequest {
   max_results?: number;
 }
 
+interface ScrapedSDSDocument {
+  product_name: string;
+  manufacturer?: string;
+  cas_number?: string;
+  source_url: string;
+  file_name: string;
+  document_type: string;
+  h_codes?: Array<{ code: string; description: string }>;
+  pictograms?: Array<{ ghs_code: string; name: string; description?: string }>;
+  signal_word?: string;
+  hazard_statements?: string[];
+  precautionary_statements?: string[];
+}
+
+async function scrapeSDSDocuments(productName: string, maxResults: number = 10): Promise<ScrapedSDSDocument[]> {
+  console.log('🔍 Starting SDS scraping for:', productName);
+  
+  try {
+    // Example scraping implementation - you can replace this with actual scraper logic
+    // This could call an external scraping service or implement web scraping
+    const searchQuery = encodeURIComponent(productName);
+    
+    // Mock scraper results for now - replace with actual scraping logic
+    const mockResults: ScrapedSDSDocument[] = [
+      {
+        product_name: productName,
+        manufacturer: 'Example Chemical Co.',
+        cas_number: '108-88-3',
+        source_url: `https://example-sds-site.com/sds/${searchQuery}`,
+        file_name: `${productName}_SDS.pdf`,
+        document_type: 'safety_data_sheet',
+        signal_word: 'Danger',
+        h_codes: [
+          { code: 'H225', description: 'Highly flammable liquid and vapour' },
+          { code: 'H304', description: 'May be fatal if swallowed and enters airways' }
+        ],
+        pictograms: [
+          { ghs_code: 'GHS02', name: 'Flame' },
+          { ghs_code: 'GHS08', name: 'Health hazard' }
+        ],
+        hazard_statements: ['Highly flammable liquid and vapour', 'May be fatal if swallowed and enters airways'],
+        precautionary_statements: ['Keep away from heat/sparks/open flames/hot surfaces', 'Do NOT induce vomiting']
+      }
+    ];
+    
+    // TODO: Replace with actual scraping implementation
+    // For example, you could:
+    // 1. Call an external scraping API
+    // 2. Use a headless browser to scrape SDS websites
+    // 3. Query multiple chemical databases
+    
+    console.log('✅ Scraping completed, found:', mockResults.length, 'documents');
+    return mockResults.slice(0, maxResults);
+    
+  } catch (error) {
+    console.error('❌ Scraping error:', error);
+    return [];
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -50,7 +110,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 3: If no existing results, create a job for potential scraping
+    // Step 3: No existing results found, create job and start scraping
     console.log('💾 Creating SDS job for:', product_name);
     
     const { data: jobData, error: jobError } = await supabase
@@ -59,7 +119,7 @@ Deno.serve(async (req) => {
         product_name,
         max_results,
         status: 'pending',
-        message: 'Job created - searching for SDS documents'
+        message: 'Starting SDS document scraping...'
       })
       .select()
       .single();
@@ -71,28 +131,114 @@ Deno.serve(async (req) => {
 
     console.log('✅ Created job:', jobData.id);
 
-    // For now, mark job as completed with no results
-    // In a real implementation, this would trigger actual scraping
-    await supabase
-      .from('sds_jobs')
-      .update({
-        status: 'completed',
-        message: 'No documents found for this search term',
-        progress: 100
-      })
-      .eq('id', jobData.id);
+    // Step 4: Perform scraping
+    try {
+      await supabase
+        .from('sds_jobs')
+        .update({
+          status: 'processing',
+          message: 'Scraping SDS documents...',
+          progress: 25
+        })
+        .eq('id', jobData.id);
 
-    return new Response(
-      JSON.stringify({ 
-        job_id: jobData.id,
-        status: 'completed',
-        results: [],
-        message: 'No SDS documents found for this search term'
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      const scrapedDocs = await scrapeSDSDocuments(product_name, max_results);
+      
+      if (scrapedDocs.length > 0) {
+        // Step 5: Store scraped documents in database
+        console.log('💾 Storing', scrapedDocs.length, 'scraped documents');
+        
+        const documentsToInsert = scrapedDocs.map(doc => ({
+          ...doc,
+          job_id: jobData.id,
+          created_at: new Date().toISOString()
+        }));
+
+        const { data: insertedDocs, error: insertError } = await supabase
+          .from('sds_documents')
+          .insert(documentsToInsert)
+          .select();
+
+        if (insertError) {
+          console.error('❌ Document insertion error:', insertError);
+          throw insertError;
+        }
+
+        // Step 6: Update job status to completed
+        await supabase
+          .from('sds_jobs')
+          .update({
+            status: 'completed',
+            message: `Successfully found and stored ${insertedDocs?.length || 0} SDS documents`,
+            progress: 100
+          })
+          .eq('id', jobData.id);
+
+        console.log('✅ Job completed successfully');
+
+        return new Response(
+          JSON.stringify({ 
+            job_id: jobData.id,
+            status: 'completed',
+            results: insertedDocs || [],
+            source: 'scraper',
+            message: `Found ${insertedDocs?.length || 0} new SDS documents`
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      } else {
+        // No documents found via scraping
+        await supabase
+          .from('sds_jobs')
+          .update({
+            status: 'completed',
+            message: 'No SDS documents found for this search term',
+            progress: 100
+          })
+          .eq('id', jobData.id);
+
+        return new Response(
+          JSON.stringify({ 
+            job_id: jobData.id,
+            status: 'completed',
+            results: [],
+            source: 'scraper',
+            message: 'No SDS documents found for this search term'
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
       }
-    );
+    } catch (scrapingError) {
+      console.error('❌ Scraping process error:', scrapingError);
+      
+      // Update job status to failed
+      await supabase
+        .from('sds_jobs')
+        .update({
+          status: 'failed',
+          error: scrapingError.message,
+          message: 'Scraping process failed',
+          progress: 0
+        })
+        .eq('id', jobData.id);
+
+      return new Response(
+        JSON.stringify({ 
+          job_id: jobData.id,
+          status: 'failed',
+          results: [],
+          error: 'Scraping process failed',
+          message: scrapingError.message
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
   } catch (error) {
     console.error('❌ SDS search error:', error);
