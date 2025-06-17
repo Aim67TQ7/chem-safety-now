@@ -117,12 +117,6 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
         console.log('✅ Supabase Edge Functions connected successfully');
         setBackendHealth('healthy');
         setConnectionError('');
-        
-        toast({
-          title: "Backend Connected",
-          description: "Successfully connected to Supabase Edge Functions.",
-          variant: "default"
-        });
       }
     } catch (error) {
       console.error('❌ Health check error:', error);
@@ -474,40 +468,32 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Backend Health Status */}
-      {backendHealth !== 'healthy' && (
-        <Alert variant={backendHealth === 'unhealthy' ? 'destructive' : 'default'}>
-          {backendHealth === 'checking' ? (
-            <Search className="h-4 w-4 animate-spin" />
-          ) : (
-            <AlertCircle className="h-4 w-4" />
-          )}
+      {/* Backend Health Status - Only show errors */}
+      {backendHealth === 'unhealthy' && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between w-full">
             <div>
-              {backendHealth === 'checking' 
-                ? 'Checking Supabase connection...' 
-                : `Supabase connection failed: ${connectionError || 'Unknown error'}`}
+              Supabase connection failed: {connectionError || 'Unknown error'}
             </div>
-            {backendHealth === 'unhealthy' && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={checkBackendHealth}
-                className="ml-4 flex items-center space-x-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span>Retry</span>
-              </Button>
-            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={checkBackendHealth}
+              className="ml-4 flex items-center space-x-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Retry</span>
+            </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      {backendHealth === 'healthy' && (
+      {backendHealth === 'checking' && (
         <Alert>
-          <CheckCircle className="h-4 w-4" />
+          <Search className="h-4 w-4 animate-spin" />
           <AlertDescription>
-            Supabase connected successfully. Search functionality is available.
+            Checking Supabase connection...
           </AlertDescription>
         </Alert>
       )}
