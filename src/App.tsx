@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import SDSDocumentsPage from "./pages/SDSDocumentsPage";
 import AdminPage from "./pages/AdminPage";
 import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
+import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
+import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +23,8 @@ const App = () => (
           <Route path="/sds-documents" element={<SDSDocumentsPage />} />
           <Route path="/secret-admin-dashboard" element={<AdminPage />} />
           <Route path="/subscribe/:facilitySlug?" element={<SubscriptionRequiredPage />} />
+          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+          <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
           {navItems.map(({ to, page }) => (
             <Route key={to} path={to} element={page} />
           ))}

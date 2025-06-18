@@ -76,12 +76,9 @@ serve(async (req) => {
     logStep("Using price ID", { priceId, billingCycle });
 
     const origin = req.headers.get("origin") || "https://chemlabel-gpt.lovable.app";
-    const successUrl = facilitySlug 
-      ? `${origin}/facility/${facilitySlug}?checkout=success`
-      : `${origin}/?checkout=success`;
-    const cancelUrl = facilitySlug 
-      ? `${origin}/facility/${facilitySlug}?checkout=cancelled`
-      : `${origin}/?checkout=cancelled`;
+    const facilityParam = facilitySlug ? `?facility=${facilitySlug}` : '';
+    const successUrl = `${origin}/subscription/success${facilityParam}`;
+    const cancelUrl = `${origin}/subscription/cancel${facilityParam}`;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

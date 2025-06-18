@@ -6,18 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Zap } from "lucide-react";
 import { SubscriptionService, SubscriptionPlan } from "@/services/subscriptionService";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface SubscriptionPlansModalProps {
   isOpen: boolean;
   onClose: () => void;
   facilityId: string;
   currentPlan?: string;
+  facilitySlug?: string;
 }
 
-const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan }: SubscriptionPlansModalProps) => {
+const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, facilitySlug }: SubscriptionPlansModalProps) => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -32,9 +36,32 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan }: Su
   }, [isOpen]);
 
   const handleSelectPlan = async (plan: SubscriptionPlan) => {
-    // TODO: Implement Stripe checkout
-    console.log('Selected plan:', plan, 'Billing cycle:', billingCycle);
-    // This will be implemented when we add Stripe integration
+    setProcessingPlan(plan.id);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          planId: plan.id,
+          billingCycle,
+          facilitySlug
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+        onClose(); // Close the modal after starting checkout
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Failed to start checkout process. Please try again.');
+    } finally {
+      setProcessingPlan(null);
+    }
   };
 
   const featureDescriptions = {
@@ -156,16 +183,18 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan }: Su
 
                 <Button
                   onClick={() => handleSelectPlan(plan)}
+                  disabled={currentPlan === plan.name.toLowerCase() || processingPlan === plan.id}
                   className={`w-full ${
                     plan.name === 'Premium'
                       ? 'bg-purple-600 hover:bg-purple-700'
                       : 'bg-blue-600 hover:bg-blue-700'
                   }`}
-                  disabled={currentPlan === plan.name.toLowerCase()}
                 >
-                  {currentPlan === plan.name.toLowerCase() 
-                    ? 'Current Plan' 
-                    : `Choose ${plan.name}`
+                  {processingPlan === plan.id 
+                    ? 'Processing...' 
+                    : currentPlan === plan.name.toLowerCase() 
+                      ? 'Current Plan' 
+                      : `Choose ${plan.name}`
                   }
                 </Button>
               </CardContent>
