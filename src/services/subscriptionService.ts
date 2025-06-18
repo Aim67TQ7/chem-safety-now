@@ -116,4 +116,16 @@ export class SubscriptionService {
     return subscription.feature_access_level === 'premium' || 
            (subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0);
   }
+
+  // New method to check if a feature is available for trial users
+  static isFeatureAvailableForTrial(featureName: string): boolean {
+    const trialFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+    return trialFeatures.includes(featureName);
+  }
+
+  // New method to get feature tier
+  static getFeatureTier(featureName: string): 'basic' | 'premium' {
+    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+    return basicFeatures.includes(featureName) ? 'basic' : 'premium';
+  }
 }

@@ -65,6 +65,9 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
     const launchDate = new Date('2025-07-01');
     return currentDate < launchDate;
   };
+
+  // Check if user is subscribed (not trial)
+  const isSubscribed = subscription && ['basic', 'premium'].includes(subscription.subscription_status);
   
   const quickActions = [
     {
@@ -128,6 +131,15 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
 
   const handleQuickAction = async (action: string, feature?: string) => {
     if (feature) {
+      // For trial users, allow access to basic features
+      if (subscription?.subscription_status === 'trial' && subscription?.trial_days_remaining > 0) {
+        const featureTier = SubscriptionService.getFeatureTier(feature);
+        if (featureTier === 'basic') {
+          onQuickAction(action);
+          return;
+        }
+      }
+      
       const hasAccess = await SubscriptionService.checkFeatureAccess(facilityData.id, feature);
       if (!hasAccess) {
         setShowUpgradeModal(true);
@@ -140,11 +152,13 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
 
   return (
     <div className="space-y-6 mb-8 animate-fade-in">
-      {/* Subscription Status Header */}
-      <SubscriptionStatusHeader 
-        facilityId={facilityData.id}
-        onUpgrade={() => setShowUpgradeModal(true)}
-      />
+      {/* Subscription Status Header - Only show for trial users */}
+      {!isSubscribed && (
+        <SubscriptionStatusHeader 
+          facilityId={facilityData.id}
+          onUpgrade={() => setShowUpgradeModal(true)}
+        />
+      )}
 
       {/* Welcome Header */}
       <div className="text-center space-y-2">
@@ -166,7 +180,7 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
         </div>
       </div>
 
-      {/* Quick Actions Grid - Updated to 5 columns to accommodate settings */}
+      {/* Quick Actions Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
         {quickActions.map((action) => (
           <Card 
@@ -181,7 +195,7 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
               <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
               <p className="text-sm text-gray-600">{action.description}</p>
               <div className="flex justify-center items-center gap-2 mt-2">
-                {action.feature === 'label_printing' && subscription && !SubscriptionService.hasPremiumAccess(subscription) && (
+                {action.feature === 'label_printing' && subscription && !SubscriptionService.hasPremiumAccess(subscription) && !isSubscribed && (
                   <Badge variant="outline" className="text-xs text-purple-600 border-purple-200">
                     Premium
                   </Badge>
@@ -235,11 +249,8 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
           </CardContent>
         </Card>
 
-        <FeatureAccessWrapper
-          feature="dashboards"
-          facilityId={facilityData.id}
-          onUpgrade={() => setShowUpgradeModal(true)}
-        >
+        {/* Only wrap dashboard in FeatureAccessWrapper for non-subscribed users */}
+        {isSubscribed ? (
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
@@ -264,7 +275,38 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
               </div>
             </CardContent>
           </Card>
-        </FeatureAccessWrapper>
+        ) : (
+          <FeatureAccessWrapper
+            feature="dashboards"
+            facilityId={facilityData.id}
+            onUpgrade={() => setShowUpgradeModal(true)}
+          >
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
+                  Quick Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">SDS Database</span>
+                    <span className="text-sm font-medium">1000+ Documents</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Search Response</span>
+                    <span className="text-sm font-medium">Under 2 seconds</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">AI Assistant</span>
+                    <Badge variant="outline" className="text-xs">Sarah Ready</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </FeatureAccessWrapper>
+        )}
 
         <Card>
           <CardHeader className="pb-3">
@@ -326,13 +368,15 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
         </CardContent>
       </Card>
 
-      {/* Subscription Plans Modal */}
-      <SubscriptionPlansModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        facilityId={facilityData.id}
-        currentPlan={subscription?.subscription_status}
-      />
+      {/* Subscription Plans Modal - Only show for non-subscribed users */}
+      {!isSubscribed && (
+        <SubscriptionPlansModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          facilityId={facilityData.id}
+          currentPlan={subscription?.subscription_status}
+        />
+      )}
     </div>
   );
 };

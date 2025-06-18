@@ -24,12 +24,29 @@ const FeatureAccessWrapper = ({
   showPreview = false
 }: FeatureAccessWrapperProps) => {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAccess = async () => {
-      const access = await SubscriptionService.checkFeatureAccess(facilityId, feature);
-      setHasAccess(access);
+      const [access, sub] = await Promise.all([
+        SubscriptionService.checkFeatureAccess(facilityId, feature),
+        SubscriptionService.getFacilitySubscription(facilityId)
+      ]);
+      
+      // For trial users, grant access to basic features
+      if (sub && sub.subscription_status === 'trial' && sub.trial_days_remaining > 0) {
+        const featureTier = SubscriptionService.getFeatureTier(feature);
+        if (featureTier === 'basic') {
+          setHasAccess(true);
+        } else {
+          setHasAccess(access);
+        }
+      } else {
+        setHasAccess(access);
+      }
+      
+      setSubscription(sub);
       setLoading(false);
     };
 
@@ -100,7 +117,7 @@ const FeatureAccessWrapper = ({
     );
   }
 
-  // Normal access control for other features or after launch date
+  // If user has access, show the content
   if (hasAccess) {
     return <>{children}</>;
   }
@@ -146,6 +163,7 @@ const FeatureAccessWrapper = ({
   };
 
   const featureInfo = getFeatureInfo();
+  const isTrialUser = subscription?.subscription_status === 'trial' && subscription?.trial_days_remaining > 0;
 
   return (
     <Card className="border-2 border-dashed border-gray-200">
@@ -162,6 +180,13 @@ const FeatureAccessWrapper = ({
             <p className="text-sm text-gray-500">
               Available with {featureInfo.plan} plan
             </p>
+            
+            {/* Special messaging for trial users viewing Premium features */}
+            {isTrialUser && featureInfo.plan === 'Premium' && (
+              <p className="text-sm text-blue-600 font-medium mt-2">
+                Continue accessing this page with a Basic subscription
+              </p>
+            )}
           </div>
           
           {showPreview && (
@@ -175,16 +200,25 @@ const FeatureAccessWrapper = ({
             </div>
           )}
 
-          <Button 
-            onClick={onUpgrade}
-            className={`${
-              featureInfo.plan === 'Premium' 
-                ? 'bg-purple-600 hover:bg-purple-700' 
-                : 'bg-blue-600 hover:bg-blue-700'
-            } text-white px-8 py-2`}
-          >
-            Upgrade to {featureInfo.plan}
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={onUpgrade}
+              className={`${
+                featureInfo.plan === 'Premium' 
+                  ? 'bg-purple-600 hover:bg-purple-700' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } text-white px-8 py-2`}
+            >
+              Upgrade to {featureInfo.plan}
+            </Button>
+            
+            {/* Show "Continue with Basic" option for trial users viewing Premium features */}
+            {isTrialUser && featureInfo.plan === 'Premium' && (
+              <p className="text-xs text-gray-500">
+                or continue with Basic plan to keep accessing this page
+              </p>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
