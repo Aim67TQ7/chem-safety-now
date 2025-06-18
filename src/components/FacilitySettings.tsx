@@ -74,7 +74,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${facilityData.id}-${Date.now()}.${fileExt}`;
-      const filePath = `facility-logos/${fileName}`;
+      const filePath = fileName; // Use just the filename for the storage path
 
       console.log('Uploading to Supabase Storage...', {
         filePath,
@@ -84,11 +84,17 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
       // First, try to remove the old logo if it exists
       if (formData.logo_url) {
         try {
-          const oldPath = formData.logo_url.split('/').pop();
-          if (oldPath) {
+          // Extract the file path from the full URL
+          const url = new URL(formData.logo_url);
+          const pathParts = url.pathname.split('/');
+          const oldFileName = pathParts[pathParts.length - 1];
+          
+          console.log('Attempting to delete old logo:', oldFileName);
+          
+          if (oldFileName && oldFileName !== 'undefined') {
             const { error: deleteError } = await supabase.storage
               .from('facility-logos')
-              .remove([oldPath]);
+              .remove([oldFileName]);
             
             if (deleteError) {
               console.warn('Could not delete old logo:', deleteError);
@@ -101,6 +107,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
         }
       }
 
+      // Upload the new file
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('facility-logos')
         .upload(filePath, file, {
@@ -116,6 +123,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
 
       console.log('Upload successful:', uploadData);
 
+      // Get the public URL
       const { data: urlData } = supabase.storage
         .from('facility-logos')
         .getPublicUrl(filePath);

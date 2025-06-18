@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface FeedbackData {
   id: string;
@@ -11,7 +12,7 @@ export interface FeedbackData {
   ip_address: unknown | null;
   status: 'new' | 'reviewed' | 'resolved';
   priority: 'low' | 'medium' | 'high';
-  metadata: Record<string, any>;
+  metadata: Json | null;
   created_at: string;
   updated_at: string;
 }
@@ -82,6 +83,7 @@ export class FeedbackService {
           contact_info: feedbackData.contact_info as string | null,
           user_agent: feedbackData.user_agent as string | null,
           ip_address: feedbackData.ip_address as unknown | null,
+          metadata: feedbackData.metadata as Json | null,
           facility_name: facilities?.facility_name || 'Unknown Facility'
         };
       });
