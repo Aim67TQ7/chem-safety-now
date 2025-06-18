@@ -96,9 +96,11 @@ async function testPDFReadability(url: string): Promise<PDFReadabilityResult> {
     // Try to extract text using simple decoding first
     const pdfText = new TextDecoder('utf-8', { fatal: false }).decode(pdfArrayBuffer);
     
-    // Check for readable text indicators
+    // Check for readable text indicators (more lenient)
     const sdsIndicators = [
       'safety data sheet',
+      'sds',
+      'msds',
       'section 1',
       'hazard identification',
       'ghs',
@@ -106,7 +108,9 @@ async function testPDFReadability(url: string): Promise<PDFReadabilityResult> {
       'h codes',
       'pictogram',
       'signal word',
-      'cas number'
+      'cas number',
+      'manufacturer',
+      'product identifier'
     ];
     
     let foundIndicators = 0;
@@ -124,24 +128,31 @@ async function testPDFReadability(url: string): Promise<PDFReadabilityResult> {
     const hasSignalWord = /(danger|warning)/i.test(pdfText);
     const hasStructuredData = hasHCodes || hasCAS || hasSignalWord;
     
-    // Calculate quality score based on multiple factors
+    // Calculate quality score based on multiple factors (more generous)
     let qualityScore = 0;
     
-    // Text length score (0-30 points)
-    if (pdfText.length > 1000) qualityScore += 30;
-    else if (pdfText.length > 500) qualityScore += 15;
+    // Text length score (0-25 points) - more generous
+    if (pdfArrayBuffer.byteLength > 50000) qualityScore += 25; // Large file likely has content
+    else if (pdfArrayBuffer.byteLength > 10000) qualityScore += 20;
+    else if (pdfArrayBuffer.byteLength > 1000) qualityScore += 15;
+    else qualityScore += 10; // Any file gets some points
     
-    // SDS indicators score (0-40 points)
-    qualityScore += (foundIndicators / sdsIndicators.length) * 40;
+    // SDS indicators score (0-35 points) - more generous
+    qualityScore += Math.min((foundIndicators / sdsIndicators.length) * 35, 35);
     
-    // Structured data score (0-30 points)
+    // File format bonus (0-15 points)
+    if (contentType.includes('application/pdf')) qualityScore += 15;
+    else if (url.toLowerCase().includes('.pdf')) qualityScore += 10;
+    
+    // Structured data score (0-25 points)
     if (hasHCodes) qualityScore += 10;
-    if (hasCAS) qualityScore += 10;
-    if (hasSignalWord) qualityScore += 10;
+    if (hasCAS) qualityScore += 8;
+    if (hasSignalWord) qualityScore += 7;
     
-    const isReadable = qualityScore >= 30 && foundIndicators >= 2;
+    // Relaxed readability criteria
+    const isReadable = qualityScore >= 10 && (foundIndicators >= 1 || hasStructuredData || pdfArrayBuffer.byteLength > 5000);
     
-    console.log(`📊 Readability test results - Score: ${qualityScore.toFixed(1)}, Readable: ${isReadable}, Indicators: ${foundIndicators}/${sdsIndicators.length}`);
+    console.log(`📊 Readability test results - Score: ${qualityScore.toFixed(1)}, Readable: ${isReadable}, Indicators: ${foundIndicators}/${sdsIndicators.length}, Size: ${pdfArrayBuffer.byteLength} bytes`);
     
     return {
       isReadable,
@@ -190,18 +201,18 @@ async function checkForExistingHigherQualityDocument(productName: string, source
       return true;
     }
     
-    // Check if we have a higher quality document for the same product
+    // Much more relaxed quality comparison - only skip if existing score is significantly higher
     const higherQualityExists = existingDocs.some(doc => {
       const existingScore = doc.extraction_quality_score || 0;
-      return existingScore >= qualityScore;
+      return existingScore >= (qualityScore + 30); // Only skip if existing is 30+ points higher
     });
     
     if (higherQualityExists) {
-      console.log(`⚠️ Higher quality document already exists (score >= ${qualityScore})`);
+      console.log(`⚠️ Significantly higher quality document already exists (threshold: ${qualityScore + 30})`);
       return true;
     }
     
-    console.log('✅ No higher quality document found, proceed with storage');
+    console.log('✅ No significantly higher quality document found, proceed with storage');
     return false;
     
   } catch (error) {
@@ -350,7 +361,7 @@ async function downloadAndValidateDocument(url: string, productName: string): Pr
       return null;
     }
     
-    // Step 2: Check for existing higher quality documents
+    // Step 2: Check for existing higher quality documents (more relaxed)
     const hasHigherQuality = await checkForExistingHigherQualityDocument(
       productName, 
       url, 
@@ -358,7 +369,7 @@ async function downloadAndValidateDocument(url: string, productName: string): Pr
     );
     
     if (hasHigherQuality) {
-      console.log(`⚠️ Skipping document - higher quality version already exists: ${url}`);
+      console.log(`⚠️ Skipping document - significantly higher quality version already exists: ${url}`);
       return null;
     }
     
@@ -374,8 +385,8 @@ async function downloadAndValidateDocument(url: string, productName: string): Pr
       is_readable: readabilityResult.isReadable
     };
     
-    // Step 4: Extract basic data from readable text
-    if (readabilityResult.hasStructuredData) {
+    // Step 4: Extract basic data from readable text if available
+    if (readabilityResult.hasStructuredData && readabilityResult.extractedText) {
       const extractedData = extractSDSDataFromContent(readabilityResult.extractedText, productName, url);
       Object.assign(document, extractedData);
     }
@@ -389,7 +400,7 @@ async function downloadAndValidateDocument(url: string, productName: string): Pr
 }
 
 async function scrapeSDSDocuments(productName: string, maxResults: number = 3): Promise<ScrapedSDSDocument[]> {
-  console.log('🔍 Starting Google CSE SDS document search with quality validation for:', productName);
+  console.log('🔍 Starting Google CSE SDS document search with relaxed quality validation for:', productName);
   
   try {
     // Step 1: Search using Google CSE with PDF focus
@@ -418,7 +429,7 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 3): 
       return [];
     }
     
-    // Step 3: Process PDF documents with quality validation
+    // Step 3: Process PDF documents with relaxed quality validation
     const validatedDocs: ScrapedSDSDocument[] = [];
     
     for (let i = 0; i < Math.min(pdfResults.length, maxResults * 3); i++) { // Test more than needed
@@ -430,7 +441,7 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 3): 
           validatedDocs.push(doc);
           console.log(`✅ Successfully validated PDF: ${result.title} (Score: ${doc.extraction_quality_score})`);
           
-          // Stop when we have enough high-quality documents
+          // Stop when we have enough documents
           if (validatedDocs.length >= maxResults) {
             break;
           }
@@ -445,11 +456,11 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 3): 
     const sortedDocs = validatedDocs.sort((a, b) => (b.extraction_quality_score || 0) - (a.extraction_quality_score || 0));
     const topQualityDocs = sortedDocs.slice(0, maxResults);
     
-    console.log(`✅ Document validation completed, found ${topQualityDocs.length} high-quality PDF documents`);
+    console.log(`✅ Document validation completed, found ${topQualityDocs.length} validated PDF documents`);
     return topQualityDocs;
     
   } catch (error) {
-    console.error('❌ SDS document search error:', error);
+    console.error('❌ SDS document search and validation process error:', error);
     throw error;
   }
 }
@@ -519,7 +530,7 @@ Deno.serve(async (req) => {
   try {
     const { product_name, max_results = 10 }: SearchRequest = await req.json();
     
-    console.log('🔍 SDS document search request with quality validation:', { product_name, max_results });
+    console.log('🔍 SDS document search request with relaxed quality validation:', { product_name, max_results });
 
     // Step 1: Search existing documents in the database, prioritize high-quality ones
     const { data: existingDocs, error: searchError } = await supabase
@@ -554,9 +565,9 @@ Deno.serve(async (req) => {
       
       const topMatch = topThreeResults[0];
       
-      // Auto-select if confidence is high enough and quality is good
-      if (topMatch.confidence.autoSelect && topMatch.confidence.score >= 0.9 && (topMatch.extraction_quality_score || 0) >= 50) {
-        console.log('✅ Auto-selecting top match with high confidence and quality:', topMatch.confidence.score);
+      // Relaxed auto-selection criteria
+      if (topMatch.confidence.autoSelect && topMatch.confidence.score >= 0.8 && (topMatch.extraction_quality_score || 0) >= 15) {
+        console.log('✅ Auto-selecting top match with good confidence and quality:', topMatch.confidence.score);
         
         // Enhance document with extraction if needed
         const enhancedDocument = await enhanceDocumentWithExtraction(topMatch);
@@ -595,8 +606,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 3: No existing results found, create job and start PDF document search with quality validation
-    console.log('💾 Creating SDS job for validated PDF document search:', product_name);
+    // Step 3: No existing results found, create job and start PDF document search with relaxed validation
+    console.log('💾 Creating SDS job for relaxed PDF document search:', product_name);
     
     const { data: jobData, error: jobError } = await supabase
       .from('sds_jobs')
@@ -604,7 +615,7 @@ Deno.serve(async (req) => {
         product_name,
         max_results: 3, // Limit new search results to 3 as well
         status: 'pending',
-        message: 'Starting Google CSE PDF document search with quality validation...'
+        message: 'Starting Google CSE PDF document search with relaxed quality validation...'
       })
       .select()
       .single();
@@ -616,13 +627,13 @@ Deno.serve(async (req) => {
 
     console.log('✅ Created job:', jobData.id);
 
-    // Step 4: Perform PDF document scraping with quality validation
+    // Step 4: Perform PDF document scraping with relaxed quality validation
     try {
       await supabase
         .from('sds_jobs')
         .update({
           status: 'processing',
-          message: 'Searching and validating PDF SDS documents...',
+          message: 'Searching and validating PDF SDS documents with relaxed criteria...',
           progress: 25
         })
         .eq('id', jobData.id);
@@ -669,16 +680,16 @@ Deno.serve(async (req) => {
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: `Successfully found and validated ${topThreeNewResults.length} high-quality PDF SDS documents`,
+            message: `Successfully found and validated ${topThreeNewResults.length} PDF SDS documents with relaxed criteria`,
             progress: 100
           })
           .eq('id', jobData.id);
 
         console.log('✅ Job completed successfully');
 
-        // Auto-select if confidence is high enough and quality is good
-        if (topNewMatch && topNewMatch.confidence.autoSelect && topNewMatch.confidence.score >= 0.9 && (topNewMatch.extraction_quality_score || 0) >= 50) {
-          console.log('✅ Auto-selecting top new match with high confidence and quality:', topNewMatch.confidence.score);
+        // Relaxed auto-selection criteria for new documents
+        if (topNewMatch && topNewMatch.confidence.autoSelect && topNewMatch.confidence.score >= 0.8 && (topNewMatch.extraction_quality_score || 0) >= 15) {
+          console.log('✅ Auto-selecting top new match with good confidence and quality:', topNewMatch.confidence.score);
           
           // Enhance document with extraction if needed
           const enhancedDocument = await enhanceDocumentWithExtraction(topNewMatch);
@@ -713,7 +724,7 @@ Deno.serve(async (req) => {
             results: enhancedNewResults,
             source: 'google_cse_pdf_search',
             auto_selected: false,
-            message: `Found ${topThreeNewResults.length} validated PDF SDS documents - please select the best one`
+            message: `Found ${topThreeNewResults.length} validated PDF SDS documents with relaxed criteria - please select the best one`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -725,7 +736,7 @@ Deno.serve(async (req) => {
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: 'No readable/extractable PDF SDS documents found for this search term',
+            message: 'No PDF SDS documents found for this search term even with relaxed criteria',
             progress: 100
           })
           .eq('id', jobData.id);
@@ -737,7 +748,7 @@ Deno.serve(async (req) => {
             results: [],
             source: 'google_cse_pdf_search',
             auto_selected: false,
-            message: 'No readable/extractable PDF SDS documents found for this search term'
+            message: 'No PDF SDS documents found for this search term even with relaxed criteria'
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }

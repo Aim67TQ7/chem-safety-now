@@ -73,21 +73,32 @@ export class ConfidenceScorer {
   }
 
   /**
-   * Score product name match
+   * Score product name match (more generous)
    */
   private scoreProductName(searchTerm: string, documentName: string): { score: number; reason?: string } {
     const similarity = this.stringSimilarity(searchTerm, documentName);
     
-    if (similarity >= 0.95) return { score: 1, reason: 'Product name (exact)' };
-    if (similarity >= 0.8) return { score: 0.9, reason: 'Product name (near match)' };
-    if (similarity >= 0.6) return { score: 0.7, reason: 'Product name (partial)' };
+    if (similarity >= 0.9) return { score: 1, reason: 'Product name (exact)' };
+    if (similarity >= 0.7) return { score: 0.9, reason: 'Product name (near match)' };
+    if (similarity >= 0.5) return { score: 0.8, reason: 'Product name (good match)' };
+    if (similarity >= 0.3) return { score: 0.6, reason: 'Product name (partial)' };
     
-    // Check if search term is contained within document name
+    // Check if search term is contained within document name (more generous)
     const searchLower = searchTerm.toLowerCase();
     const docLower = documentName.toLowerCase();
     
     if (docLower.includes(searchLower) || searchLower.includes(docLower)) {
-      return { score: 0.6, reason: 'Product name (contains)' };
+      return { score: 0.7, reason: 'Product name (contains)' };
+    }
+    
+    // Check for common words/tokens
+    const searchWords = searchLower.split(/\s+/).filter(word => word.length > 2);
+    const docWords = docLower.split(/\s+/).filter(word => word.length > 2);
+    
+    const commonWords = searchWords.filter(word => docWords.includes(word));
+    if (commonWords.length > 0) {
+      const ratio = commonWords.length / Math.max(searchWords.length, docWords.length);
+      return { score: Math.min(0.5 + ratio * 0.3, 0.8), reason: 'Product name (word match)' };
     }
     
     return { score: similarity };
@@ -113,15 +124,24 @@ export class ConfidenceScorer {
   }
 
   /**
-   * Score manufacturer match
+   * Score manufacturer match (more generous)
    */
   private scoreManufacturer(searchTerm: string, documentManufacturer?: string): { score: number; reason?: string } {
     if (!documentManufacturer) return { score: 0 };
     
     const similarity = this.stringSimilarity(searchTerm, documentManufacturer);
     
-    if (similarity >= 0.9) return { score: 1, reason: 'Manufacturer (exact)' };
-    if (similarity >= 0.7) return { score: 0.8, reason: 'Manufacturer (close)' };
+    if (similarity >= 0.8) return { score: 1, reason: 'Manufacturer (exact)' };
+    if (similarity >= 0.6) return { score: 0.8, reason: 'Manufacturer (close)' };
+    if (similarity >= 0.4) return { score: 0.6, reason: 'Manufacturer (partial)' };
+    
+    // Check for contained matches
+    const searchLower = searchTerm.toLowerCase();
+    const mfgLower = documentManufacturer.toLowerCase();
+    
+    if (mfgLower.includes(searchLower) || searchLower.includes(mfgLower)) {
+      return { score: 0.7, reason: 'Manufacturer (contains)' };
+    }
     
     return { score: similarity };
   }
@@ -197,8 +217,8 @@ export class ConfidenceScorer {
     if (manufacturerResult.reason) reasons.push(manufacturerResult.reason);
     if (contentResult.reason) reasons.push(contentResult.reason);
     
-    // Determine auto-selection
-    const autoSelect = totalScore >= 0.9;
+    // More relaxed auto-selection criteria
+    const autoSelect = totalScore >= 0.7; // Lowered from 0.9 to 0.7
     
     return {
       score: totalScore,
