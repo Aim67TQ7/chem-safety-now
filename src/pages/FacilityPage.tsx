@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import SDSSearch from "@/components/SDSSearch";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import QRCodePopup from "@/components/popups/QRCodePopup";
+import FacilityDashboard from "@/components/FacilityDashboard";
 import { interactionLogger } from "@/services/interactionLogger";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +37,7 @@ const FacilityPage = () => {
   const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDashboard, setShowDashboard] = useState(true);
   const { toast } = useToast();
 
   // Generate facility URL for QR code - always use production domain
@@ -67,6 +70,11 @@ const FacilityPage = () => {
 
         setFacilityData(data);
         
+        // Check if dashboard should be hidden (user has searched before)
+        const dashboardKey = `dashboard_hidden_${data.id}`;
+        const isDashboardHidden = localStorage.getItem(dashboardKey) === 'true';
+        setShowDashboard(!isDashboardHidden);
+        
         // Set facility context for interaction logging
         interactionLogger.setUserContext(null, data.id);
         
@@ -89,6 +97,41 @@ const FacilityPage = () => {
 
     fetchFacilityData();
   }, [facilitySlug, isSetup]);
+
+  const handleSearchStart = () => {
+    if (showDashboard && facilityData) {
+      // Hide dashboard and remember this preference
+      setShowDashboard(false);
+      localStorage.setItem(`dashboard_hidden_${facilityData.id}`, 'true');
+      
+      // Log dashboard dismissal
+      interactionLogger.logFacilityUsage({
+        eventType: 'dashboard_dismissed',
+        eventDetail: {
+          facilitySlug,
+          dismissedBy: 'search_initiated'
+        }
+      });
+    }
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'search':
+        // Focus will be handled by SDSSearch component
+        handleSearchStart();
+        break;
+      case 'qr-codes':
+        setIsQRPopupOpen(true);
+        break;
+      case 'labels':
+        setIsLabelPopupOpen(true);
+        break;
+      case 'ai-assistant':
+        setIsAIPopupOpen(true);
+        break;
+    }
+  };
 
   if (loading) {
     return (
@@ -196,9 +239,23 @@ const FacilityPage = () => {
         </div>
       </header>
 
-      {/* Main Content - SDS Search Only */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SDSSearch facilityData={facilityData} />
+        {/* Dashboard - conditionally rendered */}
+        {showDashboard && (
+          <div className="transition-all duration-500 ease-out">
+            <FacilityDashboard 
+              facilityData={facilityData} 
+              onQuickAction={handleQuickAction}
+            />
+          </div>
+        )}
+        
+        {/* SDS Search */}
+        <SDSSearch 
+          facilityData={facilityData} 
+          onSearchStart={handleSearchStart}
+        />
       </main>
 
       {/* Popups */}
