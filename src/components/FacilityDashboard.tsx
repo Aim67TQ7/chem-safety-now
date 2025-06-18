@@ -48,6 +48,36 @@ const FacilityDashboard = ({
   onQuickAction,
   onUpgrade
 }: FacilityDashboardProps) => {
+  // Helper function to check feature access
+  const hasFeatureAccess = (featureName: string): boolean => {
+    if (!subscriptionInfo) return true; // Default to true if no subscription info
+    
+    // Define feature tiers
+    const basicFeatures = ['sds_search', 'qr_codes', 'desktop_links'];
+    const premiumFeatures = ['label_printing', 'ai_assistant'];
+    
+    const isBasicFeature = basicFeatures.includes(featureName);
+    const isPremiumFeature = premiumFeatures.includes(featureName);
+    
+    // Trial users get access to all features
+    if (subscriptionInfo.subscription_status === 'trial' && subscriptionInfo.trial_days_remaining > 0) {
+      return true;
+    }
+    
+    // Premium users get access to everything
+    if (subscriptionInfo.subscription_status === 'premium') {
+      return true;
+    }
+    
+    // Basic users get access to basic features only
+    if (subscriptionInfo.subscription_status === 'basic') {
+      return isBasicFeature;
+    }
+    
+    // Expired users get no access to premium features
+    return isBasicFeature;
+  };
+
   const quickActions = [
     {
       id: 'search',
@@ -219,10 +249,10 @@ const FacilityDashboard = ({
                 key={action.id}
                 className={`
                   relative cursor-pointer transition-all duration-300 hover:shadow-lg group
-                  ${action.featured ? 'ring-2 ring-blue-500 ring-opacity-50 animate-pulse bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : ''}
+                  ${action.featured ? 'ring-2 ring-blue-500 ring-opacity-50 animate-strobe bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : ''}
                   ${isLocked ? 'opacity-60' : ''}
                 `}
-                onClick={() => isLocked ? onUpgrade() : onQuickAction(action.id)}
+                onClick={() => isLocked ? onUpgrade && onUpgrade() : onQuickAction(action.id)}
               >
                 {action.featured && (
                   <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
