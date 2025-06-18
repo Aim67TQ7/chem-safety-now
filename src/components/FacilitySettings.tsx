@@ -29,6 +29,7 @@ interface FacilitySettingsProps {
 
 const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     facility_name: facilityData.facility_name || "",
     contact_name: facilityData.contact_name || "",
@@ -48,80 +49,139 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('Starting logo upload process...', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      facilityId: facilityData.id
+    });
+
     // Validate file type
     if (!file.type.startsWith('image/')) {
+      console.error('Invalid file type:', file.type);
       toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
+      console.error('File too large:', file.size);
       toast.error("File size must be less than 2MB");
       return;
     }
 
-    setIsLoading(true);
+    setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${facilityData.id}-${Date.now()}.${fileExt}`;
       const filePath = `facility-logos/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('Uploading to Supabase Storage...', {
+        filePath,
+        bucketName: 'facility-logos'
+      });
+
+      // First, try to remove the old logo if it exists
+      if (formData.logo_url) {
+        try {
+          const oldPath = formData.logo_url.split('/').pop();
+          if (oldPath) {
+            const { error: deleteError } = await supabase.storage
+              .from('facility-logos')
+              .remove([oldPath]);
+            
+            if (deleteError) {
+              console.warn('Could not delete old logo:', deleteError);
+            } else {
+              console.log('Old logo deleted successfully');
+            }
+          }
+        } catch (deleteErr) {
+          console.warn('Error deleting old logo:', deleteErr);
+        }
+      }
+
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('facility-logos')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
-        toast.error("Failed to upload logo");
+        console.error('Upload error details:', uploadError);
+        toast.error(`Failed to upload logo: ${uploadError.message}`);
         return;
       }
+
+      console.log('Upload successful:', uploadData);
 
       const { data: urlData } = supabase.storage
         .from('facility-logos')
         .getPublicUrl(filePath);
+
+      console.log('Generated public URL:', urlData.publicUrl);
 
       setFormData(prev => ({
         ...prev,
         logo_url: urlData.publicUrl
       }));
 
-      toast.success("Logo uploaded successfully");
+      toast.success("Logo uploaded successfully! Don't forget to save your changes.");
     } catch (error) {
-      console.error('Error uploading logo:', error);
-      toast.error("Failed to upload logo");
+      console.error('Unexpected error during upload:', error);
+      toast.error(`Failed to upload logo: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
+      // Reset the file input
+      event.target.value = '';
     }
   };
 
   const handleSave = async () => {
+    console.log('Starting save process...', {
+      facilityId: facilityData.id,
+      formData,
+      hasChanges
+    });
+
+    if (!formData.facility_name || !formData.contact_name || !formData.email) {
+      toast.error("Please fill in all required fields (marked with *)");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      const updateData = {
+        facility_name: formData.facility_name,
+        contact_name: formData.contact_name,
+        email: formData.email,
+        address: formData.address,
+        logo_url: formData.logo_url,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Updating facility with data:', updateData);
+
       const { data, error } = await supabase
         .from('facilities')
-        .update({
-          facility_name: formData.facility_name,
-          contact_name: formData.contact_name,
-          email: formData.email,
-          address: formData.address,
-          logo_url: formData.logo_url,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', facilityData.id)
         .select()
         .single();
 
       if (error) {
-        console.error('Error updating facility:', error);
-        toast.error("Failed to update facility information");
+        console.error('Database update error:', error);
+        toast.error(`Failed to update facility: ${error.message}`);
         return;
       }
 
+      console.log('Update successful:', data);
       onFacilityUpdate(data);
-      toast.success("Facility information updated successfully");
+      toast.success("Facility information updated successfully!");
     } catch (error) {
-      console.error('Error saving facility data:', error);
-      toast.error("Failed to save changes");
+      console.error('Unexpected error during save:', error);
+      toast.error(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -164,9 +224,14 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
               </Avatar>
               <div className="space-y-2">
                 <Label htmlFor="logo-upload" className="cursor-pointer">
-                  <Button variant="outline" className="cursor-pointer" disabled={isLoading}>
+                  <Button 
+                    variant="outline" 
+                    className="cursor-pointer" 
+                    disabled={isUploading || isLoading}
+                    type="button"
+                  >
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload New Logo
+                    {isUploading ? "Uploading..." : "Upload New Logo"}
                   </Button>
                 </Label>
                 <Input
@@ -175,10 +240,16 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                   accept="image/*"
                   onChange={handleLogoUpload}
                   className="hidden"
+                  disabled={isUploading || isLoading}
                 />
                 <p className="text-xs text-gray-500">
                   Recommended: Square image, max 2MB (JPG, PNG)
                 </p>
+                {formData.logo_url && (
+                  <p className="text-xs text-green-600">
+                    Logo ready - remember to save changes
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -193,6 +264,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 onChange={(e) => handleInputChange('facility_name', e.target.value)}
                 placeholder="Enter facility name"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -204,6 +276,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 onChange={(e) => handleInputChange('contact_name', e.target.value)}
                 placeholder="Enter contact person name"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -216,6 +289,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter email address"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -226,26 +300,34 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 placeholder="Enter facility address"
+                disabled={isLoading}
               />
             </div>
           </div>
 
           {/* Save Button */}
-          <div className="flex justify-end pt-4 border-t">
-            <Button 
-              onClick={handleSave}
-              disabled={!hasChanges || isLoading}
-              className="min-w-24"
-            >
-              {isLoading ? (
-                "Saving..."
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
+          <div className="flex justify-between items-center pt-4 border-t">
+            {hasChanges && (
+              <p className="text-sm text-orange-600">
+                You have unsaved changes
+              </p>
+            )}
+            <div className="ml-auto">
+              <Button 
+                onClick={handleSave}
+                disabled={!hasChanges || isLoading || isUploading}
+                className="min-w-24"
+              >
+                {isLoading ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
