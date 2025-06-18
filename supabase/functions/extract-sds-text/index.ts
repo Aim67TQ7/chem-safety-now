@@ -7,223 +7,211 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-// SDS Reference Constants
-const H_CODES: Record<string, string> = {
-  'H200': 'Unstable explosive',
-  'H201': 'Explosive; mass explosion hazard',
-  'H202': 'Explosive; severe projection hazard',
-  'H203': 'Explosive; fire, blast or projection hazard',
-  'H204': 'Fire or projection hazard',
-  'H205': 'May mass explode in fire',
-  'H220': 'Extremely flammable gas',
-  'H221': 'Flammable gas',
-  'H222': 'Extremely flammable aerosol',
-  'H223': 'Flammable aerosol',
-  'H224': 'Extremely flammable liquid and vapour',
-  'H225': 'Highly flammable liquid and vapour',
-  'H226': 'Flammable liquid and vapour',
-  'H228': 'Flammable solid',
-  'H240': 'Heating may cause an explosion',
-  'H241': 'Heating may cause a fire or explosion',
-  'H242': 'Heating may cause a fire',
-  'H250': 'Catches fire spontaneously if exposed to air',
-  'H251': 'Self-heating: may catch fire',
-  'H252': 'Self-heating in large quantities: may catch fire',
-  'H260': 'In contact with water releases flammable gases which may ignite spontaneously',
-  'H261': 'In contact with water releases flammable gas',
-  'H270': 'May cause or intensify fire; oxidiser',
-  'H271': 'May cause fire or explosion; strong oxidiser',
-  'H272': 'May intensify fire; oxidiser',
-  'H280': 'Contains gas under pressure; may explode if heated',
-  'H281': 'Contains refrigerated gas; may cause cryogenic burns or injury',
-  'H290': 'May be corrosive to metals',
-  'H300': 'Fatal if swallowed',
-  'H301': 'Toxic if swallowed',
-  'H302': 'Harmful if swallowed',
-  'H304': 'May be fatal if swallowed and enters airways',
-  'H310': 'Fatal in contact with skin',
-  'H311': 'Toxic in contact with skin',
-  'H312': 'Harmful in contact with skin',
-  'H314': 'Causes severe skin burns and eye damage',
-  'H315': 'Causes skin irritation',
-  'H317': 'May cause an allergic skin reaction',
-  'H318': 'Causes serious eye damage',
-  'H319': 'Causes serious eye irritation',
-  'H330': 'Fatal if inhaled',
-  'H331': 'Toxic if inhaled',
-  'H332': 'Harmful if inhaled',
-  'H334': 'May cause allergy or asthma symptoms or breathing difficulties if inhaled',
-  'H335': 'May cause respiratory irritation',
-  'H336': 'May cause drowsiness or dizziness',
-  'H340': 'May cause genetic defects',
-  'H341': 'Suspected of causing genetic defects',
-  'H350': 'May cause cancer',
-  'H351': 'Suspected of causing cancer',
-  'H360': 'May damage fertility or the unborn child',
-  'H361': 'Suspected of damaging fertility or the unborn child',
-  'H362': 'May cause harm to breast-fed children',
-  'H370': 'Causes damage to organs',
-  'H371': 'May cause damage to organs',
-  'H372': 'Causes damage to organs through prolonged or repeated exposure',
-  'H373': 'May cause damage to organs through prolonged or repeated exposure',
-  'H400': 'Very toxic to aquatic life',
-  'H401': 'Toxic to aquatic life',
-  'H402': 'Harmful to aquatic life',
-  'H410': 'Very toxic to aquatic life with long lasting effects',
-  'H411': 'Toxic to aquatic life with long lasting effects',
-  'H412': 'Harmful to aquatic life with long lasting effects',
-  'H413': 'May cause long lasting harmful effects to aquatic life'
-};
-
-const PICTOGRAM_NAMES: Record<string, string> = {
-  'GHS01': 'Explosive',
-  'GHS02': 'Flammable',
-  'GHS03': 'Oxidising',
-  'GHS04': 'Compressed Gas',
-  'GHS05': 'Corrosive',
-  'GHS06': 'Toxic',
-  'GHS07': 'Warning',
-  'GHS08': 'Health Hazard',
-  'GHS09': 'Environmental'
-};
-
-const H_CODE_TO_PICTOGRAM: Record<string, string> = {
-  'H200': 'GHS01', 'H201': 'GHS01', 'H202': 'GHS01', 'H203': 'GHS01',
-  'H220': 'GHS02', 'H221': 'GHS02', 'H222': 'GHS02', 'H223': 'GHS02',
-  'H224': 'GHS02', 'H225': 'GHS02', 'H226': 'GHS02', 'H228': 'GHS02',
-  'H270': 'GHS03', 'H271': 'GHS03', 'H272': 'GHS03',
-  'H280': 'GHS04', 'H281': 'GHS04',
-  'H290': 'GHS05', 'H314': 'GHS05',
-  'H300': 'GHS06', 'H301': 'GHS06', 'H310': 'GHS06', 'H311': 'GHS06',
-  'H330': 'GHS06', 'H331': 'GHS06',
-  'H302': 'GHS07', 'H312': 'GHS07', 'H315': 'GHS07', 'H317': 'GHS07',
-  'H318': 'GHS07', 'H319': 'GHS07', 'H332': 'GHS07', 'H335': 'GHS07',
-  'H334': 'GHS08', 'H340': 'GHS08', 'H341': 'GHS08', 'H350': 'GHS08',
-  'H351': 'GHS08', 'H360': 'GHS08', 'H361': 'GHS08', 'H362': 'GHS08',
-  'H370': 'GHS08', 'H371': 'GHS08', 'H372': 'GHS08', 'H373': 'GHS08',
-  'H400': 'GHS09', 'H410': 'GHS09', 'H411': 'GHS09', 'H412': 'GHS09', 'H413': 'GHS09'
-};
-
-const SDS_INDICATORS = [
-  "safety data sheet",
-  "section 1: identification",
-  "section 1 identification",
-  "hazard identification",
-  "prepared in accordance with osha 29 cfr 1910.1200",
-  "ghs classification",
-  "pictograms",
-  "signal word",
-  "h-statements",
-  "precautionary statements",
-  "material safety data sheet",
-  "msds"
-];
-
-const REGULATORY_INDICATORS = [
-  "regulatory data sheet",
-  "rds",
-  "this product is an article and therefore is not subject to the requirements",
-  "not subject to osha's hazard communication standard",
-  "not subject to osha hazard communication standard",
-  "regulations and industry standards",
-  "this is not a safety data sheet",
-  "article as defined by osha",
-  "manufactured item which has a specific shape or design"
-];
-
-interface ExtractionRequest {
+interface ExtractRequest {
   document_id: string;
-  bucket_url: string;
+  bucket_url?: string;
 }
 
-function extractHCodes(text: string): Array<{ code: string; description: string }> {
-  const hCodeRegex = /H(\d{3})/g;
-  const matches = text.match(hCodeRegex) || [];
-  const uniqueCodes = [...new Set(matches)];
+interface SDSExtractedData {
+  manufacturer?: string;
+  cas_number?: string;
+  h_codes?: Array<{ code: string; description: string }>;
+  pictograms?: Array<{ ghs_code: string; name: string; description?: string }>;
+  signal_word?: string;
+  hazard_statements?: string[];
+  precautionary_statements?: string[];
+  physical_hazards?: string[];
+  health_hazards?: string[];
+  environmental_hazards?: string[];
+  first_aid?: Record<string, string>;
+  nfpa_codes?: Record<string, number>;
+  hmis_codes?: Record<string, number>;
+  full_text?: string;
+  extraction_quality_score?: number;
+  is_readable?: boolean;
+}
+
+function calculateExtractionQuality(extractedData: SDSExtractedData, textLength: number): number {
+  let score = 0;
   
-  return uniqueCodes
-    .filter(code => H_CODES[code])
-    .map(code => ({
-      code,
-      description: H_CODES[code]
+  // Basic text length (0-20 points)
+  if (textLength > 2000) score += 20;
+  else if (textLength > 1000) score += 15;
+  else if (textLength > 500) score += 10;
+  else if (textLength > 200) score += 5;
+  
+  // Essential SDS data (0-50 points)
+  if (extractedData.h_codes && extractedData.h_codes.length > 0) score += 15;
+  if (extractedData.signal_word) score += 10;
+  if (extractedData.cas_number) score += 10;
+  if (extractedData.manufacturer) score += 5;
+  if (extractedData.pictograms && extractedData.pictograms.length > 0) score += 10;
+  
+  // Additional hazard information (0-20 points)
+  if (extractedData.hazard_statements && extractedData.hazard_statements.length > 0) score += 5;
+  if (extractedData.precautionary_statements && extractedData.precautionary_statements.length > 0) score += 5;
+  if (extractedData.physical_hazards && extractedData.physical_hazards.length > 0) score += 3;
+  if (extractedData.health_hazards && extractedData.health_hazards.length > 0) score += 3;
+  if (extractedData.environmental_hazards && extractedData.environmental_hazards.length > 0) score += 2;
+  if (extractedData.first_aid && Object.keys(extractedData.first_aid).length > 0) score += 2;
+  
+  // Rating system codes (0-10 points)
+  if (extractedData.nfpa_codes && Object.keys(extractedData.nfpa_codes).length > 0) score += 5;
+  if (extractedData.hmis_codes && Object.keys(extractedData.hmis_codes).length > 0) score += 5;
+  
+  return Math.min(score, 100); // Cap at 100
+}
+
+function extractSDSData(text: string): SDSExtractedData {
+  console.log('🔍 Extracting SDS data from text...');
+  
+  const data: SDSExtractedData = {};
+  
+  // Extract manufacturer
+  const manufacturerMatch = text.match(/(?:manufacturer|company)[:\s]*([^\n\r]{1,100})/i);
+  if (manufacturerMatch) {
+    data.manufacturer = manufacturerMatch[1].trim().replace(/[^\w\s&.,'-]/g, '');
+  }
+  
+  // Extract CAS number
+  const casMatch = text.match(/CAS[\s#]*:?\s*(\d{2,7}-\d{2}-\d)/i);
+  if (casMatch) {
+    data.cas_number = casMatch[1];
+  }
+  
+  // Extract H-codes with descriptions
+  const hCodeMatches = text.match(/H\d{3}[^\n\r]*/gi) || [];
+  if (hCodeMatches.length > 0) {
+    data.h_codes = hCodeMatches.map(match => {
+      const code = match.match(/H\d{3}/)?.[0] || '';
+      const description = match.replace(/H\d{3}\s*:?\s*/, '').trim();
+      return { code, description };
+    }).filter(item => item.code);
+  }
+  
+  // Extract signal word
+  const signalWordMatch = text.match(/signal word[:\s]*(danger|warning)/i);
+  if (signalWordMatch) {
+    data.signal_word = signalWordMatch[1].toLowerCase();
+  }
+  
+  // Extract hazard statements
+  const hazardStatements = hCodeMatches
+    .map(match => match.replace(/H\d{3}\s*:?\s*/, '').trim())
+    .filter(statement => statement.length > 10);
+  if (hazardStatements.length > 0) {
+    data.hazard_statements = hazardStatements;
+  }
+  
+  // Extract precautionary statements (P-codes)
+  const pCodeMatches = text.match(/P\d{3}[^\n\r]*/gi) || [];
+  if (pCodeMatches.length > 0) {
+    data.precautionary_statements = pCodeMatches.map(match => 
+      match.replace(/P\d{3}\s*:?\s*/, '').trim()
+    );
+  }
+  
+  // Extract GHS pictograms
+  const pictogramMatches = text.match(/GHS\d{2}|flame|skull|exclamation|health hazard|corrosion|explosive|oxidizing|gas cylinder/gi) || [];
+  if (pictogramMatches.length > 0) {
+    data.pictograms = [...new Set(pictogramMatches)].map(match => ({
+      ghs_code: match.match(/GHS\d{2}/i)?.[0] || '',
+      name: match.toLowerCase(),
+      description: `${match} pictogram`
     }));
+  }
+  
+  // Extract physical hazards
+  const physicalHazardKeywords = ['flammable', 'explosive', 'oxidizing', 'corrosive', 'irritant', 'compressed gas'];
+  const physicalHazards = physicalHazardKeywords.filter(keyword => 
+    text.toLowerCase().includes(keyword)
+  );
+  if (physicalHazards.length > 0) {
+    data.physical_hazards = physicalHazards;
+  }
+  
+  // Extract health hazards
+  const healthHazardKeywords = ['toxic', 'carcinogenic', 'mutagenic', 'reproductive toxicity', 'respiratory sensitizer'];
+  const healthHazards = healthHazardKeywords.filter(keyword => 
+    text.toLowerCase().includes(keyword)
+  );
+  if (healthHazards.length > 0) {
+    data.health_hazards = healthHazards;
+  }
+  
+  // Extract environmental hazards
+  const envHazardKeywords = ['hazardous to aquatic life', 'environmental hazard', 'ozone layer'];
+  const environmentalHazards = envHazardKeywords.filter(keyword => 
+    text.toLowerCase().includes(keyword)
+  );
+  if (environmentalHazards.length > 0) {
+    data.environmental_hazards = environmentalHazards;
+  }
+  
+  // Extract first aid information
+  const firstAidMatch = text.match(/first aid measures?[:\s]*([^]*?)(?=\n\s*\d+\.|$)/i);
+  if (firstAidMatch) {
+    data.first_aid = {
+      general: firstAidMatch[1].trim().substring(0, 500)
+    };
+  }
+  
+  // Extract NFPA codes
+  const nfpaMatch = text.match(/NFPA[:\s]*(\d)[:\s-]*(\d)[:\s-]*(\d)/i);
+  if (nfpaMatch) {
+    data.nfpa_codes = {
+      health: parseInt(nfpaMatch[1]),
+      flammability: parseInt(nfpaMatch[2]),
+      reactivity: parseInt(nfpaMatch[3])
+    };
+  }
+  
+  // Extract HMIS codes
+  const hmisMatch = text.match(/HMIS[:\s]*(\d)[:\s-]*(\d)[:\s-]*(\d)/i);
+  if (hmisMatch) {
+    data.hmis_codes = {
+      health: parseInt(hmisMatch[1]),
+      flammability: parseInt(hmisMatch[2]),
+      reactivity: parseInt(hmisMatch[3])
+    };
+  }
+  
+  // Store full text (truncated for storage)
+  data.full_text = text.substring(0, 10000);
+  
+  // Calculate quality score
+  data.extraction_quality_score = calculateExtractionQuality(data, text.length);
+  data.is_readable = data.extraction_quality_score >= 30;
+  
+  console.log(`✅ Extracted SDS data with quality score: ${data.extraction_quality_score}`);
+  
+  return data;
 }
 
-function extractPictograms(hCodes: Array<{ code: string; description: string }>): Array<{ ghs_code: string; name: string; description?: string }> {
-  const pictogramCodes = new Set<string>();
-  
-  hCodes.forEach(({ code }) => {
-    const pictogramCode = H_CODE_TO_PICTOGRAM[code];
-    if (pictogramCode) {
-      pictogramCodes.add(pictogramCode);
+async function downloadAndExtractPDF(url: string): Promise<SDSExtractedData> {
+  try {
+    console.log('📥 Downloading PDF for extraction:', url);
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; SDS-Extractor/1.0)',
+        'Accept': 'application/pdf,*/*'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to download PDF: ${response.status}`);
     }
-  });
-  
-  return Array.from(pictogramCodes).map(ghs_code => ({
-    ghs_code,
-    name: PICTOGRAM_NAMES[ghs_code] || ghs_code,
-    description: `GHS ${PICTOGRAM_NAMES[ghs_code]} pictogram`
-  }));
-}
-
-function extractSignalWord(text: string): string | null {
-  const signalWordRegex = /Signal\s+Word[:\s]*(DANGER|WARNING)/i;
-  const match = text.match(signalWordRegex);
-  return match ? match[1].toUpperCase() : null;
-}
-
-function extractCASNumber(text: string): string | null {
-  const casRegex = /CAS[:\s]*(\d{2,7}-\d{2}-\d)/i;
-  const match = text.match(casRegex);
-  return match ? match[1] : null;
-}
-
-function classifyDocumentType(text: string): string {
-  const lowerText = text.toLowerCase();
-  
-  const regulatoryScore = REGULATORY_INDICATORS.reduce((score, indicator) => {
-    return score + (lowerText.includes(indicator.toLowerCase()) ? 1 : 0);
-  }, 0);
-  
-  const sdsScore = SDS_INDICATORS.reduce((score, indicator) => {
-    return score + (lowerText.includes(indicator.toLowerCase()) ? 1 : 0);
-  }, 0);
-  
-  if (regulatoryScore > sdsScore) {
-    return lowerText.includes('article') ? 'regulatory_sheet_article' : 'regulatory_sheet';
-  } else if (sdsScore > 0) {
-    return 'safety_data_sheet';
+    
+    const pdfArrayBuffer = await response.arrayBuffer();
+    const pdfText = new TextDecoder('utf-8', { fatal: false }).decode(pdfArrayBuffer);
+    
+    return extractSDSData(pdfText);
+    
+  } catch (error) {
+    console.error('❌ Error downloading/extracting PDF:', error);
+    throw error;
   }
-  
-  return 'unknown_document';
-}
-
-function extractHazardStatements(text: string): string[] {
-  const statements: string[] = [];
-  const hazardSectionRegex = /(?:hazard statements?|h-statements?)[:\s]*(.*?)(?:\n\s*\n|precautionary|section|$)/is;
-  const match = text.match(hazardSectionRegex);
-  
-  if (match && match[1]) {
-    const hazardText = match[1];
-    const lines = hazardText.split('\n').map(line => line.trim()).filter(line => line.length > 10);
-    statements.push(...lines.slice(0, 10)); // Limit to first 10 statements
-  }
-  
-  return statements;
-}
-
-function extractPrecautionaryStatements(text: string): string[] {
-  const statements: string[] = [];
-  const precautionaryRegex = /(?:precautionary statements?|p-statements?)[:\s]*(.*?)(?:\n\s*\n|section|$)/is;
-  const match = text.match(precautionaryRegex);
-  
-  if (match && match[1]) {
-    const precautionaryText = match[1];
-    const lines = precautionaryText.split('\n').map(line => line.trim()).filter(line => line.length > 10);
-    statements.push(...lines.slice(0, 10)); // Limit to first 10 statements
-  }
-  
-  return statements;
 }
 
 Deno.serve(async (req) => {
@@ -232,108 +220,81 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { document_id, bucket_url }: ExtractionRequest = await req.json();
+    const { document_id, bucket_url }: ExtractRequest = await req.json();
     
-    console.log('🔍 Starting text extraction for document:', document_id);
-    
-    // Download PDF from storage
-    const pdfResponse = await fetch(bucket_url);
-    if (!pdfResponse.ok) {
-      throw new Error(`Failed to download PDF: ${pdfResponse.status}`);
+    console.log('🔍 Starting SDS text extraction for document:', document_id);
+
+    // Get document details
+    const { data: document, error: docError } = await supabase
+      .from('sds_documents')
+      .select('*')
+      .eq('id', document_id)
+      .single();
+
+    if (docError || !document) {
+      throw new Error('Document not found');
     }
-    
-    const pdfArrayBuffer = await pdfResponse.arrayBuffer();
-    console.log('📄 PDF downloaded, size:', pdfArrayBuffer.byteLength);
-    
-    // For now, we'll use a simple text extraction approach
-    // In production, you'd want to use a proper PDF parsing library
-    const pdfText = new TextDecoder().decode(pdfArrayBuffer);
-    
-    // If the PDF is binary, we'll get mostly garbage text
-    // Let's try to extract what we can or return a placeholder
-    let extractedText = '';
-    try {
-      // Simple heuristic: if we have readable text content
-      if (pdfText.includes('Section') || pdfText.includes('H3') || pdfText.includes('GHS')) {
-        extractedText = pdfText;
-      } else {
-        // Fallback for binary PDFs - we'll extract basic info from filename/URL
-        extractedText = `Safety Data Sheet - Text extraction pending\nDocument requires advanced PDF parsing`;
-      }
-    } catch (error) {
-      console.warn('Text extraction fallback used:', error);
-      extractedText = 'Text extraction pending - PDF requires processing';
+
+    console.log('📄 Found document:', document.product_name);
+
+    // Check if document already has extracted data
+    if (document.h_codes && document.h_codes.length > 0 && document.extraction_quality_score > 0) {
+      console.log('✅ Document already has extracted data, skipping extraction');
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Document already has extracted data',
+          quality_score: document.extraction_quality_score
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    // Use bucket_url if provided, otherwise use source_url
+    const extractionUrl = bucket_url || document.source_url;
     
-    console.log('📊 Extracted text length:', extractedText.length);
+    if (!extractionUrl) {
+      throw new Error('No URL available for extraction');
+    }
+
+    // Extract data from PDF
+    const extractedData = await downloadAndExtractPDF(extractionUrl);
     
-    // Extract all the required constants
-    const hCodes = extractHCodes(extractedText);
-    const pictograms = extractPictograms(hCodes);
-    const signalWord = extractSignalWord(extractedText);
-    const casNumber = extractCASNumber(extractedText);
-    const documentType = classifyDocumentType(extractedText);
-    const hazardStatements = extractHazardStatements(extractedText);
-    const precautionaryStatements = extractPrecautionaryStatements(extractedText);
-    
-    console.log('✅ Extracted data:', {
-      hCodes: hCodes.length,
-      pictograms: pictograms.length,
-      signalWord,
-      documentType,
-      casNumber
-    });
-    
-    // Update the document in the database
+    // Update document with extracted data
     const { error: updateError } = await supabase
       .from('sds_documents')
       .update({
-        full_text: extractedText,
-        document_type: documentType,
-        h_codes: hCodes,
-        pictograms: pictograms,
-        signal_word: signalWord,
-        cas_number: casNumber,
-        hazard_statements: hazardStatements,
-        precautionary_statements: precautionaryStatements,
-        regulatory_notes: [
-          ...(extractedText.includes('Text extraction pending') ? ['Automatic text extraction pending'] : []),
-          `Processed: ${new Date().toISOString()}`
-        ]
+        ...extractedData,
+        updated_at: new Date().toISOString()
       })
       .eq('id', document_id);
-    
+
     if (updateError) {
-      throw new Error(`Database update failed: ${updateError.message}`);
+      console.error('❌ Error updating document:', updateError);
+      throw updateError;
     }
-    
-    console.log('✅ Document updated successfully');
-    
+
+    console.log('✅ Successfully extracted and stored SDS data');
+
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         success: true,
-        extracted_data: {
-          h_codes: hCodes,
-          pictograms: pictograms,
-          signal_word: signalWord,
-          cas_number: casNumber,
-          document_type: documentType,
-          text_length: extractedText.length
-        }
+        extracted_data: extractedData,
+        quality_score: extractedData.extraction_quality_score,
+        message: `Successfully extracted SDS data with ${extractedData.extraction_quality_score}% quality score`
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ Text extraction error:', error);
+    console.error('❌ SDS text extraction error:', error);
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         success: false,
-        error: error.message
+        error: 'Text extraction failed',
+        details: error.message 
       }),
-      {
+      { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }

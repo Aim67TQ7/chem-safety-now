@@ -298,6 +298,7 @@ export type Database = {
           created_at: string | null
           document_type: string | null
           environmental_hazards: Json | null
+          extraction_quality_score: number | null
           file_name: string
           file_size: number | null
           file_type: string | null
@@ -308,6 +309,7 @@ export type Database = {
           health_hazards: Json | null
           hmis_codes: Json | null
           id: string
+          is_readable: boolean | null
           job_id: string | null
           manufacturer: string | null
           nfpa_codes: Json | null
@@ -327,6 +329,7 @@ export type Database = {
           created_at?: string | null
           document_type?: string | null
           environmental_hazards?: Json | null
+          extraction_quality_score?: number | null
           file_name: string
           file_size?: number | null
           file_type?: string | null
@@ -337,6 +340,7 @@ export type Database = {
           health_hazards?: Json | null
           hmis_codes?: Json | null
           id?: string
+          is_readable?: boolean | null
           job_id?: string | null
           manufacturer?: string | null
           nfpa_codes?: Json | null
@@ -356,6 +360,7 @@ export type Database = {
           created_at?: string | null
           document_type?: string | null
           environmental_hazards?: Json | null
+          extraction_quality_score?: number | null
           file_name?: string
           file_size?: number | null
           file_type?: string | null
@@ -366,6 +371,7 @@ export type Database = {
           health_hazards?: Json | null
           hmis_codes?: Json | null
           id?: string
+          is_readable?: boolean | null
           job_id?: string | null
           manufacturer?: string | null
           nfpa_codes?: Json | null
