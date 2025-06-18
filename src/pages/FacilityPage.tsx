@@ -8,9 +8,12 @@ import QRCodeGenerator from "@/components/QRCodeGenerator";
 import LabelPrinter from "@/components/LabelPrinter";
 import AIAssistant from "@/components/AIAssistant";
 import DesktopLinkGenerator from "@/components/DesktopLinkGenerator";
+import FacilitySettings from "@/components/FacilitySettings";
 import FeatureAccessWrapper from "@/components/FeatureAccessWrapper";
 import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
 import { SubscriptionService } from "@/services/subscriptionService";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Settings } from "lucide-react";
 
 interface FacilityData {
   id: string;
@@ -75,6 +78,10 @@ const FacilityPage = () => {
     fetchFacilityData();
   }, [facilitySlug, navigate]);
 
+  const handleFacilityUpdate = (updatedData: FacilityData) => {
+    setFacilityData(updatedData);
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading facility...</div>;
   }
@@ -136,6 +143,13 @@ const FacilityPage = () => {
             <AIAssistant facilityData={facilityData} />
           </FeatureAccessWrapper>
         );
+      case 'settings':
+        return (
+          <FacilitySettings 
+            facilityData={facilityData} 
+            onFacilityUpdate={handleFacilityUpdate}
+          />
+        );
       default:
         return <FacilityDashboard facilityData={facilityData} onQuickAction={handleQuickAction} />;
     }
@@ -158,6 +172,9 @@ const FacilityPage = () => {
       case 'ai-assistant':
         setCurrentView('ai-assistant');
         break;
+      case 'settings':
+        setCurrentView('settings');
+        break;
       default:
         setCurrentView('dashboard');
     }
@@ -169,7 +186,37 @@ const FacilityPage = () => {
         facilityId={facilityData.id} 
         onUpgrade={handleUpgrade}
       />
-      <h1 className="text-2xl font-bold mb-4">{facilityData.facility_name} Dashboard</h1>
+      
+      {/* Header with navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          {currentView !== 'dashboard' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentView('dashboard')}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </Button>
+          )}
+          <h1 className="text-2xl font-bold">{facilityData.facility_name} Dashboard</h1>
+        </div>
+        
+        {currentView !== 'settings' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentView('settings')}
+            className="flex items-center space-x-2"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Settings</span>
+          </Button>
+        )}
+      </div>
+
       {renderView()}
     </div>
   );

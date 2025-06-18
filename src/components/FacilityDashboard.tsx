@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,8 @@ import {
   FileText,
   QrCode,
   Printer,
-  Bot
+  Bot,
+  Settings
 } from "lucide-react";
 import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
 import SubscriptionPlansModal from "./SubscriptionPlansModal";
@@ -91,6 +91,14 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
       action: "ai-assistant",
       color: "bg-orange-500 hover:bg-orange-600",
       feature: "ai_assistant"
+    },
+    {
+      icon: Settings,
+      title: "Facility Settings",
+      description: "Update facility information",
+      action: "settings",
+      color: "bg-gray-500 hover:bg-gray-600",
+      feature: null
     }
   ];
 
@@ -150,8 +158,8 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
         </div>
       </div>
 
-      {/* Quick Actions Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Quick Actions Grid - Updated to 5 columns to accommodate settings */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
         {quickActions.map((action) => (
           <Card 
             key={action.action}
