@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,7 +94,7 @@ const FacilityPage = () => {
     return <div className="min-h-screen flex items-center justify-center">Facility not found.</div>;
   }
 
-  const facilityUrl = `https://chemlabel-gpt.lovable.app/facility/${facilityData.slug}`;
+  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
 
   const handleUpgrade = () => {
     navigate(`/subscribe/${facilitySlug}`);
