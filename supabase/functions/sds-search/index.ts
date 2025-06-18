@@ -341,18 +341,21 @@ Deno.serve(async (req) => {
 
     console.log('📊 Found existing documents:', existingDocs?.length || 0);
 
-    // Step 2: If we have results, rank them by confidence
+    // Step 2: If we have results, rank them by confidence and limit to top 3
     if (existingDocs && existingDocs.length > 0) {
       console.log('🎯 Calculating confidence scores for existing documents...');
       
       const rankedDocs = confidenceScorer.rankDocuments(product_name, existingDocs);
       
+      // Limit to top 3 results
+      const topThreeResults = rankedDocs.slice(0, 3);
+      
       // Log confidence scores for debugging
-      rankedDocs.forEach((doc, index) => {
+      topThreeResults.forEach((doc, index) => {
         console.log(`📋 Document ${index + 1}: ${doc.product_name} - Score: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
       });
       
-      const topMatch = rankedDocs[0];
+      const topMatch = topThreeResults[0];
       
       // Auto-select if confidence is high enough
       if (topMatch.confidence.autoSelect && topMatch.confidence.score >= 0.9) {
@@ -376,9 +379,9 @@ Deno.serve(async (req) => {
         );
       }
       
-      // Return ranked results for user selection with extraction enhancement
+      // Return top 3 ranked results for user selection with extraction enhancement
       const enhancedResults = await Promise.all(
-        rankedDocs.map(doc => enhanceDocumentWithExtraction(doc))
+        topThreeResults.map(doc => enhanceDocumentWithExtraction(doc))
       );
       
       return new Response(
@@ -386,7 +389,7 @@ Deno.serve(async (req) => {
           results: enhancedResults,
           source: 'database',
           auto_selected: false,
-          message: `Found ${rankedDocs.length} potential matches - please select the best one`
+          message: `Found ${topThreeResults.length} potential matches - please select the best one`
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -401,7 +404,7 @@ Deno.serve(async (req) => {
       .from('sds_jobs')
       .insert({
         product_name,
-        max_results,
+        max_results: 3, // Limit new search results to 3 as well
         status: 'pending',
         message: 'Starting Google CSE PDF document search...'
       })
@@ -426,7 +429,7 @@ Deno.serve(async (req) => {
         })
         .eq('id', jobData.id);
 
-      const scrapedDocs = await scrapeSDSDocuments(product_name, max_results);
+      const scrapedDocs = await scrapeSDSDocuments(product_name, 3); // Limit to 3 scraped documents
       
       if (scrapedDocs.length > 0) {
         // Step 5: Store scraped PDF documents in database
@@ -448,23 +451,26 @@ Deno.serve(async (req) => {
           throw insertError;
         }
 
-        // Step 6: Rank the new documents by confidence
+        // Step 6: Rank the new documents by confidence and limit to top 3
         console.log('🎯 Calculating confidence scores for new documents...');
         const rankedNewDocs = confidenceScorer.rankDocuments(product_name, insertedDocs || []);
         
+        // Limit to top 3 results
+        const topThreeNewResults = rankedNewDocs.slice(0, 3);
+        
         // Log confidence scores for debugging
-        rankedNewDocs.forEach((doc, index) => {
+        topThreeNewResults.forEach((doc, index) => {
           console.log(`📋 New Document ${index + 1}: ${doc.product_name} - Score: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
         });
         
-        const topNewMatch = rankedNewDocs[0];
+        const topNewMatch = topThreeNewResults[0];
         
         // Step 7: Update job status to completed
         await supabase
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: `Successfully found and stored ${rankedNewDocs.length} PDF SDS documents`,
+            message: `Successfully found and stored ${topThreeNewResults.length} PDF SDS documents`,
             progress: 100
           })
           .eq('id', jobData.id);
@@ -495,9 +501,9 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Return enhanced results for multiple matches
+        // Return enhanced top 3 results for multiple matches
         const enhancedNewResults = await Promise.all(
-          rankedNewDocs.map(doc => enhanceDocumentWithExtraction(doc))
+          topThreeNewResults.map(doc => enhanceDocumentWithExtraction(doc))
         );
 
         return new Response(
@@ -507,7 +513,7 @@ Deno.serve(async (req) => {
             results: enhancedNewResults,
             source: 'google_cse_pdf_search',
             auto_selected: false,
-            message: `Found ${rankedNewDocs.length} PDF SDS documents - please select the best one`
+            message: `Found ${topThreeNewResults.length} PDF SDS documents - please select the best one`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
