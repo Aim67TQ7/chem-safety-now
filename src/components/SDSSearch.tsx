@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -419,6 +420,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
   };
 
   const handleGenerateLabel = async (sdsDocument: SDSDocument) => {
+    console.log('🏷️ Opening label printer for:', sdsDocument.product_name);
     setSelectedDocument(sdsDocument);
     setShowLabelPrinter(true);
     
@@ -430,6 +432,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
   };
 
   const handleAskAI = async (sdsDocument: SDSDocument) => {
+    console.log('🤖 Opening AI assistant for:', sdsDocument.product_name);
     setSelectedDocument(sdsDocument);
     setShowAIAssistant(true);
     
@@ -713,26 +716,32 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
       )}
 
       {/* Popups */}
-      <AIAssistantPopup
-        isOpen={showAIAssistant}
-        onClose={() => {
-          setShowAIAssistant(false);
-          setSelectedDocument(null);
-        }}
-        facilityData={facilityData}
-        selectedDocument={selectedDocument}
-      />
+      {showAIAssistant && selectedDocument && (
+        <AIAssistantPopup
+          isOpen={showAIAssistant}
+          onClose={() => {
+            console.log('🔒 Closing AI assistant popup');
+            setShowAIAssistant(false);
+            setSelectedDocument(null);
+          }}
+          facilityData={facilityData}
+          selectedDocument={selectedDocument}
+        />
+      )}
 
-      <LabelPrinterPopup
-        isOpen={showLabelPrinter}
-        onClose={() => {
-          setShowLabelPrinter(false);
-          setSelectedDocument(null);
-        }}
-        initialProductName={selectedDocument?.product_name}
-        initialManufacturer={selectedDocument?.manufacturer}
-        selectedDocument={selectedDocument}
-      />
+      {showLabelPrinter && selectedDocument && (
+        <LabelPrinterPopup
+          isOpen={showLabelPrinter}
+          onClose={() => {
+            console.log('🔒 Closing label printer popup');
+            setShowLabelPrinter(false);
+            setSelectedDocument(null);
+          }}
+          initialProductName={selectedDocument?.product_name}
+          initialManufacturer={selectedDocument?.manufacturer}
+          selectedDocument={selectedDocument}
+        />
+      )}
 
       <SDSSelectionDialog
         isOpen={showSelectionDialog}
