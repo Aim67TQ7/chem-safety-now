@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ interface FacilitySettingsProps {
 const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     facility_name: facilityData.facility_name || "",
     contact_name: facilityData.contact_name || "",
@@ -43,6 +44,10 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,19 +236,17 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 </AvatarFallback>
               </Avatar>
               <div className="space-y-2">
-                <Label htmlFor="logo-upload" className="cursor-pointer">
-                  <Button 
-                    variant="outline" 
-                    className="cursor-pointer" 
-                    disabled={isUploading || isLoading}
-                    type="button"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {isUploading ? "Uploading..." : "Upload New Logo"}
-                  </Button>
-                </Label>
+                <Button 
+                  variant="outline" 
+                  onClick={handleUploadClick}
+                  disabled={isUploading || isLoading}
+                  type="button"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {isUploading ? "Uploading..." : "Upload New Logo"}
+                </Button>
                 <Input
-                  id="logo-upload"
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleLogoUpload}
