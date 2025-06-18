@@ -2,7 +2,6 @@
 import { HomeIcon, Settings, FileText, Search } from "lucide-react";
 import Index from "./pages/Index";
 import FacilityPage from "./pages/FacilityPage";
-import LandingPage from "./pages/LandingPage";
 import QRCodePrintPage from "./pages/QRCodePrintPage";
 import NotFound from "./pages/NotFound";
 import SignupPage from "./pages/SignupPage";
@@ -26,12 +25,6 @@ export const navItems = [
     to: "/facility/:facilitySlug",
     icon: <Settings className="h-4 w-4" />,
     page: <FacilityPage />,
-  },
-  {
-    title: "Landing",
-    to: "/landing",
-    icon: <HomeIcon className="h-4 w-4" />,
-    page: <LandingPage />,
   },
   {
     title: "QR Print",

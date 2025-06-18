@@ -100,6 +100,8 @@ const Index = () => {
                 <strong>2,888 OSHA citations</strong> were issued last year under Hazard Communication — the #2 most-cited standard in the U.S.
                 <br />
                 Most involved missing SDSs, mislabeled containers, or inaccessible safety info.
+                <br />
+                <strong className="text-red-900">Violations can trigger fines up to $16.5K each — and serious repeat offenders face up to $165K per violation.</strong>
               </AlertDescription>
             </Alert>
             
