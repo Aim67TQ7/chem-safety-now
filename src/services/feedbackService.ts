@@ -6,9 +6,9 @@ export interface FeedbackData {
   facility_id: string;
   feedback_type: 'comment' | 'suggestion' | 'problem';
   message: string;
-  contact_info?: string;
-  user_agent?: string;
-  ip_address?: string;
+  contact_info: string | null;
+  user_agent: string | null;
+  ip_address: unknown | null;
   status: 'new' | 'reviewed' | 'resolved';
   priority: 'low' | 'medium' | 'high';
   metadata: Record<string, any>;
@@ -72,13 +72,19 @@ export class FeedbackService {
         return [];
       }
 
-      return (data || []).map(item => ({
-        ...item,
-        feedback_type: item.feedback_type as 'comment' | 'suggestion' | 'problem',
-        status: item.status as 'new' | 'reviewed' | 'resolved',
-        priority: item.priority as 'low' | 'medium' | 'high',
-        facility_name: item.facilities?.facility_name || 'Unknown Facility'
-      }));
+      return (data || []).map(item => {
+        const { facilities, ...feedbackData } = item;
+        return {
+          ...feedbackData,
+          feedback_type: feedbackData.feedback_type as 'comment' | 'suggestion' | 'problem',
+          status: feedbackData.status as 'new' | 'reviewed' | 'resolved',
+          priority: feedbackData.priority as 'low' | 'medium' | 'high',
+          contact_info: feedbackData.contact_info as string | null,
+          user_agent: feedbackData.user_agent as string | null,
+          ip_address: feedbackData.ip_address as unknown | null,
+          facility_name: facilities?.facility_name || 'Unknown Facility'
+        };
+      });
     } catch (error) {
       console.error('Failed to fetch feedback:', error);
       return [];

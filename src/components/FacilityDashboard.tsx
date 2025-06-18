@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,15 @@ import {
   QrCode,
   Printer,
   Bot,
-  Settings
+  Settings,
+  MapPin,
+  Mail,
+  User
 } from "lucide-react";
 import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
 import SubscriptionPlansModal from "./SubscriptionPlansModal";
 import FeatureAccessWrapper from "./FeatureAccessWrapper";
+import FeedbackPopup from "./FeedbackPopup";
 import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 
 interface FacilityData {
@@ -160,24 +165,61 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
         />
       )}
 
-      {/* Welcome Header */}
+      {/* Branded Facility Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-200">
+        <div className="flex items-center space-x-4">
+          {facilityData.logo_url && (
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-white shadow-md flex-shrink-0">
+              <img 
+                src={facilityData.logo_url} 
+                alt={`${facilityDisplayName} logo`}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          )}
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {facilityDisplayName}
+            </h1>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+              {facilityData.contact_name && (
+                <div className="flex items-center">
+                  <User className="w-4 h-4 mr-2 text-blue-500" />
+                  <span>{facilityData.contact_name}</span>
+                </div>
+              )}
+              {facilityData.email && (
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 mr-2 text-blue-500" />
+                  <span>{facilityData.email}</span>
+                </div>
+              )}
+              {facilityData.address && (
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-2 text-blue-500" />
+                  <span>{facilityData.address}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center space-x-4 text-sm text-gray-500">
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-1" />
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Shield className="w-3 h-3 mr-1" />
+              OSHA Compliant
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Welcome Message */}
       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900">
-          Welcome to {facilityDisplayName}
-        </h2>
         <p className="text-gray-600">
           Your chemical safety platform is ready. Start by searching for a chemical or exploring the quick actions below.
         </p>
-        <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
-          <div className="flex items-center">
-            <Clock className="w-4 h-4 mr-1" />
-            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </div>
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <Shield className="w-3 h-3 mr-1" />
-            OSHA Compliant
-          </Badge>
-        </div>
       </div>
 
       {/* Quick Actions Grid */}
@@ -367,6 +409,12 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
           </div>
         </CardContent>
       </Card>
+
+      {/* Feedback Popup */}
+      <FeedbackPopup 
+        facilityId={facilityData.id}
+        facilityName={facilityDisplayName}
+      />
 
       {/* Subscription Plans Modal - Only show for non-subscribed users */}
       {!isSubscribed && (
