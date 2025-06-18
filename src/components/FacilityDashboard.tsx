@@ -1,29 +1,20 @@
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
-  TrendingUp, 
-  Clock, 
-  Shield, 
-  Users, 
-  BarChart3,
-  FileText,
-  QrCode,
-  Printer,
-  Bot,
+  QrCode, 
+  Printer, 
+  Bot, 
+  Monitor,
   Settings,
-  MapPin,
-  Mail,
-  User
+  Building2,
+  Calendar,
+  Users,
+  Activity
 } from "lucide-react";
-import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
-import SubscriptionPlansModal from "./SubscriptionPlansModal";
-import FeatureAccessWrapper from "./FeatureAccessWrapper";
-import FeedbackPopup from "./FeedbackPopup";
-import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 
 interface FacilityData {
   id: string;
@@ -44,387 +35,179 @@ interface FacilityDashboardProps {
 }
 
 const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardProps) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [subscription, setSubscription] = useState<FacilitySubscription | null>(null);
-  
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      const sub = await SubscriptionService.getFacilitySubscription(facilityData.id);
-      setSubscription(sub);
-    };
-
-    fetchSubscription();
-  }, [facilityData.id]);
-
-  const facilityDisplayName = facilityData.facility_name || 'Your Facility';
-  
-  // Check if label printing is in beta (before July 1, 2025)
-  const isLabelPrintingInBeta = () => {
-    const currentDate = new Date();
-    const launchDate = new Date('2025-07-01');
-    return currentDate < launchDate;
-  };
-
-  // Check if user is subscribed (not trial)
-  const isSubscribed = subscription && ['basic', 'premium'].includes(subscription.subscription_status);
-  
   const quickActions = [
     {
+      id: 'search',
+      title: 'SDS Search',
+      description: 'Find and access Safety Data Sheets',
       icon: Search,
-      title: "Search Chemicals",
-      description: "Find SDS documents instantly",
-      action: "search",
-      color: "bg-blue-500 hover:bg-blue-600",
-      feature: "sds_search"
+      color: 'bg-blue-500 hover:bg-blue-600',
+      textColor: 'text-blue-600',
+      bgColor: 'bg-blue-50'
     },
     {
+      id: 'qr-codes',
+      title: 'QR Codes',
+      description: 'Generate facility QR codes',
       icon: QrCode,
-      title: "Generate QR Codes",
-      description: "Create facility QR codes",
-      action: "qr-codes",
-      color: "bg-green-500 hover:bg-green-600",
-      feature: "basic_qr_codes"
+      color: 'bg-green-500 hover:bg-green-600',
+      textColor: 'text-green-600',
+      bgColor: 'bg-green-50'
     },
     {
+      id: 'desktop-links',
+      title: 'Desktop Links',
+      description: 'Create desktop shortcuts',
+      icon: Monitor,
+      color: 'bg-purple-500 hover:bg-purple-600',
+      textColor: 'text-purple-600',
+      bgColor: 'bg-purple-50'
+    },
+    {
+      id: 'labels',
+      title: 'Label Printer',
+      description: 'Print chemical labels',
       icon: Printer,
-      title: "Print Labels",
-      description: isLabelPrintingInBeta() ? "Coming July 1st, 2025" : "Create GHS compliant labels",
-      action: "labels",
-      color: "bg-purple-500 hover:bg-purple-600",
-      feature: "label_printing",
-      isBeta: isLabelPrintingInBeta()
+      color: 'bg-orange-500 hover:bg-orange-600',
+      textColor: 'text-orange-600',
+      bgColor: 'bg-orange-50'
     },
     {
+      id: 'ai-assistant',
+      title: 'AI Assistant',
+      description: 'Get chemical safety help',
       icon: Bot,
-      title: "Ask Sarah",
-      description: "Get AI safety assistance",
-      action: "ai-assistant",
-      color: "bg-orange-500 hover:bg-orange-600",
-      feature: "ai_assistant"
-    },
-    {
-      icon: Settings,
-      title: "Facility Settings",
-      description: "Update facility information",
-      action: "settings",
-      color: "bg-gray-500 hover:bg-gray-600",
-      feature: null
+      color: 'bg-red-500 hover:bg-red-600',
+      textColor: 'text-red-600',
+      bgColor: 'bg-red-50'
     }
   ];
 
-  const safetyTips = [
-    "Always read SDS documents before handling chemicals",
-    "Ensure proper PPE is worn when working with hazardous materials",
-    "Keep emergency contact information easily accessible",
-    "Regular safety training keeps everyone protected"
-  ];
-
-  const [currentTipIndex, setCurrentTipIndex] = useState(0);
-
-  useEffect(() => {
-    const tipTimer = setInterval(() => {
-      setCurrentTipIndex((prev) => (prev + 1) % safetyTips.length);
-    }, 10000);
-    return () => clearInterval(tipTimer);
-  }, []);
-
-  const handleQuickAction = async (action: string, feature?: string) => {
-    if (feature) {
-      // For trial users, allow access to basic features
-      if (subscription?.subscription_status === 'trial' && subscription?.trial_days_remaining > 0) {
-        const featureTier = SubscriptionService.getFeatureTier(feature);
-        if (featureTier === 'basic') {
-          onQuickAction(action);
-          return;
-        }
-      }
-      
-      const hasAccess = await SubscriptionService.checkFeatureAccess(facilityData.id, feature);
-      if (!hasAccess) {
-        setShowUpgradeModal(true);
-        return;
-      }
-    }
-    
-    onQuickAction(action);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
-    <div className="space-y-6 mb-8 animate-fade-in">
-      {/* Subscription Status Header - Only show for trial users */}
-      {!isSubscribed && (
-        <SubscriptionStatusHeader 
-          facilityId={facilityData.id}
-          onUpgrade={() => setShowUpgradeModal(true)}
-        />
-      )}
-
-      {/* Branded Facility Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-200">
-        <div className="flex items-center space-x-4">
-          {facilityData.logo_url && (
-            <div className="w-16 h-16 rounded-lg overflow-hidden bg-white shadow-md flex-shrink-0">
-              <img 
-                src={facilityData.logo_url} 
-                alt={`${facilityDisplayName} logo`}
-                className="w-full h-full object-contain"
-              />
+    <div className="space-y-6">
+      {/* Facility Header Card with Settings Button */}
+      <Card className="bg-gradient-to-r from-blue-50 to-red-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Avatar className="w-16 h-16">
+                <AvatarImage 
+                  src={facilityData.logo_url} 
+                  alt={facilityData.facility_name || "Facility Logo"} 
+                />
+                <AvatarFallback className="text-xl font-semibold bg-blue-100 text-blue-600">
+                  {facilityData.facility_name?.charAt(0)?.toUpperCase() || "F"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {facilityData.facility_name || 'Unnamed Facility'}
+                </h2>
+                <p className="text-gray-600">
+                  Contact: {facilityData.contact_name || 'No contact set'}
+                </p>
+                {facilityData.address && (
+                  <p className="text-sm text-gray-500">{facilityData.address}</p>
+                )}
+              </div>
             </div>
-          )}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {facilityDisplayName}
-            </h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-              {facilityData.contact_name && (
-                <div className="flex items-center">
-                  <User className="w-4 h-4 mr-2 text-blue-500" />
-                  <span>{facilityData.contact_name}</span>
-                </div>
-              )}
-              {facilityData.email && (
-                <div className="flex items-center">
-                  <Mail className="w-4 h-4 mr-2 text-blue-500" />
-                  <span>{facilityData.email}</span>
-                </div>
-              )}
-              {facilityData.address && (
-                <div className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-2 text-blue-500" />
-                  <span>{facilityData.address}</span>
-                </div>
-              )}
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onQuickAction('settings')}
+              className="flex items-center space-x-2"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
+            </Button>
           </div>
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
-            <div className="flex items-center">
-              <Clock className="w-4 h-4 mr-1" />
-              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              <Shield className="w-3 h-3 mr-1" />
-              OSHA Compliant
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      {/* Welcome Message */}
-      <div className="text-center space-y-2">
-        <p className="text-gray-600">
-          Your chemical safety platform is ready. Start by searching for a chemical or exploring the quick actions below.
-        </p>
-      </div>
+        </CardHeader>
+      </Card>
 
       {/* Quick Actions Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {quickActions.map((action) => (
-          <Card 
-            key={action.action}
-            className="hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-            onClick={() => handleQuickAction(action.action, action.feature)}
-          >
-            <CardContent className="p-6 text-center">
-              <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mx-auto mb-3 transition-colors`}>
-                <action.icon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
-              <p className="text-sm text-gray-600">{action.description}</p>
-              <div className="flex justify-center items-center gap-2 mt-2">
-                {action.feature === 'label_printing' && subscription && !SubscriptionService.hasPremiumAccess(subscription) && !isSubscribed && (
-                  <Badge variant="outline" className="text-xs text-purple-600 border-purple-200">
-                    Premium
-                  </Badge>
-                )}
-                {action.isBeta && (
-                  <Badge variant="outline" className="text-xs text-orange-600 border-orange-200 bg-orange-50">
-                    Beta
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
-              <Users className="w-5 h-5 mr-2 text-blue-500" />
-              Facility Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Subscription Status</span>
-                <Badge className={`${
-                  subscription?.subscription_status === 'trial' ? 'bg-yellow-100 text-yellow-800' :
-                  subscription?.subscription_status === 'basic' ? 'bg-blue-100 text-blue-800' :
-                  subscription?.subscription_status === 'premium' ? 'bg-purple-100 text-purple-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {subscription?.subscription_status === 'trial' ? 'Trial' :
-                   subscription?.subscription_status === 'basic' ? 'Basic' :
-                   subscription?.subscription_status === 'premium' ? 'Premium' : 'Unknown'}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Platform Access</span>
-                <span className="text-sm font-medium">24/7 Available</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Last Updated</span>
-                <span className="text-sm font-medium">
-                  {new Date(facilityData.updated_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Only wrap dashboard in FeatureAccessWrapper for non-subscribed users */}
-        {isSubscribed ? (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
-                Quick Stats
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">SDS Database</span>
-                  <span className="text-sm font-medium">1000+ Documents</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Search Response</span>
-                  <span className="text-sm font-medium">Under 2 seconds</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">AI Assistant</span>
-                  <Badge variant="outline" className="text-xs">Sarah Ready</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <FeatureAccessWrapper
-            feature="dashboards"
-            facilityId={facilityData.id}
-            onUpgrade={() => setShowUpgradeModal(true)}
-          >
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
-                  Quick Stats
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">SDS Database</span>
-                    <span className="text-sm font-medium">1000+ Documents</span>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {quickActions.map((action) => {
+          const IconComponent = action.icon;
+          return (
+            <Card 
+              key={action.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+              onClick={() => onQuickAction(action.id)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3 rounded-full ${action.bgColor}`}>
+                    <IconComponent className={`w-6 h-6 ${action.textColor}`} />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Search Response</span>
-                    <span className="text-sm font-medium">Under 2 seconds</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">AI Assistant</span>
-                    <Badge variant="outline" className="text-xs">Sarah Ready</Badge>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{action.title}</h3>
+                    <p className="text-sm text-gray-600">{action.description}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </FeatureAccessWrapper>
-        )}
+          );
+        })}
+      </div>
 
+      {/* Facility Information */}
+      <div className="grid md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
-              <Shield className="w-5 h-5 mr-2 text-orange-500" />
-              Safety Tip
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Building2 className="w-5 h-5" />
+              <span>Facility Details</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {safetyTips[currentTipIndex]}
-            </p>
-            <div className="flex mt-3 space-x-1">
-              {safetyTips.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentTipIndex ? 'bg-orange-500' : 'bg-gray-300'
-                  }`}
-                />
-              ))}
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Email:</span>
+              <span className="font-medium">{facilityData.email || 'Not set'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Facility ID:</span>
+              <span className="font-mono text-sm">{facilityData.slug}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Created:</span>
+              <span className="font-medium">{formatDate(facilityData.created_at)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Activity className="w-5 h-5" />
+              <span>Quick Stats</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Status:</span>
+              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                Active
+              </Badge>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Last Updated:</span>
+              <span className="font-medium">{formatDate(facilityData.updated_at)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Tools Available:</span>
+              <span className="font-medium">{quickActions.length}</span>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Getting Started Guide */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardContent className="p-6">
-          <div className="flex items-start space-x-4">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-2">Getting Started</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                New to ChemLabel-GPT? Here's how to get the most out of your chemical safety platform:
-              </p>
-              <div className="grid md:grid-cols-2 gap-3 text-xs text-gray-600">
-                <div className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  Search for any chemical by product name
-                </div>
-                <div className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  Generate QR codes for facility access
-                </div>
-                <div className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  Print GHS compliant labels (Coming July 1st)
-                </div>
-                <div className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  Ask Sarah for safety guidance anytime
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Feedback Popup */}
-      <FeedbackPopup 
-        facilityId={facilityData.id}
-        facilityName={facilityDisplayName}
-      />
-
-      {/* Subscription Plans Modal - Only show for non-subscribed users */}
-      {!isSubscribed && (
-        <SubscriptionPlansModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          facilityId={facilityData.id}
-          currentPlan={subscription?.subscription_status}
-        />
-      )}
     </div>
   );
 };

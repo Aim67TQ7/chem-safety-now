@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
 import FeedbackPopup from "@/components/FeedbackPopup";
 import { SubscriptionService } from "@/services/subscriptionService";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 interface FacilityData {
   id: string;
@@ -182,40 +183,29 @@ const FacilityPage = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <SubscriptionStatusHeader 
-        facilityId={facilityData.id} 
-        onUpgrade={handleUpgrade}
-      />
+      {/* Only show subscription status on dashboard view */}
+      {currentView === 'dashboard' && (
+        <SubscriptionStatusHeader 
+          facilityId={facilityData.id} 
+          onUpgrade={handleUpgrade}
+        />
+      )}
       
-      {/* Header with navigation */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          {currentView !== 'dashboard' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentView('dashboard')}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Dashboard</span>
-            </Button>
-          )}
-          <h1 className="text-2xl font-bold">{facilityData.facility_name} Dashboard</h1>
-        </div>
-        
-        {currentView !== 'settings' && (
+      {/* Header with navigation - only show back button when not on dashboard */}
+      {currentView !== 'dashboard' && (
+        <div className="flex items-center space-x-4 mb-6">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentView('settings')}
+            onClick={() => setCurrentView('dashboard')}
             className="flex items-center space-x-2"
           >
-            <Settings className="w-4 h-4" />
-            <span>Settings</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
           </Button>
-        )}
-      </div>
+          <h1 className="text-2xl font-bold">{facilityData.facility_name} Dashboard</h1>
+        </div>
+      )}
 
       {renderView()}
 
