@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Crown, Zap, Check, Shield } from "lucide-react";
+import { AlertTriangle, Crown, Zap, Check, Shield, Building2 } from "lucide-react";
 import { SubscriptionService, SubscriptionPlan } from "@/services/subscriptionService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,18 +14,47 @@ const SubscriptionRequiredPage = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [facilityExists, setFacilityExists] = useState<boolean | null>(null);
+  const [facilityName, setFacilityName] = useState<string>("");
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPlans = async () => {
+    const fetchPlansAndValidateFacility = async () => {
+      // Fetch subscription plans
       const subscriptionPlans = await SubscriptionService.getSubscriptionPlans();
       setPlans(subscriptionPlans);
+
+      // Validate facility if slug is provided
+      if (facilitySlug) {
+        try {
+          const { data: facility, error } = await supabase
+            .from('facilities')
+            .select('facility_name')
+            .eq('slug', facilitySlug)
+            .single();
+
+          if (error || !facility) {
+            console.log('Facility not found:', facilitySlug);
+            setFacilityExists(false);
+          } else {
+            setFacilityExists(true);
+            setFacilityName(facility.facility_name);
+          }
+        } catch (error) {
+          console.error('Error validating facility:', error);
+          setFacilityExists(false);
+        }
+      } else {
+        // No facility slug provided - this is okay, user can still subscribe
+        setFacilityExists(null);
+      }
+
       setLoading(false);
     };
 
-    fetchPlans();
-  }, []);
+    fetchPlansAndValidateFacility();
+  }, [facilitySlug]);
 
   const handleSelectPlan = async (plan: SubscriptionPlan) => {
     setProcessingPlan(plan.id);
@@ -35,7 +64,7 @@ const SubscriptionRequiredPage = () => {
         body: {
           planId: plan.id,
           billingCycle,
-          facilitySlug
+          facilitySlug: facilityExists ? facilitySlug : undefined
         }
       });
 
@@ -53,6 +82,10 @@ const SubscriptionRequiredPage = () => {
     } finally {
       setProcessingPlan(null);
     }
+  };
+
+  const handleCreateFacility = () => {
+    navigate('/signup');
   };
 
   const featureDescriptions = {
@@ -84,6 +117,38 @@ const SubscriptionRequiredPage = () => {
     );
   }
 
+  // Show facility not found message
+  if (facilitySlug && facilityExists === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <Building2 className="w-8 h-8 text-red-600" />
+            </div>
+            <CardTitle className="text-2xl text-red-700">Facility Not Found</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-600">
+              The facility "{facilitySlug}" could not be found. You'll need to create a facility first before subscribing.
+            </p>
+            
+            <div className="space-y-2">
+              <Button onClick={handleCreateFacility} className="w-full">
+                <Building2 className="w-4 h-4 mr-2" />
+                Create Facility First
+              </Button>
+              
+              <Button onClick={() => navigate('/')} variant="outline" className="w-full">
+                Return to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -92,11 +157,16 @@ const SubscriptionRequiredPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">ChemLabel-GPT</h1>
-              <p className="text-gray-600">Chemical Safety Management Platform</p>
+              <p className="text-gray-600">
+                {facilityExists && facilityName ? 
+                  `Subscription for ${facilityName}` : 
+                  "Chemical Safety Management Platform"
+                }
+              </p>
             </div>
             <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">
               <AlertTriangle className="w-3 h-3 mr-1" />
-              Trial Expired
+              {facilityExists ? "Trial Expired" : "Subscription Required"}
             </Badge>
           </div>
         </div>
@@ -107,9 +177,14 @@ const SubscriptionRequiredPage = () => {
         <div className="text-center mb-12">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
             <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Your 7-Day Trial Has Ended</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {facilityExists ? "Your 7-Day Trial Has Ended" : "Subscribe to ChemLabel-GPT"}
+            </h2>
             <p className="text-gray-700 mb-4">
-              To continue accessing SDS documents, Sarah AI assistant, and safety tools, please select a subscription plan below.
+              {facilityExists ? 
+                "To continue accessing SDS documents, Sarah AI assistant, and safety tools, please select a subscription plan below." :
+                "Get access to SDS documents, Sarah AI assistant, and professional safety tools by selecting a subscription plan below."
+              }
             </p>
             <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
               <div className="flex items-center">
@@ -122,6 +197,21 @@ const SubscriptionRequiredPage = () => {
               <span>24/7 Support</span>
             </div>
           </div>
+
+          {!facilityExists && !facilitySlug && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+              <p className="text-blue-700 text-sm">
+                Don't have a facility yet? You can{" "}
+                <button 
+                  onClick={handleCreateFacility}
+                  className="underline hover:no-underline font-medium"
+                >
+                  create one here
+                </button>{" "}
+                to get started with a 7-day free trial.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Billing Cycle Toggle */}

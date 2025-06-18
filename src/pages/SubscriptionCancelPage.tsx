@@ -2,7 +2,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { XCircle, ArrowLeft, CreditCard } from "lucide-react";
+import { XCircle, ArrowLeft, CreditCard, Building2 } from "lucide-react";
 
 const SubscriptionCancelPage = () => {
   const navigate = useNavigate();
@@ -24,6 +24,10 @@ const SubscriptionCancelPage = () => {
     } else {
       navigate('/');
     }
+  };
+
+  const handleCreateFacility = () => {
+    navigate('/signup');
   };
 
   return (
@@ -52,9 +56,16 @@ const SubscriptionCancelPage = () => {
               Try Payment Again
             </Button>
             
+            {!facilitySlug && (
+              <Button onClick={handleCreateFacility} variant="outline" className="w-full">
+                <Building2 className="w-4 h-4 mr-2" />
+                Create Facility & Start Trial
+              </Button>
+            )}
+            
             <Button onClick={handleGoBack} variant="outline" className="w-full">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Return to Dashboard
+              {facilitySlug ? 'Return to Dashboard' : 'Return to Home'}
             </Button>
           </div>
         </CardContent>
