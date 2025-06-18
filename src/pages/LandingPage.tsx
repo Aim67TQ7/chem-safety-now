@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -90,39 +91,65 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* OSHA Warning Section */}
       <section className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
-            Why Businesses Choose ChemLabel-GPT
-          </h2>
+          <div className="text-center mb-12">
+            <Alert className="max-w-4xl mx-auto bg-red-50 border-red-200 mb-8">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800 font-medium">
+                <strong>2,888 OSHA citations</strong> were issued last year under Hazard Communication — the #2 most-cited standard in the U.S.
+                <br />
+                Most involved missing SDSs, mislabeled containers, or inaccessible safety info.
+              </AlertDescription>
+            </Alert>
+            
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              ⚠️ Why Businesses Choose ChemLabel-GPT
+            </h2>
+            <p className="text-xl text-gray-700 font-semibold mb-16">
+              ChemLabel-GPT fixes that — instantly.
+            </p>
+          </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-semibold mb-3">Mobile SDS Access</h3>
+              <div className="flex items-center justify-center mb-4">
+                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <h3 className="text-xl font-semibold">Mobile SDS Access</h3>
+              </div>
               <p className="text-gray-600">
-                Scan QR codes for instant SDS access. No app downloads, no login required.
+                Scan QR codes to pull SDS documents in seconds — no login, no app.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-semibold mb-3">AI Assistant</h3>
+              <div className="flex items-center justify-center mb-4">
+                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <h3 className="text-xl font-semibold">AI-Powered Safety Assistant</h3>
+              </div>
               <p className="text-gray-600">
-                Ask questions about your SDS sheets and get instant safety guidance from our AI assistant.
+                Ask real-time safety questions. Get instant answers based on your SDSs.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-semibold mb-3">Instant Label Generation</h3>
+              <div className="flex items-center justify-center mb-4">
+                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <h3 className="text-xl font-semibold">One-Click Label Generator</h3>
+              </div>
               <p className="text-gray-600">
-                Generate GHS-compliant secondary container labels with your facility branding.
+                Generate compliant secondary container labels with your facility's branding.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-semibold mb-3">Facility Analytics</h3>
+              <div className="flex items-center justify-center mb-4">
+                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <h3 className="text-xl font-semibold">Audit-Ready Analytics</h3>
+              </div>
               <p className="text-gray-600">
-                Professional audit trails and usage analytics impress safety inspectors.
+                Track who accessed what, when — and impress your inspector every time.
               </p>
             </Card>
           </div>
@@ -244,6 +271,22 @@ const LandingPage = () => {
                 Cancel anytime - No long-term commitment
               </p>
             </Card>
+          </div>
+          
+          {/* Updated CTA Section */}
+          <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-lg p-8 text-white mb-8">
+            <h3 className="text-2xl font-bold mb-4">
+              🟢 Stop gambling with compliance.
+            </h3>
+            <p className="text-xl mb-6">
+              Get ChemLabel-GPT working for your team in under 15 minutes.
+            </p>
+            <Button 
+              onClick={handleGetStarted}
+              className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+            >
+              Start 7-Day Free Trial Now
+            </Button>
           </div>
           
           {/* Features List */}
