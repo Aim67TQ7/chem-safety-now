@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import FacilityDashboard from "@/components/FacilityDashboard";
 import SDSSearch from "@/components/SDSSearch";
-import QRGenerator from "@/components/QRGenerator";
+import QRCodeGenerator from "@/components/QRCodeGenerator";
 import LabelPrinter from "@/components/LabelPrinter";
 import AIAssistant from "@/components/AIAssistant";
 import { SubscriptionService } from "@/services/subscriptionService";
@@ -83,6 +84,8 @@ const FacilityPage = () => {
     return <div className="min-h-screen flex items-center justify-center">Facility not found.</div>;
   }
 
+  const facilityUrl = `https://chemlabel-gpt.lovable.app/facility/${facilityData.slug}`;
+
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
@@ -95,9 +98,9 @@ const FacilityPage = () => {
       case 'sds-search':
         return <SDSSearch facilityData={facilityData} />;
       case 'qr-generator':
-        return <QRGenerator facilityData={facilityData} />;
+        return <QRCodeGenerator facilityData={facilityData} facilityUrl={facilityUrl} />;
       case 'label-printer':
-        return <LabelPrinter facilityData={facilityData} />;
+        return <LabelPrinter />;
       case 'ai-assistant':
         return <AIAssistant facilityData={facilityData} />;
       default:

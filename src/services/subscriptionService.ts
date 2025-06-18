@@ -63,7 +63,10 @@ export class SubscriptionService {
       const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
 
       return {
-        ...data,
+        subscription_status: data.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
+        feature_access_level: data.feature_access_level as 'trial' | 'basic' | 'premium' | 'expired',
+        trial_start_date: data.trial_start_date,
+        trial_end_date: data.trial_end_date,
         trial_days_remaining: daysRemaining
       };
     } catch (error) {
@@ -84,7 +87,16 @@ export class SubscriptionService {
         return [];
       }
 
-      return data || [];
+      // Type cast and handle the Json features array
+      return (data || []).map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        monthly_price: plan.monthly_price,
+        annual_price: plan.annual_price,
+        stripe_monthly_price_id: plan.stripe_monthly_price_id,
+        stripe_annual_price_id: plan.stripe_annual_price_id,
+        features: Array.isArray(plan.features) ? plan.features as string[] : []
+      }));
     } catch (error) {
       console.error('Failed to get subscription plans:', error);
       return [];
