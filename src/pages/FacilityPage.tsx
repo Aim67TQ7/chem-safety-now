@@ -11,6 +11,7 @@ import DesktopLinkGenerator from "@/components/DesktopLinkGenerator";
 import FacilitySettings from "@/components/FacilitySettings";
 import FeatureAccessWrapper from "@/components/FeatureAccessWrapper";
 import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
+import FeedbackPopup from "@/components/FeedbackPopup";
 import { SubscriptionService } from "@/services/subscriptionService";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings } from "lucide-react";
@@ -218,6 +219,12 @@ const FacilityPage = () => {
       </div>
 
       {renderView()}
+
+      {/* Feedback Popup */}
+      <FeedbackPopup 
+        facilityId={facilityData.id}
+        facilityName={facilityData.facility_name || 'Your Facility'}
+      />
     </div>
   );
 };

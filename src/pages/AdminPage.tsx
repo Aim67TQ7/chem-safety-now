@@ -9,6 +9,7 @@ import { Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import AdminFeedbackPanel from "@/components/AdminFeedbackPanel";
 
 const AdminPage = () => {
   const [facilities, setFacilities] = useState<any[]>([]);
@@ -111,86 +112,96 @@ const AdminPage = () => {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" /> Facility Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2">
-              {[...Array(5)].map((_, index) => (
-                <Skeleton key={index} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : facilities.length === 0 ? (
-            <p className="text-center py-10 text-muted-foreground">No facilities found</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Facility Name</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>URL</TableHead>
-                    <TableHead>Subscription</TableHead>
-                    <TableHead>Usage</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {facilities.map((facility) => (
-                    <TableRow key={facility.id}>
-                      <TableCell className="font-medium">
-                        {facility.facility_name || "Unnamed Facility"}
-                      </TableCell>
-                      <TableCell>{facility.contact_name || "—"}</TableCell>
-                      <TableCell>{facility.email || "—"}</TableCell>
-                      <TableCell>{facility.address || "—"}</TableCell>
-                      <TableCell>
-                        {facility.facility_url ? (
-                          <a 
-                            href={facility.facility_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            {new URL(facility.facility_url).hostname}
-                          </a>
-                        ) : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={
-                            facility.subscription_tier === "Premium" ? "default" :
-                            facility.subscription_tier === "Professional" ? "secondary" : 
-                            "outline"
-                          }
-                        >
-                          {facility.subscription_tier || "Free"}
-                          {facility.monthly_price ? ` ($${facility.monthly_price}/mo)` : ''}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {facility.current_lookups !== null && facility.lookup_limit ? 
-                          `${facility.current_lookups}/${facility.lookup_limit}` : 
-                          "—"
-                        }
-                      </TableCell>
-                      <TableCell>
-                        {facility.created_at && new Date(facility.created_at).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Feedback Panel - Left Column */}
+        <div className="lg:col-span-1">
+          <AdminFeedbackPanel />
+        </div>
+
+        {/* Facility Overview - Right Columns */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" /> Facility Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, index) => (
+                    <Skeleton key={index} className="h-12 w-full" />
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </div>
+              ) : facilities.length === 0 ? (
+                <p className="text-center py-10 text-muted-foreground">No facilities found</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Facility Name</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Address</TableHead>
+                        <TableHead>URL</TableHead>
+                        <TableHead>Subscription</TableHead>
+                        <TableHead>Usage</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {facilities.map((facility) => (
+                        <TableRow key={facility.id}>
+                          <TableCell className="font-medium">
+                            {facility.facility_name || "Unnamed Facility"}
+                          </TableCell>
+                          <TableCell>{facility.contact_name || "—"}</TableCell>
+                          <TableCell>{facility.email || "—"}</TableCell>
+                          <TableCell>{facility.address || "—"}</TableCell>
+                          <TableCell>
+                            {facility.facility_url ? (
+                              <a 
+                                href={facility.facility_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                {new URL(facility.facility_url).hostname}
+                              </a>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={
+                                facility.subscription_tier === "Premium" ? "default" :
+                                facility.subscription_tier === "Professional" ? "secondary" : 
+                                "outline"
+                              }
+                            >
+                              {facility.subscription_tier || "Free"}
+                              {facility.monthly_price ? ` ($${facility.monthly_price}/mo)` : ''}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {facility.current_lookups !== null && facility.lookup_limit ? 
+                              `${facility.current_lookups}/${facility.lookup_limit}` : 
+                              "—"
+                            }
+                          </TableCell>
+                          <TableCell>
+                            {facility.created_at && new Date(facility.created_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

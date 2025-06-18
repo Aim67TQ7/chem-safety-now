@@ -111,6 +111,66 @@ export type Database = {
         }
         Relationships: []
       }
+      facility_feedback: {
+        Row: {
+          contact_info: string | null
+          created_at: string
+          facility_id: string
+          feedback_type: string
+          id: string
+          ip_address: unknown | null
+          message: string
+          metadata: Json | null
+          priority: string
+          status: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          contact_info?: string | null
+          created_at?: string
+          facility_id: string
+          feedback_type: string
+          id?: string
+          ip_address?: unknown | null
+          message: string
+          metadata?: Json | null
+          priority?: string
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          contact_info?: string | null
+          created_at?: string
+          facility_id?: string
+          feedback_type?: string
+          id?: string
+          ip_address?: unknown | null
+          message?: string
+          metadata?: Json | null
+          priority?: string
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_feedback_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_feedback_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_qr_codes: {
         Row: {
           created_at: string
