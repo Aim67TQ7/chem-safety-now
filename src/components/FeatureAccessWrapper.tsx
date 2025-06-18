@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,12 +33,22 @@ const FeatureAccessWrapper = ({
         SubscriptionService.getFacilitySubscription(facilityId)
       ]);
       
-      // For trial users, grant access to basic features
-      if (sub && sub.subscription_status === 'trial' && sub.trial_days_remaining > 0) {
-        const featureTier = SubscriptionService.getFeatureTier(feature);
-        if (featureTier === 'basic') {
+      // Improved logic: give users the most permissive access
+      if (sub) {
+        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+        const isBasicFeature = basicFeatures.includes(feature);
+        const isActiveTrial = sub.subscription_status === 'trial' && sub.trial_days_remaining > 0;
+        
+        // Premium users get everything
+        if (sub.subscription_status === 'premium') {
           setHasAccess(true);
-        } else {
+        }
+        // Basic users or active trial users get basic features
+        else if (sub.subscription_status === 'basic' || isActiveTrial) {
+          setHasAccess(isBasicFeature || access);
+        }
+        // Otherwise use the server-side access check
+        else {
           setHasAccess(access);
         }
       } else {

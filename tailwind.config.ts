@@ -86,21 +86,21 @@ export default {
 						height: '0'
 					}
 				},
-				'strobe': {
+				'soft-glow': {
 					'0%, 100%': {
-						'box-shadow': '0 0 0 2px rgba(59, 130, 246, 0.5)',
-						'background-color': 'rgba(59, 130, 246, 0.05)'
+						'box-shadow': '0 0 0 1px rgba(59, 130, 246, 0.3)',
+						'background-color': 'rgba(59, 130, 246, 0.02)'
 					},
 					'50%': {
-						'box-shadow': '0 0 0 4px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.4)',
-						'background-color': 'rgba(59, 130, 246, 0.1)'
+						'box-shadow': '0 0 0 2px rgba(59, 130, 246, 0.5), 0 0 8px rgba(59, 130, 246, 0.2)',
+						'background-color': 'rgba(59, 130, 246, 0.05)'
 					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'strobe': 'strobe 2s ease-in-out infinite'
+				'soft-glow': 'soft-glow 3s ease-in-out infinite'
 			}
 		}
 	},

@@ -48,34 +48,37 @@ const FacilityDashboard = ({
   onQuickAction,
   onUpgrade
 }: FacilityDashboardProps) => {
-  // Helper function to check feature access
+  // Helper function to check feature access with improved logic
   const hasFeatureAccess = (featureName: string): boolean => {
     if (!subscriptionInfo) return true; // Default to true if no subscription info
     
     // Define feature tiers
-    const basicFeatures = ['sds_search', 'qr_codes', 'desktop_links'];
-    const premiumFeatures = ['label_printing', 'ai_assistant'];
+    const basicFeatures = ['sds_search', 'qr_codes', 'desktop_links', 'ai_assistant'];
+    const premiumFeatures = ['label_printing'];
     
     const isBasicFeature = basicFeatures.includes(featureName);
-    const isPremiumFeature = premiumFeatures.includes(featureName);
     
-    // Trial users get access to all features
-    if (subscriptionInfo.subscription_status === 'trial' && subscriptionInfo.trial_days_remaining > 0) {
-      return true;
-    }
+    // Trial users (with remaining days) get access to basic features regardless of their plan
+    const isActiveTrial = subscriptionInfo.subscription_status === 'trial' && 
+                         subscriptionInfo.trial_days_remaining > 0;
     
     // Premium users get access to everything
     if (subscriptionInfo.subscription_status === 'premium') {
       return true;
     }
     
-    // Basic users get access to basic features only
+    // Basic users get access to basic features
     if (subscriptionInfo.subscription_status === 'basic') {
       return isBasicFeature;
     }
     
-    // Expired users get no access to premium features
-    return isBasicFeature;
+    // Active trial users get access to basic features
+    if (isActiveTrial) {
+      return isBasicFeature;
+    }
+    
+    // Expired users only get access to basic features (free tier)
+    return isBasicFeature && !premiumFeatures.includes(featureName);
   };
 
   const quickActions = [
@@ -249,7 +252,7 @@ const FacilityDashboard = ({
                 key={action.id}
                 className={`
                   relative cursor-pointer transition-all duration-300 hover:shadow-lg group
-                  ${action.featured ? 'ring-2 ring-blue-500 ring-opacity-50 animate-strobe bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : ''}
+                  ${action.featured ? 'ring-2 ring-blue-500 ring-opacity-50 animate-soft-glow bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : ''}
                   ${isLocked ? 'opacity-60' : ''}
                 `}
                 onClick={() => isLocked ? onUpgrade && onUpgrade() : onQuickAction(action.id)}
