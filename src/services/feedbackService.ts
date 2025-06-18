@@ -74,6 +74,9 @@ export class FeedbackService {
 
       return (data || []).map(item => ({
         ...item,
+        feedback_type: item.feedback_type as 'comment' | 'suggestion' | 'problem',
+        status: item.status as 'new' | 'reviewed' | 'resolved',
+        priority: item.priority as 'low' | 'medium' | 'high',
         facility_name: item.facilities?.facility_name || 'Unknown Facility'
       }));
     } catch (error) {
