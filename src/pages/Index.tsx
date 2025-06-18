@@ -50,12 +50,13 @@ const Index = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Transform Your Facility's
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600"> Chemical Safety</span>
+            Upgrade From Paper Binders to
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600"> Instant Digital Access</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Replace paper-based SDS management with instant QR code access. Get AI-powered safety insights, 
-            automatic compliance tracking, and professional audit trails.
+            Stop searching through file cabinets and dusty binders for safety data sheets. 
+            Get instant QR code access to chemical safety information, AI-powered assistance, 
+            and automatic OSHA compliance tracking — all from any smartphone.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-8">
@@ -100,17 +101,17 @@ const Index = () => {
               <AlertDescription className="text-red-800 font-medium">
                 <strong>2,888 OSHA citations</strong> were issued last year under Hazard Communication — the #2 most-cited standard in the U.S.
                 <br />
-                Most involved missing SDSs, mislabeled containers, or inaccessible safety info.
+                Most involved missing SDSs, mislabeled containers, or inaccessible safety info in outdated paper filing systems.
                 <br />
                 <strong className="text-red-900">Violations can trigger fines up to $16.5K each — and serious repeat offenders face up to $165K per violation.</strong>
               </AlertDescription>
             </Alert>
             
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              ⚠️ Why Businesses Choose ChemLabel-GPT
+              📱 Why Modern Facilities Choose Digital Over Paper
             </h2>
             <p className="text-xl text-gray-700 font-semibold mb-16">
-              ChemLabel-GPT fixes that — instantly.
+              ChemLabel-GPT eliminates the risks of paper-based safety data management.
             </p>
           </div>
           
@@ -121,7 +122,7 @@ const Index = () => {
                 <h3 className="text-xl font-semibold">Mobile SDS Access</h3>
               </div>
               <p className="text-gray-600">
-                Scan QR codes to pull SDS documents in seconds — no login, no app.
+                Scan QR codes to pull SDS documents in seconds — no more hunting through binders.
               </p>
             </Card>
 
@@ -131,7 +132,7 @@ const Index = () => {
                 <h3 className="text-xl font-semibold">AI-Powered Safety Assistant</h3>
               </div>
               <p className="text-gray-600">
-                Ask real-time safety questions. Get instant answers based on your SDSs.
+                Ask real-time safety questions. Get instant answers — no more flipping through pages.
               </p>
             </Card>
 
@@ -141,7 +142,7 @@ const Index = () => {
                 <h3 className="text-xl font-semibold">One-Click Label Generator</h3>
               </div>
               <p className="text-gray-600">
-                Generate compliant secondary container labels with your facility's branding.
+                Generate compliant secondary container labels instantly — no more handwritten labels.
               </p>
             </Card>
 
@@ -151,7 +152,7 @@ const Index = () => {
                 <h3 className="text-xl font-semibold">Audit-Ready Analytics</h3>
               </div>
               <p className="text-gray-600">
-                Track who accessed what, when — and impress your inspector every time.
+                Automatic digital tracking — no more missing paperwork during inspections.
               </p>
             </Card>
           </div>
@@ -162,7 +163,7 @@ const Index = () => {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
-            How It Works
+            From Paper Chaos to Digital Simplicity
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -172,7 +173,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Scan QR Code</h3>
               <p className="text-gray-600">
-                Workers use their phones to scan facility QR codes posted throughout your site.
+                Workers use their phones to scan facility QR codes — no more searching file cabinets.
               </p>
             </div>
 
@@ -182,7 +183,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Search Chemicals</h3>
               <p className="text-gray-600">
-                Instantly search for any chemical by product name and get comprehensive safety data.
+                Instantly search for any chemical by product name — faster than flipping through binders.
               </p>
             </div>
 
@@ -192,7 +193,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Stay Compliant</h3>
               <p className="text-gray-600">
-                All activity is logged automatically for OSHA compliance and audit readiness.
+                All activity is logged automatically — no more manual paperwork for OSHA compliance.
               </p>
             </div>
           </div>
@@ -204,7 +205,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-lg p-8 text-white mb-8">
             <h3 className="text-2xl font-bold mb-4">
-              🟢 Stop gambling with compliance.
+              🟢 Ditch the dusty binders and filing cabinets.
             </h3>
             <p className="text-xl mb-6">
               Get ChemLabel-GPT working for your team in under 15 minutes.
