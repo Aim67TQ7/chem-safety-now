@@ -1,7 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { Send, Bot, User, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -222,17 +224,23 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
               <div className={`flex items-start space-x-3 max-w-[85%] ${
                 message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
               }`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.type === 'user' 
-                    ? 'bg-blue-600' 
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600'
-                }`}>
-                  {message.type === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
-                  ) : (
-                    <Bot className="w-4 h-4 text-white" />
-                  )}
-                </div>
+                {message.type === 'user' ? (
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarFallback className="bg-blue-600 text-white">
+                      <User className="w-4 h-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarImage 
+                      src="/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png" 
+                      alt="Sarah - Chemical Safety Manager"
+                    />
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                      <Bot className="w-4 h-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
                 
                 <div className={`rounded-lg p-4 ${
                   message.type === 'user'
@@ -256,9 +264,15 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
           {isProcessing && (
             <div className="flex justify-start">
               <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
+                <Avatar className="w-8 h-8 flex-shrink-0">
+                  <AvatarImage 
+                    src="/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png" 
+                    alt="Sarah - Chemical Safety Manager"
+                  />
+                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                    <Bot className="w-4 h-4" />
+                  </AvatarFallback>
+                </Avatar>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
                     <div className="animate-pulse text-sm text-gray-600">Sarah is thinking...</div>
