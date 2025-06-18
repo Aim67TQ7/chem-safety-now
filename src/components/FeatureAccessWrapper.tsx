@@ -2,7 +2,8 @@
 import { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Lock, Crown, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Lock, Crown, Zap, Calendar } from "lucide-react";
 import { SubscriptionService } from "@/services/subscriptionService";
 
 interface FeatureAccessWrapperProps {
@@ -35,6 +36,15 @@ const FeatureAccessWrapper = ({
     checkAccess();
   }, [facilityId, feature]);
 
+  // Check if label printing is blocked due to beta testing
+  const isLabelPrintingBlocked = () => {
+    if (feature !== 'label_printing') return false;
+    
+    const currentDate = new Date();
+    const launchDate = new Date('2025-07-01');
+    return currentDate < launchDate;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-8">
@@ -43,6 +53,54 @@ const FeatureAccessWrapper = ({
     );
   }
 
+  // Special handling for label printing beta restriction
+  if (isLabelPrintingBlocked()) {
+    return (
+      <Card className="border-2 border-dashed border-orange-200 bg-orange-50">
+        <CardContent className="py-12">
+          <div className="text-center space-y-4">
+            <Calendar className="w-8 h-8 text-orange-500 mx-auto" />
+            <div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  GHS Label Printing
+                </h3>
+                <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                  Beta
+                </Badge>
+              </div>
+              <p className="text-gray-600 mb-1">
+                Professional, OSHA-compliant chemical labels
+              </p>
+              <p className="text-sm text-orange-600 font-medium">
+                Coming July 1st, 2025 - Currently in Beta Testing
+              </p>
+            </div>
+            
+            {showPreview && (
+              <div className="relative bg-gray-100 rounded-lg p-4 mb-4">
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-orange-400" />
+                </div>
+                <div className="opacity-30">
+                  {children}
+                </div>
+              </div>
+            )}
+
+            <Button 
+              disabled
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 cursor-not-allowed opacity-60"
+            >
+              Available July 1st, 2025
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Normal access control for other features or after launch date
   if (hasAccess) {
     return <>{children}</>;
   }

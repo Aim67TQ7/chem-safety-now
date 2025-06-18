@@ -59,6 +59,13 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
 
   const facilityDisplayName = facilityData.facility_name || 'Your Facility';
   
+  // Check if label printing is in beta (before July 1, 2025)
+  const isLabelPrintingInBeta = () => {
+    const currentDate = new Date();
+    const launchDate = new Date('2025-07-01');
+    return currentDate < launchDate;
+  };
+  
   const quickActions = [
     {
       icon: Search,
@@ -79,10 +86,11 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
     {
       icon: Printer,
       title: "Print Labels",
-      description: "Create GHS compliant labels",
+      description: isLabelPrintingInBeta() ? "Coming July 1st, 2025" : "Create GHS compliant labels",
       action: "labels",
       color: "bg-purple-500 hover:bg-purple-600",
-      feature: "label_printing"
+      feature: "label_printing",
+      isBeta: isLabelPrintingInBeta()
     },
     {
       icon: Bot,
@@ -172,11 +180,18 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
               <p className="text-sm text-gray-600">{action.description}</p>
-              {action.feature === 'label_printing' && subscription && !SubscriptionService.hasPremiumAccess(subscription) && (
-                <Badge variant="outline" className="mt-2 text-xs text-purple-600 border-purple-200">
-                  Premium
-                </Badge>
-              )}
+              <div className="flex justify-center items-center gap-2 mt-2">
+                {action.feature === 'label_printing' && subscription && !SubscriptionService.hasPremiumAccess(subscription) && (
+                  <Badge variant="outline" className="text-xs text-purple-600 border-purple-200">
+                    Premium
+                  </Badge>
+                )}
+                {action.isBeta && (
+                  <Badge variant="outline" className="text-xs text-orange-600 border-orange-200 bg-orange-50">
+                    Beta
+                  </Badge>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -299,7 +314,7 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
                 </div>
                 <div className="flex items-center">
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  Print GHS compliant labels instantly (Premium)
+                  Print GHS compliant labels (Coming July 1st)
                 </div>
                 <div className="flex items-center">
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
