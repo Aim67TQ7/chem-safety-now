@@ -176,7 +176,7 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Search Response</span>
-                <span className="text-sm font-medium">< 2 seconds</span>
+                <span className="text-sm font-medium">Under 2 seconds</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">AI Assistant</span>
