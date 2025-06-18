@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -43,52 +42,63 @@ interface FacilityDashboardProps {
   onUpgrade?: () => void;
 }
 
-const FacilityDashboard = ({ facilityData, subscriptionInfo, onQuickAction, onUpgrade }: FacilityDashboardProps) => {
+const FacilityDashboard = ({
+  facilityData,
+  subscriptionInfo,
+  onQuickAction,
+  onUpgrade
+}: FacilityDashboardProps) => {
   const quickActions = [
     {
       id: 'search',
       title: 'SDS Search',
-      description: 'Find and access Safety Data Sheets',
+      description: 'Find chemical safety data sheets',
       icon: Search,
-      color: 'bg-blue-500 hover:bg-blue-600',
-      textColor: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'bg-blue-600',
+      hoverColor: 'hover:bg-blue-700',
+      featured: true // Mark as featured for special styling
     },
     {
       id: 'qr-codes',
       title: 'QR Codes',
-      description: 'Generate facility QR codes',
+      description: 'Generate facility access codes',
       icon: QrCode,
-      color: 'bg-green-500 hover:bg-green-600',
-      textColor: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'bg-green-600',
+      hoverColor: 'hover:bg-green-700'
     },
     {
       id: 'desktop-links',
       title: 'Desktop Links',
       description: 'Create desktop shortcuts',
       icon: Monitor,
-      color: 'bg-purple-500 hover:bg-purple-600',
-      textColor: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'bg-purple-600',
+      hoverColor: 'hover:bg-purple-700'
     },
     {
       id: 'labels',
       title: 'Label Printer',
-      description: 'Print chemical labels',
+      description: 'Create safety labels',
       icon: Printer,
-      color: 'bg-orange-500 hover:bg-orange-600',
-      textColor: 'text-orange-600',
-      bgColor: 'bg-orange-50'
+      color: 'bg-orange-600',
+      hoverColor: 'hover:bg-orange-700',
+      requiresFeature: 'label_printing'
     },
     {
       id: 'ai-assistant',
       title: 'AI Assistant',
-      description: 'Get chemical safety help',
+      description: 'Chat with Sarah, your AI Safety Manager',
       icon: Bot,
-      color: 'bg-red-500 hover:bg-red-600',
-      textColor: 'text-red-600',
-      bgColor: 'bg-red-50'
+      color: 'bg-indigo-600',
+      hoverColor: 'hover:bg-indigo-700',
+      requiresFeature: 'ai_assistant'
+    },
+    {
+      id: 'settings',
+      title: 'Settings',
+      description: 'Manage facility settings',
+      icon: Settings,
+      color: 'bg-gray-600',
+      hoverColor: 'hover:bg-gray-700'
     }
   ];
 
@@ -153,7 +163,7 @@ const FacilityDashboard = ({ facilityData, subscriptionInfo, onQuickAction, onUp
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Facility Header Card with Subscription Status and Settings Button */}
       <Card className="bg-gradient-to-r from-blue-50 to-red-50">
         <CardHeader>
@@ -196,31 +206,62 @@ const FacilityDashboard = ({ facilityData, subscriptionInfo, onQuickAction, onUp
         </CardHeader>
       </Card>
 
-      {/* Quick Actions Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {quickActions.map((action) => {
-          const IconComponent = action.icon;
-          return (
-            <Card 
-              key={action.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
-              onClick={() => onQuickAction(action.id)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-full ${action.bgColor}`}>
-                    <IconComponent className={`w-6 h-6 ${action.textColor}`} />
+      {/* Quick Actions */}
+      <Card className="p-6">
+        <h3 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            const isLocked = action.requiresFeature && !hasFeatureAccess(action.requiresFeature);
+            
+            return (
+              <Card
+                key={action.id}
+                className={`
+                  relative cursor-pointer transition-all duration-300 hover:shadow-lg group
+                  ${action.featured ? 'ring-2 ring-blue-500 ring-opacity-50 animate-pulse bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : ''}
+                  ${isLocked ? 'opacity-60' : ''}
+                `}
+                onClick={() => isLocked ? onUpgrade() : onQuickAction(action.id)}
+              >
+                {action.featured && (
+                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+                    START HERE
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{action.title}</h3>
-                    <p className="text-sm text-gray-600">{action.description}</p>
+                )}
+                
+                <div className="p-4 relative">
+                  {isLocked && (
+                    <div className="absolute top-2 right-2">
+                      <Crown className="w-4 h-4 text-yellow-500" />
+                    </div>
+                  )}
+                  
+                  <div className={`${action.color} ${action.hoverColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors group-hover:scale-105 transform duration-200`}>
+                    <Icon className="w-6 h-6 text-white" />
                   </div>
+                  
+                  <h4 className={`text-lg font-semibold mb-2 ${action.featured ? 'text-blue-900' : 'text-gray-900'}`}>
+                    {action.title}
+                  </h4>
+                  
+                  <p className={`text-sm ${action.featured ? 'text-blue-700' : 'text-gray-600'}`}>
+                    {action.description}
+                  </p>
+                  
+                  {isLocked && (
+                    <div className="mt-3">
+                      <Badge variant="outline" className="text-xs">
+                        Upgrade Required
+                      </Badge>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+              </Card>
+            );
+          })}
+        </div>
+      </Card>
 
       {/* Facility Information */}
       <div className="grid md:grid-cols-2 gap-6">

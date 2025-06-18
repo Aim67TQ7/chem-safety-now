@@ -678,16 +678,6 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={() => handleGenerateLabel(sdsDocument)}
-                    className="w-full"
-                    title={`Create label for ${sdsDocument.product_name}`}
-                  >
-                    <Printer className="w-4 h-4 mr-1" />
-                    Label
-                  </Button>
-                  <Button
-                    size="sm"
                     variant="default"
                     onClick={() => handleAskAI(sdsDocument)}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"

@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef } from "react";
 import QRCodeLib from 'qrcode';
 import { interactionLogger } from "@/services/interactionLogger";
+import QRPrintPopup from "@/components/popups/QRPrintPopup";
 
 interface QRCodeGeneratorProps {
   facilityData: {
@@ -25,6 +26,7 @@ interface QRCodeGeneratorProps {
 const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGeneratorProps) => {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [showPrintPopup, setShowPrintPopup] = useState(false);
 
   const facilityDisplayName = facilityData.facility_name || 'Facility';
 
@@ -99,7 +101,9 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
     });
   };
 
-  const printPoster = async () => {
+  const openPrintPopup = async () => {
+    setShowPrintPopup(true);
+
     // Log print poster action
     await interactionLogger.logQRCodeInteraction({
       actionType: 'print',
@@ -115,10 +119,6 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
         facilityName: facilityDisplayName
       }
     });
-
-    // Open print page in new window with correct parameter name
-    const printUrl = `/facility/${facilityData.slug}/print`;
-    window.open(printUrl, '_blank');
   };
 
   return (
@@ -166,7 +166,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={printPoster}
+              onClick={openPrintPopup}
               className="bg-gray-800 hover:bg-gray-900 text-white"
             >
               <Printer className="w-4 h-4 mr-2" />
@@ -249,6 +249,14 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
           <li>• Conduct regular testing to verify QR code functionality</li>
         </ul>
       </Card>
+
+      {/* Print Popup */}
+      <QRPrintPopup
+        isOpen={showPrintPopup}
+        onClose={() => setShowPrintPopup(false)}
+        facilityData={facilityData}
+        facilityUrl={facilityUrl}
+      />
     </div>
   );
 };
