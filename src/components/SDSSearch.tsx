@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface SDSSearchProps {
   facilityData: any;
+  onSearchStart?: () => void;
 }
 
 interface MatchResult {
@@ -79,7 +80,7 @@ interface SDSDocument {
 
 const API_BASE_URL = 'https://cheerful-fascination.railway.app';
 
-const SDSSearch = ({ facilityData }: SDSSearchProps) => {
+const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SDSDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +133,11 @@ const SDSSearch = ({ facilityData }: SDSSearchProps) => {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+
+    // Call onSearchStart callback if provided
+    if (onSearchStart) {
+      onSearchStart();
+    }
 
     setIsLoading(true);
     
