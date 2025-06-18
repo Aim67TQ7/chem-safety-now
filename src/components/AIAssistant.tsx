@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -212,10 +211,10 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
   };
 
   return (
-    <div className="space-y-4 h-full flex flex-col">
-      {/* Enhanced Chat Interface */}
-      <Card className="p-0 overflow-hidden flex-1 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="h-full flex flex-col space-y-4">
+      {/* Chat Messages - Now with proper height management */}
+      <Card className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[50vh]">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -288,7 +287,7 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
           )}
         </div>
 
-        {/* Enhanced Message Input */}
+        {/* Message Input */}
         <div className="border-t border-gray-200 p-4 bg-gray-50">
           <div className="flex space-x-3">
             <Input
@@ -333,7 +332,7 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
         </div>
       </Card>
 
-      {/* Enhanced Professional Disclaimer */}
+      {/* Professional Disclaimer */}
       <Card className="p-4 bg-amber-50 border-amber-200">
         <h4 className="text-sm font-semibold text-amber-900 mb-2 flex items-center">
           <AlertCircle className="w-4 h-4 mr-2" />
