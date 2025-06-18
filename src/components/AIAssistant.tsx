@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -211,47 +210,10 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* AI Assistant Header with Enhanced Context */}
-      <Card className="p-4">
-        <div className="space-y-3">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center">
-              <Bot className="w-5 h-5 text-blue-600 mr-2" />
-              Sarah - Chemical Safety Manager
-              {selectedDocument && (
-                <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-300 text-xs">
-                  {selectedDocument.product_name}
-                </Badge>
-              )}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {selectedDocument 
-                ? `Ready to help with specific guidance for ${selectedDocument.product_name} based on its SDS data and my safety experience.`
-                : "Your conversational safety expert - here to help with chemical safety, PPE, procedures, and workplace safety questions."
-              }
-            </p>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs">
-              AI-Powered
-            </Badge>
-            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300 text-xs">
-              15+ Years Experience
-            </Badge>
-            {selectedDocument && (
-              <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
-                SDS Context Active
-              </Badge>
-            )}
-          </div>
-        </div>
-      </Card>
-
+    <div className="space-y-4 h-full flex flex-col">
       {/* Enhanced Chat Interface */}
-      <Card className="p-0 overflow-hidden">
-        <div className="h-96 overflow-y-auto p-4 space-y-4">
+      <Card className="p-0 overflow-hidden flex-1 flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}

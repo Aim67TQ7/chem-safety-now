@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import AIAssistant from "@/components/AIAssistant";
 import { Bot, X } from "lucide-react";
 
@@ -15,8 +16,8 @@ interface AIAssistantPopupProps {
 const AIAssistantPopup = ({ isOpen, onClose, facilityData, selectedDocument }: AIAssistantPopupProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between pb-4">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="flex flex-row items-center justify-between p-6 pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Bot className="w-5 h-5" />
             Chemical Safety Assistant
@@ -36,12 +37,14 @@ const AIAssistantPopup = ({ isOpen, onClose, facilityData, selectedDocument }: A
           </Button>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden">
-          <AIAssistant 
-            facilityData={facilityData} 
-            selectedDocument={selectedDocument}
-          />
-        </div>
+        <ResizablePanelGroup direction="vertical" className="flex-1 min-h-0">
+          <ResizablePanel defaultSize={100} minSize={30} className="p-6">
+            <AIAssistant 
+              facilityData={facilityData} 
+              selectedDocument={selectedDocument}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </DialogContent>
     </Dialog>
   );
