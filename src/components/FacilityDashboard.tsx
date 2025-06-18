@@ -15,6 +15,10 @@ import {
   Printer,
   Bot
 } from "lucide-react";
+import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
+import SubscriptionPlansModal from "./SubscriptionPlansModal";
+import FeatureAccessWrapper from "./FeatureAccessWrapper";
+import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 
 interface FacilityData {
   id: string;
@@ -36,11 +40,22 @@ interface FacilityDashboardProps {
 
 const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [subscription, setSubscription] = useState<FacilitySubscription | null>(null);
   
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      const sub = await SubscriptionService.getFacilitySubscription(facilityData.id);
+      setSubscription(sub);
+    };
+
+    fetchSubscription();
+  }, [facilityData.id]);
 
   const facilityDisplayName = facilityData.facility_name || 'Your Facility';
   
@@ -50,28 +65,32 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
       title: "Search Chemicals",
       description: "Find SDS documents instantly",
       action: "search",
-      color: "bg-blue-500 hover:bg-blue-600"
+      color: "bg-blue-500 hover:bg-blue-600",
+      feature: "sds_search"
     },
     {
       icon: QrCode,
       title: "Generate QR Codes",
       description: "Create facility QR codes",
       action: "qr-codes",
-      color: "bg-green-500 hover:bg-green-600"
+      color: "bg-green-500 hover:bg-green-600",
+      feature: "basic_qr_codes"
     },
     {
       icon: Printer,
       title: "Print Labels",
       description: "Create GHS compliant labels",
       action: "labels",
-      color: "bg-purple-500 hover:bg-purple-600"
+      color: "bg-purple-500 hover:bg-purple-600",
+      feature: "label_printing"
     },
     {
       icon: Bot,
       title: "Ask Sarah",
       description: "Get AI safety assistance",
       action: "ai-assistant",
-      color: "bg-orange-500 hover:bg-orange-600"
+      color: "bg-orange-500 hover:bg-orange-600",
+      feature: "ai_assistant"
     }
   ];
 
@@ -91,8 +110,26 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
     return () => clearInterval(tipTimer);
   }, []);
 
+  const handleQuickAction = async (action: string, feature?: string) => {
+    if (feature) {
+      const hasAccess = await SubscriptionService.checkFeatureAccess(facilityData.id, feature);
+      if (!hasAccess) {
+        setShowUpgradeModal(true);
+        return;
+      }
+    }
+    
+    onQuickAction(action);
+  };
+
   return (
     <div className="space-y-6 mb-8 animate-fade-in">
+      {/* Subscription Status Header */}
+      <SubscriptionStatusHeader 
+        facilityId={facilityData.id}
+        onUpgrade={() => setShowUpgradeModal(true)}
+      />
+
       {/* Welcome Header */}
       <div className="text-center space-y-2">
         <h2 className="text-3xl font-bold text-gray-900">
@@ -119,7 +156,7 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
           <Card 
             key={action.action}
             className="hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-            onClick={() => onQuickAction(action.action)}
+            onClick={() => handleQuickAction(action.action, action.feature)}
           >
             <CardContent className="p-6 text-center">
               <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mx-auto mb-3 transition-colors`}>
@@ -127,6 +164,11 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
               <p className="text-sm text-gray-600">{action.description}</p>
+              {action.feature === 'label_printing' && subscription && !SubscriptionService.hasPremiumAccess(subscription) && (
+                <Badge variant="outline" className="mt-2 text-xs text-purple-600 border-purple-200">
+                  Premium
+                </Badge>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -144,8 +186,17 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">License Status</span>
-                <Badge className="bg-green-100 text-green-800">Active</Badge>
+                <span className="text-sm text-gray-600">Subscription Status</span>
+                <Badge className={`${
+                  subscription?.subscription_status === 'trial' ? 'bg-yellow-100 text-yellow-800' :
+                  subscription?.subscription_status === 'basic' ? 'bg-blue-100 text-blue-800' :
+                  subscription?.subscription_status === 'premium' ? 'bg-purple-100 text-purple-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {subscription?.subscription_status === 'trial' ? 'Trial' :
+                   subscription?.subscription_status === 'basic' ? 'Basic' :
+                   subscription?.subscription_status === 'premium' ? 'Premium' : 'Unknown'}
+                </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Platform Access</span>
@@ -161,30 +212,36 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
-              <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
-              Quick Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">SDS Database</span>
-                <span className="text-sm font-medium">1000+ Documents</span>
+        <FeatureAccessWrapper
+          feature="dashboards"
+          facilityId={facilityData.id}
+          onUpgrade={() => setShowUpgradeModal(true)}
+        >
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
+                Quick Stats
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">SDS Database</span>
+                  <span className="text-sm font-medium">1000+ Documents</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Search Response</span>
+                  <span className="text-sm font-medium">Under 2 seconds</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">AI Assistant</span>
+                  <Badge variant="outline" className="text-xs">Sarah Ready</Badge>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Search Response</span>
-                <span className="text-sm font-medium">Under 2 seconds</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">AI Assistant</span>
-                <Badge variant="outline" className="text-xs">Sarah Ready</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </FeatureAccessWrapper>
 
         <Card>
           <CardHeader className="pb-3">
@@ -234,7 +291,7 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
                 </div>
                 <div className="flex items-center">
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  Print GHS compliant labels instantly
+                  Print GHS compliant labels instantly (Premium)
                 </div>
                 <div className="flex items-center">
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
@@ -245,6 +302,14 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
           </div>
         </CardContent>
       </Card>
+
+      {/* Subscription Plans Modal */}
+      <SubscriptionPlansModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        facilityId={facilityData.id}
+        currentPlan={subscription?.subscription_status}
+      />
     </div>
   );
 };

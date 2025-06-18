@@ -7,6 +7,7 @@ import { navItems } from "./nav-items";
 import Index from "./pages/Index";
 import SDSDocumentsPage from "./pages/SDSDocumentsPage";
 import AdminPage from "./pages/AdminPage";
+import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/sds-documents" element={<SDSDocumentsPage />} />
           <Route path="/secret-admin-dashboard" element={<AdminPage />} />
+          <Route path="/subscribe/:facilitySlug?" element={<SubscriptionRequiredPage />} />
           {navItems.map(({ to, page }) => (
             <Route key={to} path={to} element={page} />
           ))}

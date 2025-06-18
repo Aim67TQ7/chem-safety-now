@@ -67,9 +67,13 @@ export type Database = {
           created_at: string
           email: string | null
           facility_name: string | null
+          feature_access_level: string | null
           id: string
           logo_url: string | null
           slug: string
+          subscription_status: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
           updated_at: string
           user_id: string | null
         }
@@ -79,9 +83,13 @@ export type Database = {
           created_at?: string
           email?: string | null
           facility_name?: string | null
+          feature_access_level?: string | null
           id?: string
           logo_url?: string | null
           slug: string
+          subscription_status?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -91,9 +99,13 @@ export type Database = {
           created_at?: string
           email?: string | null
           facility_name?: string | null
+          feature_access_level?: string | null
           id?: string
           logo_url?: string | null
           slug?: string
+          subscription_status?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -137,6 +149,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feature_permissions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          feature_name: string
+          id: string
+          required_plan: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          feature_name: string
+          id?: string
+          required_plan?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          feature_name?: string
+          id?: string
+          required_plan?: string | null
+        }
+        Relationships: []
       }
       label_generations: {
         Row: {
@@ -524,6 +560,109 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_payments: {
+        Row: {
+          amount: number
+          billing_period: string | null
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string | null
+          currency: string | null
+          facility_id: string | null
+          id: string
+          payment_status: string | null
+          plan_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          billing_period?: string | null
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          facility_id?: string | null
+          id?: string
+          payment_status?: string | null
+          plan_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          billing_period?: string | null
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          facility_id?: string | null
+          id?: string
+          payment_status?: string | null
+          plan_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_payments_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          annual_price: number | null
+          created_at: string | null
+          features: Json | null
+          id: string
+          monthly_price: number | null
+          name: string
+          stripe_annual_price_id: string | null
+          stripe_monthly_price_id: string | null
+        }
+        Insert: {
+          annual_price?: number | null
+          created_at?: string | null
+          features?: Json | null
+          id?: string
+          monthly_price?: number | null
+          name: string
+          stripe_annual_price_id?: string | null
+          stripe_monthly_price_id?: string | null
+        }
+        Update: {
+          annual_price?: number | null
+          created_at?: string | null
+          features?: Json | null
+          id?: string
+          monthly_price?: number | null
+          name?: string
+          stripe_annual_price_id?: string | null
+          stripe_monthly_price_id?: string | null
+        }
+        Relationships: []
+      }
       subscription_tiers: {
         Row: {
           annual_price: number
@@ -626,27 +765,33 @@ export type Database = {
       admin_facility_overview: {
         Row: {
           address: string | null
+          annual_price: number | null
           contact_name: string | null
           created_at: string | null
-          current_lookups: number | null
+          current_plan: string | null
           email: string | null
           facility_name: string | null
           facility_url: string | null
+          feature_access_level: string | null
           id: string | null
           logo_url: string | null
-          lookup_limit: number | null
-          lookup_reset_date: string | null
           monthly_price: number | null
           qr_code_url: string | null
           slug: string | null
           subscription_status: string | null
-          subscription_tier: string | null
+          trial_days_remaining: number | null
+          trial_end_date: string | null
+          trial_start_date: string | null
           updated_at: string | null
         }
         Relationships: []
       }
     }
     Functions: {
+      check_feature_access: {
+        Args: { p_facility_id: string; p_feature_name: string }
+        Returns: boolean
+      }
       increment_lookup_count: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -654,6 +799,14 @@ export type Database = {
       reset_monthly_usage: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      update_facility_subscription: {
+        Args: {
+          p_facility_id: string
+          p_plan_name: string
+          p_stripe_subscription_id?: string
+        }
+        Returns: boolean
       }
       upgrade_user_subscription: {
         Args: { p_user_id: string; p_tier_name: string }
