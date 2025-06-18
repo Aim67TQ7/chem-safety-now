@@ -354,8 +354,8 @@ const Index = () => {
                 <p>Start your trial immediately without payment details</p>
               </div>
               <div>
-                <strong className="text-gray-900">Full Feature Access</strong>
-                <p>Test all premium features during your trial period</p>
+                <strong className="text-gray-900">Complete Plan Access</strong>
+                <p>Experience your selected plan's full feature set during trial</p>
               </div>
               <div>
                 <strong className="text-gray-900">Easy Upgrade</strong>
