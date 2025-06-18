@@ -23,7 +23,7 @@ export const navItems = [
   },
   {
     title: "Facility",
-    to: "/facility/:slug",
+    to: "/facility/:facilitySlug",
     icon: <Settings className="h-4 w-4" />,
     page: <FacilityPage />,
   },
