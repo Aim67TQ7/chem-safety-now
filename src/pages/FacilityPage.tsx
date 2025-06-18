@@ -11,6 +11,7 @@ import DesktopLinkGenerator from "@/components/DesktopLinkGenerator";
 import FacilitySettings from "@/components/FacilitySettings";
 import FeatureAccessWrapper from "@/components/FeatureAccessWrapper";
 import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
+import SubscriptionPlansModal from "@/components/SubscriptionPlansModal";
 import FeedbackPopup from "@/components/FeedbackPopup";
 import { SubscriptionService } from "@/services/subscriptionService";
 import { Button } from "@/components/ui/button";
@@ -29,13 +30,20 @@ interface FacilityData {
   updated_at: string;
 }
 
+interface SubscriptionInfo {
+  subscription_status: 'trial' | 'basic' | 'premium' | 'expired';
+  trial_days_remaining?: number;
+}
+
 const FacilityPage = () => {
   const { facilitySlug } = useParams();
   const navigate = useNavigate();
   const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [currentView, setCurrentView] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   useEffect(() => {
     const fetchFacilityData = async () => {
@@ -61,11 +69,16 @@ const FacilityPage = () => {
 
         setFacilityData(data);
 
-        // Check if trial has expired and redirect if needed
+        // Check subscription status
         const subscription = await SubscriptionService.getFacilitySubscription(data.id);
-        if (subscription && SubscriptionService.isTrialExpired(subscription)) {
-          navigate(`/subscribe/${facilitySlug}`);
-          return;
+        if (subscription) {
+          setSubscriptionInfo(subscription);
+          
+          // Check if trial has expired and redirect if needed
+          if (SubscriptionService.isTrialExpired(subscription)) {
+            navigate(`/subscribe/${facilitySlug}`);
+            return;
+          }
         }
 
         setLoading(false);
@@ -83,6 +96,10 @@ const FacilityPage = () => {
     setFacilityData(updatedData);
   };
 
+  const handleUpgrade = () => {
+    setShowSubscriptionModal(true);
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading facility...</div>;
   }
@@ -97,17 +114,15 @@ const FacilityPage = () => {
 
   const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
 
-  const handleUpgrade = () => {
-    navigate(`/subscribe/${facilitySlug}`);
-  };
-
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
         return (
           <FacilityDashboard
             facilityData={facilityData}
+            subscriptionInfo={subscriptionInfo}
             onQuickAction={handleQuickAction}
+            onUpgrade={handleUpgrade}
           />
         );
       case 'sds-search':
@@ -152,7 +167,14 @@ const FacilityPage = () => {
           />
         );
       default:
-        return <FacilityDashboard facilityData={facilityData} onQuickAction={handleQuickAction} />;
+        return (
+          <FacilityDashboard 
+            facilityData={facilityData} 
+            subscriptionInfo={subscriptionInfo}
+            onQuickAction={handleQuickAction}
+            onUpgrade={handleUpgrade}
+          />
+        );
     }
   };
 
@@ -183,7 +205,7 @@ const FacilityPage = () => {
 
   return (
     <div className="container mx-auto py-8">
-      {/* Only show subscription status on dashboard view */}
+      {/* Only show subscription status warning on dashboard view */}
       {currentView === 'dashboard' && (
         <SubscriptionStatusHeader 
           facilityId={facilityData.id} 
@@ -208,6 +230,15 @@ const FacilityPage = () => {
       )}
 
       {renderView()}
+
+      {/* Subscription Plans Modal */}
+      <SubscriptionPlansModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        facilityId={facilityData.id}
+        currentPlan={subscriptionInfo?.subscription_status}
+        facilitySlug={facilitySlug}
+      />
 
       {/* Feedback Popup */}
       <FeedbackPopup 

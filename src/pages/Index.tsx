@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { CheckCircle, Clock, AlertTriangle, Crown, Zap } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -198,138 +199,9 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing Section - Updated for new tier structure */}
+      {/* Updated CTA Section */}
       <section className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Simple Facility-Based Pricing
-          </h2>
-          <p className="text-lg text-gray-600 mb-12">
-            Choose the plan that fits your facility's safety needs
-          </p>
-          
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
-            {/* Basic Plan */}
-            <Card className="p-8 border-2 border-blue-200 relative">
-              <div className="flex items-center justify-center mb-4">
-                <Zap className="w-8 h-8 text-blue-500 mr-2" />
-                <h3 className="text-2xl font-bold">Basic Plan</h3>
-              </div>
-              
-              <div className="mb-6">
-                <div className="flex items-baseline justify-center">
-                  <span className="text-4xl font-bold text-gray-900">$50</span>
-                  <span className="text-lg text-gray-600 ml-1">/month</span>
-                </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  or $500/year (save $100)
-                </div>
-              </div>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
-                <div className="flex items-center justify-center text-blue-800">
-                  <Clock className="w-4 h-4 mr-2" />
-                  <span className="font-semibold">7-Day Free Trial Included</span>
-                </div>
-              </div>
-              
-              <ul className="space-y-3 mb-8 text-left">
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Unlimited worker QR code access
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  SDS document search database
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Sarah AI safety assistant
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Basic facility QR codes
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  OSHA compliance tracking
-                </li>
-              </ul>
-              
-              <Button 
-                onClick={handleGetStarted}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold w-full"
-              >
-                Start Free Trial
-              </Button>
-            </Card>
-
-            {/* Premium Plan */}
-            <Card className="p-8 border-2 border-purple-200 relative shadow-xl scale-105">
-              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white">
-                <Crown className="w-4 h-4 mr-1" />
-                Most Popular
-              </Badge>
-              
-              <div className="flex items-center justify-center mb-4">
-                <Crown className="w-8 h-8 text-purple-500 mr-2" />
-                <h3 className="text-2xl font-bold">Premium Plan</h3>
-              </div>
-              
-              <div className="mb-6">
-                <div className="flex items-baseline justify-center">
-                  <span className="text-4xl font-bold text-gray-900">$500</span>
-                  <span className="text-lg text-gray-600 ml-1">/month</span>
-                </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  or $5,000/year (save $1,000)
-                </div>
-              </div>
-              
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-6">
-                <div className="flex items-center justify-center text-purple-800">
-                  <Clock className="w-4 h-4 mr-2" />
-                  <span className="font-semibold">7-Day Free Trial Included</span>
-                </div>
-              </div>
-              
-              <ul className="space-y-3 mb-8 text-left">
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Everything in Basic plan
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  GHS-compliant label printing
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Advanced QR code features
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Safety analytics dashboard
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Detailed audit trails
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                  Priority support
-                </li>
-              </ul>
-              
-              <Button 
-                onClick={handleGetStarted}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 text-lg font-semibold w-full"
-              >
-                Start Free Trial
-              </Button>
-            </Card>
-          </div>
-          
-          {/* Updated CTA Section */}
           <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-lg p-8 text-white mb-8">
             <h3 className="text-2xl font-bold mb-4">
               🟢 Stop gambling with compliance.

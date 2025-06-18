@@ -13,7 +13,9 @@ import {
   Building2,
   Calendar,
   Users,
-  Activity
+  Activity,
+  Clock,
+  Crown
 } from "lucide-react";
 
 interface FacilityData {
@@ -29,12 +31,19 @@ interface FacilityData {
   updated_at: string;
 }
 
-interface FacilityDashboardProps {
-  facilityData: FacilityData;
-  onQuickAction: (action: string) => void;
+interface SubscriptionInfo {
+  subscription_status: 'trial' | 'basic' | 'premium' | 'expired';
+  trial_days_remaining?: number;
 }
 
-const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardProps) => {
+interface FacilityDashboardProps {
+  facilityData: FacilityData;
+  subscriptionInfo?: SubscriptionInfo;
+  onQuickAction: (action: string) => void;
+  onUpgrade?: () => void;
+}
+
+const FacilityDashboard = ({ facilityData, subscriptionInfo, onQuickAction, onUpgrade }: FacilityDashboardProps) => {
   const quickActions = [
     {
       id: 'search',
@@ -91,9 +100,61 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
     });
   };
 
+  const renderSubscriptionStatus = () => {
+    if (!subscriptionInfo) return null;
+
+    switch (subscriptionInfo.subscription_status) {
+      case 'trial':
+        return (
+          <div className="flex items-center space-x-3">
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+              <Clock className="w-3 h-3 mr-1" />
+              {subscriptionInfo.trial_days_remaining} day{subscriptionInfo.trial_days_remaining !== 1 ? 's' : ''} left in trial
+            </Badge>
+            {onUpgrade && (
+              <Button
+                onClick={onUpgrade}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Upgrade Now
+              </Button>
+            )}
+          </div>
+        );
+      case 'basic':
+        return (
+          <div className="flex items-center space-x-3">
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+              Basic Plan
+            </Badge>
+            {onUpgrade && (
+              <Button
+                onClick={onUpgrade}
+                size="sm"
+                variant="outline"
+                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              >
+                Upgrade to Premium
+              </Button>
+            )}
+          </div>
+        );
+      case 'premium':
+        return (
+          <Badge variant="default" className="bg-purple-50 text-purple-700 border-purple-200">
+            <Crown className="w-3 h-3 mr-1" />
+            Premium Plan
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Facility Header Card with Settings Button */}
+      {/* Facility Header Card with Subscription Status and Settings Button */}
       <Card className="bg-gradient-to-r from-blue-50 to-red-50">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -119,15 +180,18 @@ const FacilityDashboard = ({ facilityData, onQuickAction }: FacilityDashboardPro
                 )}
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onQuickAction('settings')}
-              className="flex items-center space-x-2"
-            >
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </Button>
+            <div className="flex items-center space-x-3">
+              {renderSubscriptionStatus()}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onQuickAction('settings')}
+                className="flex items-center space-x-2"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
