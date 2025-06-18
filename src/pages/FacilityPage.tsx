@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import SDSSearch from "@/components/SDSSearch";
 import QRCodeGenerator from "@/components/QRCodeGenerator";
 import LabelPrinter from "@/components/LabelPrinter";
 import AIAssistant from "@/components/AIAssistant";
+import DesktopLinkGenerator from "@/components/DesktopLinkGenerator";
 import FeatureAccessWrapper from "@/components/FeatureAccessWrapper";
 import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
 import { SubscriptionService } from "@/services/subscriptionService";
@@ -112,6 +114,8 @@ const FacilityPage = () => {
         );
       case 'qr-generator':
         return <QRCodeGenerator facilityData={facilityData} facilityUrl={facilityUrl} />;
+      case 'desktop-links':
+        return <DesktopLinkGenerator facilityData={facilityData} />;
       case 'label-printer':
         return (
           <FeatureAccessWrapper
@@ -144,6 +148,9 @@ const FacilityPage = () => {
         break;
       case 'qr-codes':
         setCurrentView('qr-generator');
+        break;
+      case 'desktop-links':
+        setCurrentView('desktop-links');
         break;
       case 'labels':
         setCurrentView('label-printer');
