@@ -48,6 +48,13 @@ export type Database = {
             foreignKeyName: "ai_conversations_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_conversations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
@@ -119,6 +126,13 @@ export type Database = {
             foreignKeyName: "facility_qr_codes_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_qr_codes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
@@ -172,6 +186,13 @@ export type Database = {
             foreignKeyName: "label_generations_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "label_generations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
@@ -215,6 +236,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "qr_code_interactions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qr_code_interactions_facility_id_fkey"
             columns: ["facility_id"]
@@ -275,6 +303,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "qr_codes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qr_codes_facility_id_fkey"
             columns: ["facility_id"]
@@ -434,6 +469,13 @@ export type Database = {
             foreignKeyName: "sds_interactions_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sds_interactions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
@@ -560,6 +602,13 @@ export type Database = {
             foreignKeyName: "subscriptions_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
@@ -574,7 +623,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_facility_overview: {
+        Row: {
+          address: string | null
+          contact_name: string | null
+          created_at: string | null
+          current_lookups: number | null
+          email: string | null
+          facility_name: string | null
+          facility_url: string | null
+          id: string | null
+          logo_url: string | null
+          lookup_limit: number | null
+          lookup_reset_date: string | null
+          monthly_price: number | null
+          qr_code_url: string | null
+          slug: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       increment_lookup_count: {
