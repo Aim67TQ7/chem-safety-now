@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -171,7 +170,7 @@ const SignupPage = () => {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
             Set Up Your Facility
@@ -181,176 +180,125 @@ const SignupPage = () => {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Signup Form */}
-          <div className="lg:col-span-2">
-            <Card className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Contact Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                    Contact Information
-                  </h3>
-                  
-                  <div>
-                    <Label htmlFor="email">Work Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="contactName">Contact Person Full Name *</Label>
-                    <Input
-                      id="contactName"
-                      type="text"
-                      value={formData.contactName}
-                      onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                {/* Facility Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                    Facility Details
-                  </h3>
-                  
-                  <div>
-                    <Label htmlFor="facilityName">Facility/Company Name *</Label>
-                    <Input
-                      id="facilityName"
-                      type="text"
-                      value={formData.facilityName}
-                      onChange={(e) => setFormData({ ...formData, facilityName: e.target.value })}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="address">Facility Address *</Label>
-                    <Input
-                      id="address"
-                      type="text"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      required
-                      className="mt-1"
-                      placeholder="123 Industrial Blvd, City, State 12345"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="logo">Company Logo (Optional)</Label>
-                    <div className="mt-1">
-                      <div className="flex items-center space-x-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="relative overflow-hidden"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Logo
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
-                        </Button>
-                        {formData.logo && (
-                          <span className="text-sm text-green-600">
-                            ✓ {formData.logo.name}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        PNG or JPG format recommended. Will be displayed on QR codes and facility site.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  disabled={isProcessing || !formData.email || !formData.facilityName || !formData.contactName || !formData.address}
-                  className="w-full bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white py-4 text-lg font-semibold"
-                >
-                  {isProcessing ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Setting up facility...
-                    </div>
-                  ) : (
-                    "Complete Facility Setup"
-                  )}
-                </Button>
-
-                <p className="text-xs text-gray-500 text-center">
-                  By completing setup, you agree to our Terms of Service and Privacy Policy.
-                </p>
-              </form>
-            </Card>
-          </div>
-
-          {/* Custom GPT Advertisement Card */}
-          <div className="lg:col-span-1">
-            <Card className="p-6 bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto">
-                  <Bot className="w-8 h-8 text-white" />
-                </div>
-                
-                <h3 className="text-xl font-bold text-gray-900">
-                  Free Custom GPT Integration
-                </h3>
-                
-                <p className="text-sm text-gray-600">
-                  We can include this chemical safety app for free in a custom GPT that learns your company's specific data and processes.
-                </p>
-                
-                <div className="space-y-3 text-sm text-gray-700">
-                  <div className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Custom RAG system with your company data</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Integration with your existing business apps</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Dedicated AI assistant for your business needs</span>
-                  </div>
-                </div>
-                
-                <Button
-                  variant="outline"
-                  className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
-                  onClick={() => window.open('mailto:support@nov8v.ai?subject=Custom GPT Integration Inquiry', '_blank')}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Contact support@nov8v.ai
-                </Button>
-                
-                <p className="text-xs text-gray-500">
-                  Free with any ChemLabel-GPT subscription
-                </p>
+        {/* Main Signup Form */}
+        <Card className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                Contact Information
+              </h3>
+              
+              <div>
+                <Label htmlFor="email">Work Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="mt-1"
+                />
               </div>
-            </Card>
-          </div>
-        </div>
+
+              <div>
+                <Label htmlFor="contactName">Contact Person Full Name *</Label>
+                <Input
+                  id="contactName"
+                  type="text"
+                  value={formData.contactName}
+                  onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                  required
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* Facility Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                Facility Details
+              </h3>
+              
+              <div>
+                <Label htmlFor="facilityName">Facility/Company Name *</Label>
+                <Input
+                  id="facilityName"
+                  type="text"
+                  value={formData.facilityName}
+                  onChange={(e) => setFormData({ ...formData, facilityName: e.target.value })}
+                  required
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="address">Facility Address *</Label>
+                <Input
+                  id="address"
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required
+                  className="mt-1"
+                  placeholder="123 Industrial Blvd, City, State 12345"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="logo">Company Logo (Optional)</Label>
+                <div className="mt-1">
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="relative overflow-hidden"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Logo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </Button>
+                    {formData.logo && (
+                      <span className="text-sm text-green-600">
+                        ✓ {formData.logo.name}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    PNG or JPG format recommended. Will be displayed on QR codes and facility site.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isProcessing || !formData.email || !formData.facilityName || !formData.contactName || !formData.address}
+              className="w-full bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white py-4 text-lg font-semibold"
+            >
+              {isProcessing ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Setting up facility...
+                </div>
+              ) : (
+                "Complete Facility Setup"
+              )}
+            </Button>
+
+            <p className="text-xs text-gray-500 text-center">
+              By completing setup, you agree to our Terms of Service and Privacy Policy.
+            </p>
+          </form>
+        </Card>
       </div>
 
       {/* Setup Failure Dialog */}
