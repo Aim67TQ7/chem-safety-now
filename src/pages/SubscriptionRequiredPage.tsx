@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Crown, Zap, Check, Shield } from "lucide-react";
 import { SubscriptionService, SubscriptionPlan } from "@/services/subscriptionService";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const SubscriptionRequiredPage = () => {
   const { facilitySlug } = useParams();
@@ -13,6 +14,7 @@ const SubscriptionRequiredPage = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -25,9 +27,31 @@ const SubscriptionRequiredPage = () => {
   }, []);
 
   const handleSelectPlan = async (plan: SubscriptionPlan) => {
-    // TODO: Implement Stripe checkout
-    console.log('Selected plan:', plan, 'Billing cycle:', billingCycle, 'Facility:', facilitySlug);
-    // This will be implemented when we add Stripe integration
+    setProcessingPlan(plan.id);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          planId: plan.id,
+          billingCycle,
+          facilitySlug
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Failed to start checkout process. Please try again.');
+    } finally {
+      setProcessingPlan(null);
+    }
   };
 
   const featureDescriptions = {
@@ -181,6 +205,7 @@ const SubscriptionRequiredPage = () => {
 
                 <Button
                   onClick={() => handleSelectPlan(plan)}
+                  disabled={processingPlan === plan.id}
                   size="lg"
                   className={`w-full text-lg py-6 ${
                     plan.name === 'Premium'
@@ -188,7 +213,7 @@ const SubscriptionRequiredPage = () => {
                       : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
-                  Get Started with {plan.name}
+                  {processingPlan === plan.id ? 'Processing...' : `Get Started with ${plan.name}`}
                 </Button>
               </CardContent>
             </Card>

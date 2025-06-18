@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +6,8 @@ import SDSSearch from "@/components/SDSSearch";
 import QRCodeGenerator from "@/components/QRCodeGenerator";
 import LabelPrinter from "@/components/LabelPrinter";
 import AIAssistant from "@/components/AIAssistant";
+import FeatureAccessWrapper from "@/components/FeatureAccessWrapper";
+import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
 import { SubscriptionService } from "@/services/subscriptionService";
 
 interface FacilityData {
@@ -86,6 +87,10 @@ const FacilityPage = () => {
 
   const facilityUrl = `https://chemlabel-gpt.lovable.app/facility/${facilityData.slug}`;
 
+  const handleUpgrade = () => {
+    navigate(`/subscribe/${facilitySlug}`);
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
@@ -96,13 +101,37 @@ const FacilityPage = () => {
           />
         );
       case 'sds-search':
-        return <SDSSearch facilityData={facilityData} />;
+        return (
+          <FeatureAccessWrapper
+            feature="sds_search"
+            facilityId={facilityData.id}
+            onUpgrade={handleUpgrade}
+          >
+            <SDSSearch facilityData={facilityData} />
+          </FeatureAccessWrapper>
+        );
       case 'qr-generator':
         return <QRCodeGenerator facilityData={facilityData} facilityUrl={facilityUrl} />;
       case 'label-printer':
-        return <LabelPrinter />;
+        return (
+          <FeatureAccessWrapper
+            feature="label_printing"
+            facilityId={facilityData.id}
+            onUpgrade={handleUpgrade}
+          >
+            <LabelPrinter />
+          </FeatureAccessWrapper>
+        );
       case 'ai-assistant':
-        return <AIAssistant facilityData={facilityData} />;
+        return (
+          <FeatureAccessWrapper
+            feature="ai_assistant"
+            facilityId={facilityData.id}
+            onUpgrade={handleUpgrade}
+          >
+            <AIAssistant facilityData={facilityData} />
+          </FeatureAccessWrapper>
+        );
       default:
         return <FacilityDashboard facilityData={facilityData} onQuickAction={handleQuickAction} />;
     }
@@ -129,6 +158,10 @@ const FacilityPage = () => {
 
   return (
     <div className="container mx-auto py-8">
+      <SubscriptionStatusHeader 
+        facilityId={facilityData.id} 
+        onUpgrade={handleUpgrade}
+      />
       <h1 className="text-2xl font-bold mb-4">{facilityData.facility_name} Dashboard</h1>
       {renderView()}
     </div>
