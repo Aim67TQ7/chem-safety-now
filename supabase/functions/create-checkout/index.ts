@@ -41,6 +41,21 @@ serve(async (req) => {
     const { planId, billingCycle, facilitySlug } = await req.json();
     logStep("Request data", { planId, billingCycle, facilitySlug });
 
+    // Get facility data if facilitySlug is provided
+    let facilityData = null;
+    if (facilitySlug) {
+      const { data: facility, error: facilityError } = await supabaseClient
+        .from('facilities')
+        .select('id, facility_name, email')
+        .eq('slug', facilitySlug)
+        .single();
+      
+      if (facility && !facilityError) {
+        facilityData = facility;
+        logStep("Facility found", { facilityId: facility.id, facilityName: facility.facility_name });
+      }
+    }
+
     // Get plan details from database
     const { data: plan, error: planError } = await supabaseClient
       .from('subscription_plans')
@@ -80,6 +95,19 @@ serve(async (req) => {
     const successUrl = `${origin}/subscription/success${facilityParam}`;
     const cancelUrl = `${origin}/subscription/cancel${facilityParam}`;
 
+    // Create checkout session with metadata to link facility
+    const metadata: any = {
+      user_id: user.id,
+      plan_name: plan.name,
+      billing_cycle: billingCycle
+    };
+
+    if (facilityData) {
+      metadata.facility_id = facilityData.id;
+      metadata.facility_slug = facilitySlug;
+      metadata.facility_name = facilityData.facility_name;
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -92,11 +120,7 @@ serve(async (req) => {
       mode: "subscription",
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: {
-        facility_slug: facilitySlug || '',
-        user_id: user.id,
-        plan_name: plan.name,
-      },
+      metadata: metadata,
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });

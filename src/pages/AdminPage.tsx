@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import AdminFeedbackPanel from "@/components/AdminFeedbackPanel";
+import AdminActionButtons from "@/components/AdminActionButtons";
 
 const AdminPage = () => {
   const [facilities, setFacilities] = useState<any[]>([]);
@@ -33,6 +33,8 @@ const AdminPage = () => {
     if (authPassword === SECRET_ADMIN_PASSWORD) {
       setAuthorized(true);
       sessionStorage.setItem("adminAuthorized", "true");
+      // Store admin email for action tracking
+      sessionStorage.setItem("adminEmail", "admin@chemlabel-gpt.com");
       fetchFacilityData();
     } else {
       toast.error("Invalid password");
@@ -104,6 +106,7 @@ const AdminPage = () => {
           variant="outline" 
           onClick={() => {
             sessionStorage.removeItem("adminAuthorized");
+            sessionStorage.removeItem("adminEmail");
             setAuthorized(false);
             navigate("/");
           }}
@@ -123,7 +126,7 @@ const AdminPage = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" /> Facility Overview
+                <Eye className="h-5 w-5" /> Facility Overview & Subscription Management
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -140,57 +143,83 @@ const AdminPage = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Facility Name</TableHead>
+                        <TableHead>Facility</TableHead>
                         <TableHead>Contact</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead>URL</TableHead>
-                        <TableHead>Subscription</TableHead>
-                        <TableHead>Usage</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Stripe IDs</TableHead>
+                        <TableHead>Actions</TableHead>
                         <TableHead>Created</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {facilities.map((facility) => (
                         <TableRow key={facility.id}>
-                          <TableCell className="font-medium">
-                            {facility.facility_name || "Unnamed Facility"}
-                          </TableCell>
-                          <TableCell>{facility.contact_name || "—"}</TableCell>
-                          <TableCell>{facility.email || "—"}</TableCell>
-                          <TableCell>{facility.address || "—"}</TableCell>
                           <TableCell>
-                            {facility.facility_url ? (
-                              <a 
-                                href={facility.facility_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
+                            <div className="space-y-1">
+                              <div className="font-medium">
+                                {facility.facility_name || "Unnamed Facility"}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {facility.email || "—"}
+                              </div>
+                              {facility.facility_url && (
+                                <a 
+                                  href={facility.facility_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-500 hover:underline"
+                                >
+                                  View Site
+                                </a>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div>{facility.contact_name || "—"}</div>
+                              {facility.address && (
+                                <div className="text-xs text-gray-500">{facility.address}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <Badge 
+                                variant={
+                                  facility.subscription_status === "premium" ? "default" :
+                                  facility.subscription_status === "basic" ? "secondary" : 
+                                  "outline"
+                                }
                               >
-                                {new URL(facility.facility_url).hostname}
-                              </a>
-                            ) : "—"}
+                                {facility.subscription_status || "trial"}
+                              </Badge>
+                              {facility.trial_days_remaining !== null && (
+                                <div className="text-xs text-gray-500">
+                                  {facility.trial_days_remaining} days left
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            <Badge 
-                              variant={
-                                facility.subscription_tier === "Premium" ? "default" :
-                                facility.subscription_tier === "Professional" ? "secondary" : 
-                                "outline"
-                              }
-                            >
-                              {facility.subscription_tier || "Free"}
-                              {facility.monthly_price ? ` ($${facility.monthly_price}/mo)` : ''}
-                            </Badge>
+                            <div className="text-xs space-y-1">
+                              <div>Customer: {facility.stripe_customer_id ? 
+                                facility.stripe_customer_id.substring(0, 12) + "..." : "—"}</div>
+                              <div>Sub: {facility.stripe_subscription_id ? 
+                                facility.stripe_subscription_id.substring(0, 12) + "..." : "—"}</div>
+                            </div>
                           </TableCell>
                           <TableCell>
-                            {facility.current_lookups !== null && facility.lookup_limit ? 
-                              `${facility.current_lookups}/${facility.lookup_limit}` : 
-                              "—"
-                            }
+                            <AdminActionButtons
+                              facilityId={facility.id}
+                              facilityName={facility.facility_name || "Unnamed Facility"}
+                              currentStatus={facility.subscription_status || "trial"}
+                              onStatusUpdate={fetchFacilityData}
+                            />
                           </TableCell>
                           <TableCell>
-                            {facility.created_at && new Date(facility.created_at).toLocaleDateString()}
+                            <div className="text-sm">
+                              {facility.created_at && new Date(facility.created_at).toLocaleDateString()}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

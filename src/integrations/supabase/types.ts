@@ -9,6 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_subscription_actions: {
+        Row: {
+          action_type: string
+          admin_user_email: string
+          created_at: string | null
+          duration_months: number | null
+          facility_id: string | null
+          id: string
+          new_access_level: string | null
+          new_status: string | null
+          notes: string | null
+          previous_access_level: string | null
+          previous_status: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_email: string
+          created_at?: string | null
+          duration_months?: number | null
+          facility_id?: string | null
+          id?: string
+          new_access_level?: string | null
+          new_status?: string | null
+          notes?: string | null
+          previous_access_level?: string | null
+          previous_status?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_email?: string
+          created_at?: string | null
+          duration_months?: number | null
+          facility_id?: string | null
+          id?: string
+          new_access_level?: string | null
+          new_status?: string | null
+          notes?: string | null
+          previous_access_level?: string | null
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_subscription_actions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_subscription_actions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_conversations: {
         Row: {
           created_at: string | null
@@ -71,6 +128,8 @@ export type Database = {
           id: string
           logo_url: string | null
           slug: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           subscription_status: string | null
           trial_end_date: string | null
           trial_start_date: string | null
@@ -87,6 +146,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           slug: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_status?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -103,6 +164,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           slug?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_status?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -852,8 +915,31 @@ export type Database = {
         Args: { p_facility_id: string; p_feature_name: string }
         Returns: boolean
       }
+      extend_trial_period: {
+        Args: {
+          p_facility_id: string
+          p_days: number
+          p_admin_email: string
+          p_notes?: string
+        }
+        Returns: boolean
+      }
+      grant_free_subscription: {
+        Args: {
+          p_facility_id: string
+          p_plan_type: string
+          p_duration_months: number
+          p_admin_email: string
+          p_notes?: string
+        }
+        Returns: boolean
+      }
       increment_lookup_count: {
         Args: { p_user_id: string }
+        Returns: boolean
+      }
+      reset_facility_subscription: {
+        Args: { p_facility_id: string; p_admin_email: string; p_notes?: string }
         Returns: boolean
       }
       reset_monthly_usage: {
