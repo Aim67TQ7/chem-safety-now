@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import ConfidenceScorer from '../_shared/confidence-scorer.ts'
@@ -34,6 +33,174 @@ interface GoogleSearchResult {
   link: string;
   snippet: string;
   fileFormat?: string;
+}
+
+interface SearchVariation {
+  query: string;
+  description: string;
+}
+
+function createSearchVariations(productName: string): SearchVariation[] {
+  const variations: SearchVariation[] = [];
+  
+  // Clean and normalize the product name
+  const cleanName = productName.trim();
+  
+  // Extract potential manufacturer (first word if it looks like a brand)
+  const words = cleanName.split(/\s+/);
+  const potentialManufacturer = words[0];
+  const restOfName = words.slice(1).join(' ');
+  
+  // Common prefixes/suffixes to handle
+  const commonPrefixes = ['AA', 'LC', 'HV', 'LV'];
+  const commonSuffixes = ['LC', 'HV', 'LV', 'PLUS', 'PRO'];
+  
+  // 1. Exact search with quotes (most restrictive)
+  variations.push({
+    query: `"${cleanName}" "safety data sheet" filetype:pdf`,
+    description: 'Exact product name with SDS'
+  });
+  
+  // 2. Exact search with MSDS variation
+  variations.push({
+    query: `"${cleanName}" "MSDS" filetype:pdf`,
+    description: 'Exact product name with MSDS'
+  });
+  
+  // 3. Flexible search without quotes
+  variations.push({
+    query: `${cleanName} "safety data sheet" filetype:pdf`,
+    description: 'Flexible product name with SDS'
+  });
+  
+  // 4. Flexible search with MSDS
+  variations.push({
+    query: `${cleanName} "MSDS" filetype:pdf`,
+    description: 'Flexible product name with MSDS'
+  });
+  
+  // 5. If we have a potential manufacturer, search with manufacturer separately
+  if (words.length > 1 && potentialManufacturer.length > 2) {
+    variations.push({
+      query: `${potentialManufacturer} ${restOfName} "safety data sheet" filetype:pdf`,
+      description: 'Manufacturer and product separate'
+    });
+    
+    // 6. Just the product part without manufacturer
+    if (restOfName.length > 2) {
+      variations.push({
+        query: `"${restOfName}" "safety data sheet" filetype:pdf`,
+        description: 'Product name without manufacturer'
+      });
+    }
+  }
+  
+  // 7. Remove common prefixes/suffixes for broader search
+  let simplifiedName = cleanName;
+  
+  // Remove common prefixes
+  for (const prefix of commonPrefixes) {
+    const prefixPattern = new RegExp(`\\b${prefix}\\s+`, 'gi');
+    if (prefixPattern.test(simplifiedName)) {
+      const withoutPrefix = simplifiedName.replace(prefixPattern, '').trim();
+      if (withoutPrefix.length > 2) {
+        variations.push({
+          query: `"${withoutPrefix}" "safety data sheet" filetype:pdf`,
+          description: `Without ${prefix} prefix`
+        });
+      }
+    }
+  }
+  
+  // Remove common suffixes
+  for (const suffix of commonSuffixes) {
+    const suffixPattern = new RegExp(`\\s+${suffix}\\b`, 'gi');
+    if (suffixPattern.test(simplifiedName)) {
+      const withoutSuffix = simplifiedName.replace(suffixPattern, '').trim();
+      if (withoutSuffix.length > 2) {
+        variations.push({
+          query: `"${withoutSuffix}" "safety data sheet" filetype:pdf`,
+          description: `Without ${suffix} suffix`
+        });
+      }
+    }
+  }
+  
+  // 8. Handle special characters and numbers
+  const alphanumericOnly = cleanName.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (alphanumericOnly !== cleanName && alphanumericOnly.length > 2) {
+    variations.push({
+      query: `${alphanumericOnly} "safety data sheet" filetype:pdf`,
+      description: 'Alphanumeric characters only'
+    });
+  }
+  
+  // 9. Very broad search as last resort
+  const coreTerms = cleanName.split(/\s+/).filter(word => word.length > 2);
+  if (coreTerms.length > 1) {
+    variations.push({
+      query: `${coreTerms.join(' ')} safety data sheet filetype:pdf`,
+      description: 'Core terms broad search'
+    });
+  }
+  
+  return variations;
+}
+
+async function searchGoogleCSEWithVariations(productName: string, maxResults: number = 10): Promise<{ results: GoogleSearchResult[], usedQuery: string }> {
+  const apiKey = Deno.env.get('GOOGLE_API_KEY');
+  const cseId = Deno.env.get('GOOGLE_CSE_ID');
+  
+  if (!apiKey || !cseId) {
+    console.error('❌ Missing Google API credentials');
+    throw new Error('Google API credentials not configured');
+  }
+
+  const searchVariations = createSearchVariations(productName);
+  
+  console.log(`🔍 Created ${searchVariations.length} search variations for: ${productName}`);
+  
+  // Try each search variation until we get results
+  for (let i = 0; i < searchVariations.length; i++) {
+    const variation = searchVariations[i];
+    const encodedQuery = encodeURIComponent(variation.query);
+    const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodedQuery}&num=${Math.min(maxResults, 10)}`;
+    
+    console.log(`🔍 Trying search variation ${i + 1}/${searchVariations.length}: ${variation.description}`);
+    console.log(`📝 Query: ${variation.query}`);
+    
+    try {
+      const response = await fetch(searchUrl);
+      if (!response.ok) {
+        console.error(`❌ Google CSE API error for variation ${i + 1}: ${response.status} ${response.statusText}`);
+        continue; // Try next variation
+      }
+      
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        console.log(`✅ Found ${data.items.length} results with variation: ${variation.description}`);
+        
+        const results = data.items.map((item: any): GoogleSearchResult => ({
+          title: item.title,
+          link: item.link,
+          snippet: item.snippet,
+          fileFormat: item.fileFormat
+        }));
+        
+        return { results, usedQuery: variation.query };
+      } else {
+        console.log(`📄 No results for variation ${i + 1}: ${variation.description}`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error with search variation ${i + 1}:`, error);
+      continue; // Try next variation
+    }
+  }
+  
+  console.log('📄 No results found with any search variation');
+  return { results: [], usedQuery: searchVariations[0]?.query || productName };
 }
 
 async function searchGoogleCSE(productName: string, maxResults: number = 10): Promise<GoogleSearchResult[]> {
@@ -110,16 +277,18 @@ function isPDFDocument(url: string, title: string, fileFormat?: string): boolean
 }
 
 async function scrapeSDSDocuments(productName: string, maxResults: number = 3): Promise<ScrapedSDSDocument[]> {
-  console.log('🔍 Starting Google CSE SDS document search for:', productName);
+  console.log('🔍 Starting enhanced Google CSE SDS document search for:', productName);
   
   try {
-    // Step 1: Search using Google CSE with PDF focus
-    const searchResults = await searchGoogleCSE(productName, maxResults * 2);
+    // Step 1: Search using Google CSE with progressive search variations
+    const { results: searchResults, usedQuery } = await searchGoogleCSEWithVariations(productName, maxResults * 2);
     
     if (searchResults.length === 0) {
-      console.log('📄 No Google CSE results found');
+      console.log('📄 No Google CSE results found with any search variation');
       return [];
     }
+    
+    console.log(`✅ Found results using query: ${usedQuery}`);
     
     // Step 2: Filter results for actual PDF documents only
     const pdfResults = searchResults.filter(result => {
@@ -139,7 +308,7 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 3): 
       return [];
     }
     
-    // Step 3: Create document records for all found PDFs (no quality validation)
+    // Step 3: Create document records for all found PDFs
     const documents: ScrapedSDSDocument[] = pdfResults.slice(0, maxResults).map(result => ({
       product_name: productName,
       source_url: result.link,
@@ -147,11 +316,11 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 3): 
       document_type: 'safety_data_sheet'
     }));
     
-    console.log(`✅ Created ${documents.length} document records from CSE search`);
+    console.log(`✅ Created ${documents.length} document records from enhanced CSE search`);
     return documents;
     
   } catch (error) {
-    console.error('❌ SDS document search process error:', error);
+    console.error('❌ Enhanced SDS document search process error:', error);
     throw error;
   }
 }
@@ -221,7 +390,7 @@ Deno.serve(async (req) => {
   try {
     const { product_name, max_results = 10 }: SearchRequest = await req.json();
     
-    console.log('🔍 SDS document search request (confidence-only):', { product_name, max_results });
+    console.log('🔍 Enhanced SDS document search request:', { product_name, max_results });
 
     // Step 1: Search existing documents in database (NO QUALITY FILTERS)
     const { data: existingDocs, error: searchError } = await supabase
@@ -276,11 +445,11 @@ Deno.serve(async (req) => {
       }
       
       // If confidence is below 70%, go directly to CSE instead of returning low-confidence existing docs
-      console.log(`⚠️ Top existing document confidence ${(topMatch.confidence.score * 100).toFixed(1)}% is below 70%, proceeding to CSE search`);
+      console.log(`⚠️ Top existing document confidence ${(topMatch.confidence.score * 100).toFixed(1)}% is below 70%, proceeding to enhanced CSE search`);
     }
 
     // Step 3: No suitable existing documents found, create job and search CSE
-    console.log('💾 Creating SDS job for CSE document search:', product_name);
+    console.log('💾 Creating SDS job for enhanced CSE document search:', product_name);
     
     const { data: jobData, error: jobError } = await supabase
       .from('sds_jobs')
@@ -288,7 +457,7 @@ Deno.serve(async (req) => {
         product_name,
         max_results: 3,
         status: 'pending',
-        message: 'Starting Google CSE PDF document search...'
+        message: 'Starting enhanced Google CSE PDF document search with multiple variations...'
       })
       .select()
       .single();
@@ -300,13 +469,13 @@ Deno.serve(async (req) => {
 
     console.log('✅ Created job:', jobData.id);
 
-    // Step 4: Perform PDF document scraping (no quality validation)
+    // Step 4: Perform enhanced PDF document scraping
     try {
       await supabase
         .from('sds_jobs')
         .update({
           status: 'processing',
-          message: 'Searching for PDF SDS documents...',
+          message: 'Searching for PDF SDS documents with enhanced query variations...',
           progress: 25
         })
         .eq('id', jobData.id);
@@ -314,8 +483,8 @@ Deno.serve(async (req) => {
       const scrapedDocs = await scrapeSDSDocuments(product_name, 3);
       
       if (scrapedDocs.length > 0) {
-        // Step 5: Store all found PDF documents (no quality validation)
-        console.log('💾 Storing', scrapedDocs.length, 'PDF documents');
+        // Step 5: Store all found PDF documents
+        console.log('💾 Storing', scrapedDocs.length, 'PDF documents from enhanced search');
         
         const documentsToInsert = scrapedDocs.map(doc => ({
           ...doc,
@@ -352,12 +521,12 @@ Deno.serve(async (req) => {
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: `Successfully found ${topThreeNewResults.length} PDF SDS documents`,
+            message: `Successfully found ${topThreeNewResults.length} PDF SDS documents using enhanced search`,
             progress: 100
           })
           .eq('id', jobData.id);
 
-        console.log('✅ Job completed successfully');
+        console.log('✅ Enhanced search job completed successfully');
 
         // Auto-select new documents based on confidence only (≥70%)
         if (topNewMatch && topNewMatch.confidence.score >= 0.7) {
@@ -371,7 +540,7 @@ Deno.serve(async (req) => {
               job_id: jobData.id,
               status: 'completed',
               results: [enhancedDocument],
-              source: 'google_cse_pdf_search',
+              source: 'enhanced_google_cse_search',
               auto_selected: true,
               confidence_score: topNewMatch.confidence.score,
               match_reasons: topNewMatch.confidence.reasons,
@@ -393,21 +562,21 @@ Deno.serve(async (req) => {
             job_id: jobData.id,
             status: 'completed',
             results: enhancedNewResults,
-            source: 'google_cse_pdf_search',
+            source: 'enhanced_google_cse_search',
             auto_selected: false,
-            message: `Found ${topThreeNewResults.length} PDF SDS documents - please select the best one`
+            message: `Found ${topThreeNewResults.length} PDF SDS documents using enhanced search - please select the best one`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       } else {
-        // No PDF documents found
+        // No PDF documents found with any search variation
         await supabase
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: 'No PDF SDS documents found for this search term',
+            message: 'No PDF SDS documents found with any search variation',
             progress: 100
           })
           .eq('id', jobData.id);
@@ -417,9 +586,9 @@ Deno.serve(async (req) => {
             job_id: jobData.id,
             status: 'completed',
             results: [],
-            source: 'google_cse_pdf_search',
+            source: 'enhanced_google_cse_search',
             auto_selected: false,
-            message: 'No PDF SDS documents found for this search term'
+            message: 'No PDF SDS documents found with any search variation - try a different product name'
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -427,7 +596,7 @@ Deno.serve(async (req) => {
         );
       }
     } catch (scrapingError) {
-      console.error('❌ PDF document search process error:', scrapingError);
+      console.error('❌ Enhanced PDF document search process error:', scrapingError);
       
       // Update job status to failed
       await supabase
@@ -435,7 +604,7 @@ Deno.serve(async (req) => {
         .update({
           status: 'failed',
           error: scrapingError.message,
-          message: 'PDF document search process failed',
+          message: 'Enhanced PDF document search process failed',
           progress: 0
         })
         .eq('id', jobData.id);
@@ -445,7 +614,7 @@ Deno.serve(async (req) => {
           job_id: jobData.id,
           status: 'failed',
           results: [],
-          error: 'PDF document search process failed',
+          error: 'Enhanced PDF document search process failed',
           message: scrapingError.message
         }),
         { 
@@ -455,10 +624,10 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('❌ SDS document search error:', error);
+    console.error('❌ Enhanced SDS document search error:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Document search failed',
+        error: 'Enhanced document search failed',
         details: error.message 
       }),
       { 
