@@ -59,7 +59,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
         physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
         special: selectedDocument.hmis_codes?.special || ''
       },
-      ppeRequirements: aiData.required_ppe || [],
+      ppeRequirements: Array.isArray(aiData.required_ppe) ? aiData.required_ppe.map(String) : [],
       chemicalFormula: aiData.chemical_formula || '',
       chemicalCompound: aiData.chemical_compound || '',
       productId: aiData.product_id || '',
