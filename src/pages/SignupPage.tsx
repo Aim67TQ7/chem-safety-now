@@ -295,7 +295,25 @@ const SignupPage = () => {
             </Button>
 
             <p className="text-xs text-gray-500 text-center">
-              By completing setup, you agree to our Terms of Service and Privacy Policy.
+              By completing setup, you agree to our{" "}
+              <a 
+                href="/terms" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Terms of Service
+              </a>
+              {" "}and{" "}
+              <a 
+                href="/privacy" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Privacy Policy
+              </a>
+              .
             </p>
           </form>
         </Card>

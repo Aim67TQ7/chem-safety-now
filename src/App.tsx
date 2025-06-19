@@ -11,6 +11,8 @@ import AdminPage from "./pages/AdminPage";
 import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
 import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
 import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,8 @@ const App = () => (
           <Route path="/subscribe/:facilitySlug?" element={<SubscriptionRequiredPage />} />
           <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
           <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           {navItems.map(({ to, page }) => (
             <Route key={to} path={to} element={page} />
           ))}
