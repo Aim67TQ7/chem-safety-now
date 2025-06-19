@@ -3,10 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import FacilityDashboard from "@/components/FacilityDashboard";
 import SDSSearch from "@/components/SDSSearch";
-import QRCodeGenerator from "@/components/QRCodeGenerator";
+import AccessTools from "@/components/AccessTools";
 import LabelPrinter from "@/components/LabelPrinter";
-import AIAssistant from "@/components/AIAssistant";
-import DesktopLinkGenerator from "@/components/DesktopLinkGenerator";
+import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import FacilitySettings from "@/components/FacilitySettings";
 import FeatureAccessWrapper from "@/components/FeatureAccessWrapper";
 import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
@@ -50,6 +49,7 @@ const FacilityPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showAIAssistantPopup, setShowAIAssistantPopup] = useState(false);
   const [selectedIncidentType, setSelectedIncidentType] = useState<'near_miss' | 'reportable' | null>(null);
   const [activeTab, setActiveTab] = useState('list');
 
@@ -119,6 +119,10 @@ const FacilityPage = () => {
 
   const handleIncidentCancel = () => {
     setSelectedIncidentType(null);
+  };
+
+  const handleChatWithSarah = () => {
+    setShowAIAssistantPopup(true);
   };
 
   if (loading) {
@@ -195,6 +199,7 @@ const FacilityPage = () => {
             subscriptionInfo={subscriptionInfo}
             onQuickAction={handleQuickAction}
             onUpgrade={handleUpgrade}
+            onChatWithSarah={handleChatWithSarah}
           />
         );
       case 'sds-search':
@@ -241,10 +246,16 @@ const FacilityPage = () => {
             </div>
           </FeatureAccessWrapper>
         );
-      case 'qr-generator':
-        return <QRCodeGenerator facilityData={facilityData} facilityUrl={facilityUrl} />;
-      case 'desktop-links':
-        return <DesktopLinkGenerator facilityData={facilityData} />;
+      case 'access-tools':
+        return (
+          <FeatureAccessWrapper
+            feature="access_tools"
+            facilityId={facilityData.id}
+            onUpgrade={handleUpgrade}
+          >
+            <AccessTools facilityData={facilityData} />
+          </FeatureAccessWrapper>
+        );
       case 'label-printer':
         return (
           <FeatureAccessWrapper
@@ -253,16 +264,6 @@ const FacilityPage = () => {
             onUpgrade={handleUpgrade}
           >
             <LabelPrinter />
-          </FeatureAccessWrapper>
-        );
-      case 'ai-assistant':
-        return (
-          <FeatureAccessWrapper
-            feature="ai_assistant"
-            facilityId={facilityData.id}
-            onUpgrade={handleUpgrade}
-          >
-            <AIAssistant facilityData={facilityData} />
           </FeatureAccessWrapper>
         );
       case 'settings':
@@ -279,6 +280,7 @@ const FacilityPage = () => {
             subscriptionInfo={subscriptionInfo}
             onQuickAction={handleQuickAction}
             onUpgrade={handleUpgrade}
+            onChatWithSarah={handleChatWithSarah}
           />
         );
     }
@@ -294,17 +296,11 @@ const FacilityPage = () => {
         setSelectedIncidentType(null); // Reset incident type when navigating to incidents
         setActiveTab('list'); // Start on list tab
         break;
-      case 'qr-codes':
-        setCurrentView('qr-generator');
-        break;
-      case 'desktop-links':
-        setCurrentView('desktop-links');
+      case 'access-tools':
+        setCurrentView('access-tools');
         break;
       case 'labels':
         setCurrentView('label-printer');
-        break;
-      case 'ai-assistant':
-        setCurrentView('ai-assistant');
         break;
       case 'settings':
         setCurrentView('settings');
@@ -341,6 +337,13 @@ const FacilityPage = () => {
       )}
 
       {renderView()}
+
+      {/* AI Assistant Popup */}
+      <AIAssistantPopup
+        isOpen={showAIAssistantPopup}
+        onClose={() => setShowAIAssistantPopup(false)}
+        facilityData={facilityData}
+      />
 
       {/* Subscription Plans Modal */}
       <SubscriptionPlansModal

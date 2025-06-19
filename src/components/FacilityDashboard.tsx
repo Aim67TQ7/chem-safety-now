@@ -16,7 +16,8 @@ import {
   Activity,
   Clock,
   Crown,
-  AlertTriangle
+  AlertTriangle,
+  Link
 } from "lucide-react";
 
 interface FacilityData {
@@ -42,20 +43,22 @@ interface FacilityDashboardProps {
   subscriptionInfo?: SubscriptionInfo;
   onQuickAction: (action: string) => void;
   onUpgrade?: () => void;
+  onChatWithSarah?: () => void;
 }
 
 const FacilityDashboard = ({
   facilityData,
   subscriptionInfo,
   onQuickAction,
-  onUpgrade
+  onUpgrade,
+  onChatWithSarah
 }: FacilityDashboardProps) => {
   // Helper function to check feature access with improved logic
   const hasFeatureAccess = (featureName: string): boolean => {
     if (!subscriptionInfo) return true; // Default to true if no subscription info
     
     // Define feature tiers
-    const basicFeatures = ['sds_search', 'qr_codes', 'desktop_links', 'ai_assistant'];
+    const basicFeatures = ['sds_search', 'access_tools', 'ai_assistant'];
     const premiumFeatures = ['label_printing'];
     
     const isBasicFeature = basicFeatures.includes(featureName);
@@ -103,20 +106,13 @@ const FacilityDashboard = ({
       requiresFeature: 'incident_reporting'
     },
     {
-      id: 'qr-codes',
-      title: 'QR Codes',
-      description: 'Generate facility access codes',
-      icon: QrCode,
+      id: 'access-tools',
+      title: 'Access Tools',
+      description: 'Generate QR codes and desktop shortcuts',
+      icon: Link,
       color: 'bg-green-600',
-      hoverColor: 'hover:bg-green-700'
-    },
-    {
-      id: 'desktop-links',
-      title: 'Desktop Links',
-      description: 'Create desktop shortcuts',
-      icon: Monitor,
-      color: 'bg-purple-600',
-      hoverColor: 'hover:bg-purple-700'
+      hoverColor: 'hover:bg-green-700',
+      requiresFeature: 'access_tools'
     },
     {
       id: 'labels',
@@ -126,23 +122,6 @@ const FacilityDashboard = ({
       color: 'bg-orange-600',
       hoverColor: 'hover:bg-orange-700',
       requiresFeature: 'label_printing'
-    },
-    {
-      id: 'ai-assistant',
-      title: 'AI Assistant',
-      description: 'Chat with Sarah, your AI Safety Manager',
-      icon: Bot,
-      color: 'bg-indigo-600',
-      hoverColor: 'hover:bg-indigo-700',
-      requiresFeature: 'ai_assistant'
-    },
-    {
-      id: 'settings',
-      title: 'Settings',
-      description: 'Manage facility settings',
-      icon: Settings,
-      color: 'bg-gray-600',
-      hoverColor: 'hover:bg-gray-700'
     }
   ];
 
@@ -208,7 +187,7 @@ const FacilityDashboard = ({
 
   return (
     <div className="space-y-8">
-      {/* Facility Header Card with Subscription Status and Settings Button */}
+      {/* Facility Header Card with Subscription Status, Chat with Sarah, and Settings Button */}
       <Card className="bg-gradient-to-r from-blue-50 to-red-50">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -236,6 +215,25 @@ const FacilityDashboard = ({
             </div>
             <div className="flex items-center space-x-3">
               {renderSubscriptionStatus()}
+              {onChatWithSarah && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onChatWithSarah}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100"
+                >
+                  <Avatar className="w-6 h-6">
+                    <AvatarImage 
+                      src="/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png" 
+                      alt="Sarah - Chemical Safety Manager"
+                    />
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
+                      <Bot className="w-3 h-3" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>Chat with Sarah</span>
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -253,7 +251,7 @@ const FacilityDashboard = ({
       {/* Quick Actions */}
       <Card className="p-6">
         <h3 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             const isLocked = action.requiresFeature && !hasFeatureAccess(action.requiresFeature);
@@ -274,18 +272,18 @@ const FacilityDashboard = ({
                   </div>
                 )}
                 
-                <div className="p-4 relative">
+                <div className="p-6 relative">
                   {isLocked && (
                     <div className="absolute top-2 right-2">
                       <Crown className="w-4 h-4 text-yellow-500" />
                     </div>
                   )}
                   
-                  <div className={`${action.color} ${action.hoverColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors group-hover:scale-105 transform duration-200`}>
-                    <Icon className="w-6 h-6 text-white" />
+                  <div className={`${action.color} ${action.hoverColor} w-16 h-16 rounded-lg flex items-center justify-center mb-4 transition-colors group-hover:scale-105 transform duration-200`}>
+                    <Icon className="w-8 h-8 text-white" />
                   </div>
                   
-                  <h4 className={`text-lg font-semibold mb-2 ${action.featured ? 'text-blue-900' : 'text-gray-900'}`}>
+                  <h4 className={`text-xl font-semibold mb-2 ${action.featured ? 'text-blue-900' : 'text-gray-900'}`}>
                     {action.title}
                   </h4>
                   
