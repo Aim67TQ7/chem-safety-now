@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -283,7 +282,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
                 ) : (
                   <Avatar className="w-12 h-12 flex-shrink-0">
                     <AvatarImage 
-                      src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
+                      src="/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" 
                       alt="Sarah - Safety Manager"
                     />
                     <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
@@ -316,7 +315,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
               <div className="flex items-start space-x-3">
                 <Avatar className="w-12 h-12 flex-shrink-0">
                   <AvatarImage 
-                    src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
+                    src="/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" 
                     alt="Sarah - Safety Manager"
                   />
                   <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
