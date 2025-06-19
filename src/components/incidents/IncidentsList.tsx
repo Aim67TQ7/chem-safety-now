@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,8 @@ export const IncidentsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [selectedIncident, setSelectedIncident] = useState<any>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   
   const { incidents, isLoading, error } = useIncidents();
 
@@ -26,6 +27,11 @@ export const IncidentsList: React.FC = () => {
     
     return matchesSearch && matchesStatus && matchesType;
   }) || [];
+
+  const handleViewDetails = (incident: any) => {
+    setSelectedIncident(incident);
+    setDetailsDialogOpen(true);
+  };
 
   const getSeverityColor = (incident: any) => {
     if (incident.incident_type === 'near_miss') {
@@ -193,9 +199,13 @@ export const IncidentsList: React.FC = () => {
                     <div className="text-xs text-gray-500">
                       Reported by: {incident.form_completed_by_name}
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewDetails(incident)}
+                    >
                       <Eye className="h-4 w-4 mr-2" />
-                      View Details
+                      View Details & AI Analysis
                     </Button>
                   </div>
                 </div>
@@ -204,6 +214,14 @@ export const IncidentsList: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Incident Details Dialog */}
+      <IncidentDetailsDialog
+        isOpen={detailsDialogOpen}
+        onClose={() => setDetailsDialogOpen(false)}
+        incident={selectedIncident}
+        facilityData={{ facility_name: 'Current Facility' }} // Replace with actual facility data
+      />
     </div>
   );
 };
