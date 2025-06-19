@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Generate a proper UUID for session ID
@@ -63,7 +64,7 @@ class InteractionLogger {
   // Log SDS interactions
   async logSDSInteraction(params: {
     sdsDocumentId: string;
-    actionType: 'view' | 'download' | 'generate_label' | 'ask_ai';
+    actionType: 'view' | 'download' | 'generate_label' | 'ask_ai' | 'generate_label_from_ai';
     searchQuery?: string;
     metadata?: any;
   }) {
