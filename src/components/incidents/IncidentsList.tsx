@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertTriangle, FileText, Search, Filter, Eye } from 'lucide-react';
 import { useIncidents } from '@/hooks/useIncidents';
 import { format } from 'date-fns';
+import { IncidentDetailsDialog } from './IncidentDetailsDialog';
 
 export const IncidentsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
