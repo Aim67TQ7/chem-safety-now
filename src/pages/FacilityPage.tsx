@@ -18,6 +18,9 @@ import { ArrowLeft } from "lucide-react";
 import { IncidentsList } from "@/components/incidents/IncidentsList";
 import { IncidentReportForm } from "@/components/incidents/IncidentReportForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface FacilityData {
   id: string;
@@ -40,12 +43,15 @@ interface SubscriptionInfo {
 const FacilityPage = () => {
   const { facilitySlug } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [currentView, setCurrentView] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [selectedIncidentType, setSelectedIncidentType] = useState<'near_miss' | 'reportable' | null>(null);
+  const [activeTab, setActiveTab] = useState('list');
 
   useEffect(() => {
     const fetchFacilityData = async () => {
@@ -102,6 +108,19 @@ const FacilityPage = () => {
     setShowSubscriptionModal(true);
   };
 
+  const handleIncidentSuccess = () => {
+    toast({
+      title: "Incident Report Submitted",
+      description: "Your incident report has been successfully submitted.",
+    });
+    setSelectedIncidentType(null);
+    setActiveTab('list');
+  };
+
+  const handleIncidentCancel = () => {
+    setSelectedIncidentType(null);
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading facility...</div>;
   }
@@ -115,6 +134,57 @@ const FacilityPage = () => {
   }
 
   const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+
+  const renderIncidentTypeSelection = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Select Incident Type</h3>
+        <p className="text-gray-600">Choose the type of incident you want to report</p>
+      </div>
+      
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-orange-300"
+          onClick={() => setSelectedIncidentType('near_miss')}
+        >
+          <CardHeader className="text-center">
+            <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+            <CardTitle className="text-orange-700">Near Miss Incident</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 text-center">
+              Report incidents that could have resulted in injury, illness, or property damage but didn't.
+            </p>
+            <ul className="mt-4 text-sm text-gray-500 space-y-1">
+              <li>• Close calls and potential hazards</li>
+              <li>• Unsafe conditions discovered</li>
+              <li>• Equipment malfunctions without injury</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-red-300"
+          onClick={() => setSelectedIncidentType('reportable')}
+        >
+          <CardHeader className="text-center">
+            <FileText className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <CardTitle className="text-red-700">Reportable Incident</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 text-center">
+              Report actual incidents involving injury, illness, or property damage.
+            </p>
+            <ul className="mt-4 text-sm text-gray-500 space-y-1">
+              <li>• Workplace injuries</li>
+              <li>• Occupational illnesses</li>
+              <li>• Property damage incidents</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 
   const renderView = () => {
     switch (currentView) {
@@ -148,7 +218,7 @@ const FacilityPage = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold text-gray-900">Incident Management</h2>
               </div>
-              <Tabs defaultValue="list" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-fit grid-cols-2">
                   <TabsTrigger value="list">Incident List</TabsTrigger>
                   <TabsTrigger value="report">Report Incident</TabsTrigger>
@@ -157,7 +227,15 @@ const FacilityPage = () => {
                   <IncidentsList />
                 </TabsContent>
                 <TabsContent value="report" className="space-y-4">
-                  <IncidentReportForm facilityData={facilityData} />
+                  {selectedIncidentType ? (
+                    <IncidentReportForm 
+                      incidentType={selectedIncidentType}
+                      onSuccess={handleIncidentSuccess}
+                      onCancel={handleIncidentCancel}
+                    />
+                  ) : (
+                    renderIncidentTypeSelection()
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
@@ -213,6 +291,8 @@ const FacilityPage = () => {
         break;
       case 'incidents':
         setCurrentView('incidents');
+        setSelectedIncidentType(null); // Reset incident type when navigating to incidents
+        setActiveTab('list'); // Start on list tab
         break;
       case 'qr-codes':
         setCurrentView('qr-generator');
