@@ -36,52 +36,88 @@ interface EnhancedSDSData {
 }
 
 function createExtractionPrompt(sdsText: string): string {
-  return `You are an expert chemical safety data analyst. Extract the following critical information from this SDS (Safety Data Sheet) document for safety label generation. Focus on accuracy and completeness.
+  return `You are an expert chemical safety data analyst specializing in HMIS (Hazardous Materials Identification System) scoring. Extract the following critical information from this SDS document for safety label generation.
 
-CRITICAL REQUIREMENTS:
-1. HMIS Ratings (MOST IMPORTANT): Health, Flammability, Physical (0-4 scale), Special hazards
-2. Product Title: Official product name
-3. Chemical Compound: Main chemical name and formula
-4. Manufacturer: Company name and any product ID
-5. GHS Pictograms: Identify which pictograms are referenced
-6. Required PPE: Personal protective equipment needed
-7. Current date for label printing
+CRITICAL HMIS SCORING CRITERIA:
+You MUST use these standardized HMIS scoring criteria (0-4 scale):
+
+🔷 HEALTH HAZARD (Blue Bar) - Rate 0-4:
+• 4: Life-threatening or major permanent damage (e.g., hydrogen cyanide, phosgene, carcinogens)
+• 3: Serious temporary/residual injury, medical attention needed (e.g., strong acids/bases, phenol, H₂S)
+• 2: Temporary injury may occur, prompt treatment usually not required (e.g., solvents causing CNS depression)
+• 1: Irritation or minor reversible injury (e.g., isopropyl alcohol, ammonia solution)
+• 0: No significant risk to health (e.g., water, inert substances)
+
+🔥 FLAMMABILITY (Red Bar) - Rate 0-4 based on flash points:
+• 4: Flash point < 73°F (22.8°C) AND boiling point < 100°F (37.8°C)
+• 3: Flash point < 100°F (37.8°C)
+• 2: Flash point 100–200°F (37.8–93.3°C)
+• 1: Flash point > 200°F (93.3°C)
+• 0: Will not burn under typical fire conditions (e.g., water, salts)
+
+⚙️ PHYSICAL HAZARD/REACTIVITY (Yellow Bar) - Rate 0-4:
+• 4: May detonate or explode under normal conditions (e.g., nitroglycerin)
+• 3: May detonate with strong initiating force or heat (e.g., ammonium perchlorate)
+• 2: Unstable with violent chemical change (e.g., peroxides, cyanides in heat)
+• 1: Normally stable, but unstable when heated (e.g., sodium)
+• 0: Stable and unreactive under fire conditions (e.g., common solvents)
+
+🧤 PERSONAL PROTECTION (White Bar) - Use these codes:
+• A: Safety glasses
+• B: Safety glasses, gloves
+• C: Safety glasses, gloves, apron
+• D: Face shield, gloves, apron
+• E: Safety glasses, gloves, dust respirator
+• F: Safety glasses, gloves, apron, dust respirator
+• G: Safety glasses, vapor respirator
+• H: Splash goggles, gloves, apron, vapor respirator
+• X: Consult supervisor or SDS for guidance
+
+EXTRACTION REQUIREMENTS:
+1. Look for explicit HMIS ratings first
+2. If not found, calculate using flash point, LD50, pH, volatility data
+3. Extract CAS numbers in format XX-XX-X (e.g., "67-63-0")
+4. Find chemical formulas (e.g., "C3H8O")
+5. Identify official product names
+6. Map GHS pictograms to correct codes (GHS01-GHS09)
+7. Determine PPE requirements using A-X coding system
+
+Use SDS Sections 2, 4, 5, 9, 10, and 11 for information gathering.
 
 SDS Document Text:
-${sdsText.substring(0, 8000)}
+${sdsText.substring(0, 12000)}
 
-Please extract and return ONLY a JSON object with this exact structure:
+Extract and return ONLY a JSON object with this exact structure:
 {
-  "hmis_health": <number 0-4>,
-  "hmis_flammability": <number 0-4>,
-  "hmis_physical": <number 0-4>,  
-  "hmis_special": "<any special hazard codes or empty string>",
-  "hmis_confidence": <confidence 0-100>,
+  "hmis_health": <number 0-4 using criteria above>,
+  "hmis_flammability": <number 0-4 using flash point criteria>,
+  "hmis_physical": <number 0-4 using reactivity criteria>,  
+  "hmis_special": "<PPE code A-X or special hazard codes>",
+  "hmis_confidence": <confidence 0-100 based on data availability>,
   "product_title": "<official product name>",
   "chemical_compound": "<primary chemical name>",
-  "chemical_formula": "<molecular formula if available>",
+  "chemical_formula": "<molecular formula like C3H8O>",
   "manufacturer": "<company name>",
   "product_id": "<product ID, lot number, or catalog number>",
+  "cas_number": "<CAS number in XX-XX-X format>",
   "ghs_pictograms": [
     {
-      "code": "<GHS code like GHS02, GHS07, etc>",
-      "name": "<pictogram name like flame, exclamation, etc>",
+      "code": "<GHS code like GHS02, GHS07>",
+      "name": "<pictogram name like flame, exclamation>",
       "confidence": <confidence 0-100>
     }
   ],
-  "required_ppe": ["<list of required PPE items>"],
+  "required_ppe": ["<PPE items based on precautionary statements>"],
   "extraction_confidence": <overall confidence 0-100>,
   "label_print_date": "${new Date().toISOString().split('T')[0]}"
 }
 
-EXTRACTION GUIDELINES:
-- For HMIS: Look for explicit HMIS ratings first, then NFPA ratings as backup
-- If HMIS not found but NFPA exists, use NFPA values as HMIS approximation
-- For pictograms: Match hazard statements to correct GHS pictograms
-- For PPE: Extract from precautionary statements and handling procedures
-- Use high confidence (80+) only when data is explicitly stated
-- Use medium confidence (50-79) for inferred data
-- Use low confidence (below 50) for uncertain extractions`
+SCORING LOGIC:
+- Use explicit HMIS ratings when available (confidence 90+)
+- Calculate from flash points for flammability (confidence 80+)
+- Infer from toxicity data (LD50) for health ratings (confidence 70+)
+- Use reactivity warnings for physical hazards (confidence 60+)
+- Default to conservative ratings if uncertain (confidence <50)`
 }
 
 async function callOpenAI(prompt: string): Promise<any> {
@@ -101,7 +137,7 @@ async function callOpenAI(prompt: string): Promise<any> {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert chemical safety analyst specializing in SDS document analysis and GHS compliance. Always return valid JSON responses.'
+          content: 'You are an expert chemical safety analyst and HMIS scoring specialist. You understand flash points, LD50 values, reactivity data, and can accurately score HMIS ratings using standardized criteria. Always return valid JSON responses with precise HMIS scores.'
         },
         {
           role: 'user',
@@ -109,7 +145,7 @@ async function callOpenAI(prompt: string): Promise<any> {
         }
       ],
       temperature: 0.1,
-      max_tokens: 2000
+      max_tokens: 2500
     }),
   });
 
@@ -129,7 +165,7 @@ Deno.serve(async (req) => {
   try {
     const { document_id } = await req.json();
     
-    console.log('🤖 Starting AI-enhanced SDS extraction for document:', document_id);
+    console.log('🤖 Starting AI-enhanced SDS extraction with HMIS expertise for document:', document_id);
 
     // Get the SDS document
     const { data: document, error: docError } = await supabase
@@ -144,13 +180,13 @@ Deno.serve(async (req) => {
 
     console.log('📄 Processing document:', document.product_name);
 
-    // Check if we already have AI-enhanced data
-    if (document.ai_extracted_data && document.ai_extraction_confidence > 70) {
+    // Check if we already have high-confidence AI-enhanced data
+    if (document.ai_extracted_data && document.ai_extraction_confidence > 80) {
       console.log('✅ Document already has high-confidence AI extraction');
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Document already has AI-enhanced data',
+          message: 'Document already has high-confidence AI-enhanced data',
           data: document.ai_extracted_data,
           confidence: document.ai_extraction_confidence
         }),
@@ -164,9 +200,9 @@ Deno.serve(async (req) => {
       throw new Error('Insufficient text content for AI analysis');
     }
 
-    // Create extraction prompt and call OpenAI
+    // Create enhanced extraction prompt with HMIS expertise
     const extractionPrompt = createExtractionPrompt(sdsText);
-    console.log('🤖 Calling OpenAI for enhanced extraction...');
+    console.log('🧠 Calling OpenAI with HMIS scoring expertise...');
     
     const aiResponse = await callOpenAI(extractionPrompt);
     
@@ -184,9 +220,9 @@ Deno.serve(async (req) => {
       throw new Error('Invalid JSON response from AI');
     }
 
-    // Validate and enhance the extracted data
+    // Validate and enhance the extracted data with HMIS intelligence
     const validatedData = {
-      // HMIS ratings (ensure 0-4 range)
+      // HMIS ratings with validation (ensure 0-4 range)
       hmis_codes: {
         health: Math.max(0, Math.min(4, extractedData.hmis_health || 0)),
         flammability: Math.max(0, Math.min(4, extractedData.hmis_flammability || 0)),
@@ -194,18 +230,22 @@ Deno.serve(async (req) => {
         special: extractedData.hmis_special || ''
       },
       
-      // Enhanced product information
+      // Enhanced product information with better extraction
       ai_extracted_data: {
         product_title: extractedData.product_title || document.product_name,
         chemical_compound: extractedData.chemical_compound || '',
         chemical_formula: extractedData.chemical_formula || '',
         manufacturer: extractedData.manufacturer || document.manufacturer,
         product_id: extractedData.product_id || '',
+        cas_number: extractedData.cas_number || document.cas_number,
         ghs_pictograms: extractedData.ghs_pictograms || [],
         required_ppe: extractedData.required_ppe || [],
         hmis_confidence: extractedData.hmis_confidence || 50,
         label_print_date: extractedData.label_print_date
       },
+      
+      // Update CAS number if found by AI
+      cas_number: extractedData.cas_number || document.cas_number,
       
       ai_extraction_confidence: extractedData.extraction_confidence || 50,
       ai_extraction_date: new Date().toISOString()
@@ -222,18 +262,19 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    console.log('✅ Successfully completed AI-enhanced SDS extraction');
+    console.log('✅ Successfully completed AI-enhanced SDS extraction with HMIS scoring');
     console.log(`📊 Extraction confidence: ${validatedData.ai_extraction_confidence}%`);
-    console.log(`🏥 HMIS Health: ${validatedData.hmis_codes.health}`);
-    console.log(`🔥 HMIS Flammability: ${validatedData.hmis_codes.flammability}`);
-    console.log(`⚠️ HMIS Physical: ${validatedData.hmis_codes.physical}`);
+    console.log(`🏥 HMIS Health: ${validatedData.hmis_codes.health} (Blue)`);
+    console.log(`🔥 HMIS Flammability: ${validatedData.hmis_codes.flammability} (Red)`);
+    console.log(`⚠️ HMIS Physical: ${validatedData.hmis_codes.physical} (Yellow)`);
+    console.log(`🧤 HMIS Special: ${validatedData.hmis_codes.special} (White)`);
 
     return new Response(
       JSON.stringify({ 
         success: true,
         extracted_data: validatedData,
         confidence: validatedData.ai_extraction_confidence,
-        message: `AI extraction completed with ${validatedData.ai_extraction_confidence}% confidence`
+        message: `AI extraction completed with ${validatedData.ai_extraction_confidence}% confidence using HMIS scoring criteria`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

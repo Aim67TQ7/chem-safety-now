@@ -46,12 +46,17 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       return codeMapping[p.code] || p.name?.toLowerCase().replace(/\s+/g, '_') || 'exclamation';
     });
 
+    // Fix hazardCodes type safety
+    const hazardCodes = Array.isArray(selectedDocument.h_codes) 
+      ? selectedDocument.h_codes.map((h: any) => typeof h === 'string' ? h : h?.code || String(h))
+      : [];
+
     return {
       productName: aiData.product_title || selectedDocument.product_name,
       manufacturer: aiData.manufacturer || selectedDocument.manufacturer,
       casNumber: selectedDocument.cas_number,
       signalWord: selectedDocument.signal_word || 'WARNING',
-      hazardCodes: (selectedDocument.h_codes || []).map((h: any) => h.code || h),
+      hazardCodes,
       pictograms: [...new Set(pictograms)], // Remove duplicates
       hmisRatings: {
         health: selectedDocument.hmis_codes?.health?.toString() || '2',
@@ -76,7 +81,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
   const signalWord = selectedDocument.signal_word || 'WARNING';
 
   const hazardCodes = Array.isArray(selectedDocument.h_codes) 
-    ? selectedDocument.h_codes.map((h: any) => h.code || h)
+    ? selectedDocument.h_codes.map((h: any) => typeof h === 'string' ? h : h?.code || String(h))
     : [];
 
   const sdsPrograms = Array.isArray(selectedDocument.pictograms) 
