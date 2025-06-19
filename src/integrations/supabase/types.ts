@@ -297,6 +297,235 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_ai_analysis: {
+        Row: {
+          ai_response: string
+          analysis_type: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          incident_id: string
+          metadata: Json | null
+          related_sds_documents: Json | null
+          suggested_actions: Json | null
+        }
+        Insert: {
+          ai_response: string
+          analysis_type: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          incident_id: string
+          metadata?: Json | null
+          related_sds_documents?: Json | null
+          suggested_actions?: Json | null
+        }
+        Update: {
+          ai_response?: string
+          analysis_type?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          incident_id?: string
+          metadata?: Json | null
+          related_sds_documents?: Json | null
+          suggested_actions?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_ai_analysis_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_images: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          image_url: string
+          incident_id: string
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          image_url: string
+          incident_id: string
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          image_url?: string
+          incident_id?: string
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_images_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          activity_being_performed: string
+          additional_comments: string | null
+          assigned_to_user_id: string | null
+          body_parts_affected: Json | null
+          corrective_actions: string | null
+          created_at: string
+          days_away_details: string | null
+          days_away_from_work: boolean | null
+          description: string
+          equipment_materials_involved: string | null
+          facility_id: string | null
+          form_completed_by_contact: string | null
+          form_completed_by_name: string
+          id: string
+          immediate_actions_taken: string | null
+          incident_date: string
+          incident_time: string | null
+          incident_type: string
+          job_transfer_details: string | null
+          job_transfer_restriction: boolean | null
+          location: string
+          medical_provider_contact: string | null
+          medical_provider_name: string | null
+          medical_treatment_provided: string | null
+          nature_of_injury_illness: string | null
+          object_substance_causing_injury: string | null
+          person_involved_date_hired: string | null
+          person_involved_dob: string | null
+          person_involved_job_title: string | null
+          person_involved_name: string
+          potential_severity: string | null
+          ppe_details: string | null
+          ppe_used: boolean | null
+          probability_recurrence: string | null
+          reported_by_user_id: string | null
+          severity_classification: string | null
+          status: string
+          updated_at: string
+          witnesses: Json | null
+        }
+        Insert: {
+          activity_being_performed: string
+          additional_comments?: string | null
+          assigned_to_user_id?: string | null
+          body_parts_affected?: Json | null
+          corrective_actions?: string | null
+          created_at?: string
+          days_away_details?: string | null
+          days_away_from_work?: boolean | null
+          description: string
+          equipment_materials_involved?: string | null
+          facility_id?: string | null
+          form_completed_by_contact?: string | null
+          form_completed_by_name: string
+          id?: string
+          immediate_actions_taken?: string | null
+          incident_date: string
+          incident_time?: string | null
+          incident_type: string
+          job_transfer_details?: string | null
+          job_transfer_restriction?: boolean | null
+          location: string
+          medical_provider_contact?: string | null
+          medical_provider_name?: string | null
+          medical_treatment_provided?: string | null
+          nature_of_injury_illness?: string | null
+          object_substance_causing_injury?: string | null
+          person_involved_date_hired?: string | null
+          person_involved_dob?: string | null
+          person_involved_job_title?: string | null
+          person_involved_name: string
+          potential_severity?: string | null
+          ppe_details?: string | null
+          ppe_used?: boolean | null
+          probability_recurrence?: string | null
+          reported_by_user_id?: string | null
+          severity_classification?: string | null
+          status?: string
+          updated_at?: string
+          witnesses?: Json | null
+        }
+        Update: {
+          activity_being_performed?: string
+          additional_comments?: string | null
+          assigned_to_user_id?: string | null
+          body_parts_affected?: Json | null
+          corrective_actions?: string | null
+          created_at?: string
+          days_away_details?: string | null
+          days_away_from_work?: boolean | null
+          description?: string
+          equipment_materials_involved?: string | null
+          facility_id?: string | null
+          form_completed_by_contact?: string | null
+          form_completed_by_name?: string
+          id?: string
+          immediate_actions_taken?: string | null
+          incident_date?: string
+          incident_time?: string | null
+          incident_type?: string
+          job_transfer_details?: string | null
+          job_transfer_restriction?: boolean | null
+          location?: string
+          medical_provider_contact?: string | null
+          medical_provider_name?: string | null
+          medical_treatment_provided?: string | null
+          nature_of_injury_illness?: string | null
+          object_substance_causing_injury?: string | null
+          person_involved_date_hired?: string | null
+          person_involved_dob?: string | null
+          person_involved_job_title?: string | null
+          person_involved_name?: string
+          potential_severity?: string | null
+          ppe_details?: string | null
+          ppe_used?: boolean | null
+          probability_recurrence?: string | null
+          reported_by_user_id?: string | null
+          severity_classification?: string | null
+          status?: string
+          updated_at?: string
+          witnesses?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       label_generations: {
         Row: {
           action_type: string
