@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { WitnessFields } from './WitnessFields';
 import { BodyPartsSelector } from './BodyPartsSelector';
 import { useIncidentSubmission } from '@/hooks/useIncidentSubmission';
+import ImageUpload, { ImageUploadRef } from './ImageUpload';
 
 const baseIncidentSchema = z.object({
   incident_date: z.date(),
@@ -39,6 +39,7 @@ const baseIncidentSchema = z.object({
   additional_comments: z.string().optional(),
   form_completed_by_name: z.string().min(1, 'Form completer name is required'),
   form_completed_by_contact: z.string().optional(),
+  images: z.array(z.string()).optional().default([]),
 });
 
 const nearMissSchema = baseIncidentSchema.extend({
@@ -79,6 +80,7 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
 }) => {
   const schema = incidentType === 'near_miss' ? nearMissSchema : reportableSchema;
   const { submitIncident, isSubmitting } = useIncidentSubmission();
+  const imageUploadRef = useRef<ImageUploadRef>(null);
 
   const form = useForm<IncidentFormData>({
     resolver: zodResolver(schema),
@@ -88,13 +90,27 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
       body_parts_affected: [],
       days_away_from_work: false,
       job_transfer_restriction: false,
+      images: [],
     },
   });
 
   const onSubmit = async (data: IncidentFormData) => {
-    const success = await submitIncident(data);
-    if (success) {
-      onSuccess();
+    try {
+      // Upload images first if any
+      const imageUrls = await imageUploadRef.current?.uploadImages() || [];
+      
+      // Add image URLs to the form data
+      const formDataWithImages = {
+        ...data,
+        images: imageUrls,
+      };
+      
+      const success = await submitIncident(formDataWithImages);
+      if (success) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Error submitting incident with images:', error);
     }
   };
 
@@ -603,6 +619,19 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
                 </FormItem>
               )}
             />
+
+            {/* Image Upload Section */}
+            <div className="space-y-4">
+              <ImageUpload
+                ref={imageUploadRef}
+                onImagesChange={(images) => {
+                  // Update form with image count for validation
+                  form.setValue('images', images.map(img => img.preview));
+                }}
+                maxImages={4}
+                disabled={isSubmitting}
+              />
+            </div>
 
             {/* Form Completion */}
             <div className="space-y-4">

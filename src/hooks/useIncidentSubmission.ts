@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 export const useIncidentSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,9 +13,12 @@ export const useIncidentSubmission = () => {
       // For now, we'll use a placeholder - in real app, get from user session
       const facilityId = 'placeholder-facility-id';
 
+      // Extract images from the data
+      const { images, ...restData } = incidentData;
+
       // Prepare the data for submission
       const submissionData = {
-        ...incidentData,
+        ...restData,
         facility_id: facilityId,
         // Convert dates to ISO strings
         incident_date: incidentData.incident_date?.toISOString(),
@@ -39,6 +42,30 @@ export const useIncidentSubmission = () => {
           variant: 'destructive',
         });
         return false;
+      }
+
+      // If there are images, save them to the incident_images table
+      if (images && images.length > 0 && data) {
+        const imageRecords = images.map((imageUrl: string, index: number) => ({
+          incident_id: data.id,
+          image_url: imageUrl,
+          file_name: `incident_image_${index + 1}`,
+          description: `Incident photo ${index + 1}`,
+        }));
+
+        const { error: imageError } = await supabase
+          .from('incident_images')
+          .insert(imageRecords);
+
+        if (imageError) {
+          console.error('Error saving incident images:', imageError);
+          // Don't fail the whole submission if images fail to save
+          toast({
+            title: 'Warning',
+            description: 'Incident saved but some images failed to upload.',
+            variant: 'destructive',
+          });
+        }
       }
 
       toast({
