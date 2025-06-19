@@ -1,11 +1,12 @@
 
-import { HomeIcon, Settings, FileText, Search } from "lucide-react";
+import { HomeIcon, Settings, FileText, Search, AlertTriangle } from "lucide-react";
 import Index from "./pages/Index";
 import FacilityPage from "./pages/FacilityPage";
 import QRCodePrintPage from "./pages/QRCodePrintPage";
 import NotFound from "./pages/NotFound";
 import SignupPage from "./pages/SignupPage";
 import SDSDocumentsPage from "./pages/SDSDocumentsPage";
+import IncidentsPage from "./pages/IncidentsPage";
 
 export const navItems = [
   {
@@ -19,6 +20,12 @@ export const navItems = [
     to: "/sds-documents",
     icon: <FileText className="h-4 w-4" />,
     page: <SDSDocumentsPage />,
+  },
+  {
+    title: "Incidents",
+    to: "/incidents",
+    icon: <AlertTriangle className="h-4 w-4" />,
+    page: <IncidentsPage />,
   },
   {
     title: "Facility",
