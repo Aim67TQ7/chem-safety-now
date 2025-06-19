@@ -1,8 +1,9 @@
+
 import { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Crown, Zap, Calendar } from "lucide-react";
+import { Lock, Crown, Zap, Calendar, AlertTriangle } from "lucide-react";
 import { SubscriptionService } from "@/services/subscriptionService";
 
 interface FeatureAccessWrapperProps {
@@ -35,7 +36,7 @@ const FeatureAccessWrapper = ({
       
       // Improved logic: give users the most permissive access
       if (sub) {
-        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting'];
         const isBasicFeature = basicFeatures.includes(feature);
         const isActiveTrial = sub.subscription_status === 'trial' && sub.trial_days_remaining > 0;
         
@@ -133,6 +134,13 @@ const FeatureAccessWrapper = ({
 
   const getFeatureInfo = () => {
     switch (feature) {
+      case 'incident_reporting':
+        return {
+          icon: <AlertTriangle className="w-8 h-8 text-red-500" />,
+          title: "Incident Reporting & Management",
+          description: "Report, track, and analyze workplace safety incidents with AI-powered insights",
+          plan: "Basic"
+        };
       case 'label_printing':
         return {
           icon: <Crown className="w-8 h-8 text-purple-500" />,

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,9 @@ import FeedbackPopup from "@/components/FeedbackPopup";
 import { SubscriptionService } from "@/services/subscriptionService";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { IncidentsList } from "@/components/incidents/IncidentsList";
+import { IncidentReportForm } from "@/components/incidents/IncidentReportForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FacilityData {
   id: string;
@@ -135,6 +137,32 @@ const FacilityPage = () => {
             <SDSSearch facilityData={facilityData} />
           </FeatureAccessWrapper>
         );
+      case 'incidents':
+        return (
+          <FeatureAccessWrapper
+            feature="incident_reporting"
+            facilityId={facilityData.id}
+            onUpgrade={handleUpgrade}
+          >
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold text-gray-900">Incident Management</h2>
+              </div>
+              <Tabs defaultValue="list" className="w-full">
+                <TabsList className="grid w-fit grid-cols-2">
+                  <TabsTrigger value="list">Incident List</TabsTrigger>
+                  <TabsTrigger value="report">Report Incident</TabsTrigger>
+                </TabsList>
+                <TabsContent value="list" className="space-y-4">
+                  <IncidentsList />
+                </TabsContent>
+                <TabsContent value="report" className="space-y-4">
+                  <IncidentReportForm facilityData={facilityData} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </FeatureAccessWrapper>
+        );
       case 'qr-generator':
         return <QRCodeGenerator facilityData={facilityData} facilityUrl={facilityUrl} />;
       case 'desktop-links':
@@ -182,6 +210,9 @@ const FacilityPage = () => {
     switch (action) {
       case 'search':
         setCurrentView('sds-search');
+        break;
+      case 'incidents':
+        setCurrentView('incidents');
         break;
       case 'qr-codes':
         setCurrentView('qr-generator');

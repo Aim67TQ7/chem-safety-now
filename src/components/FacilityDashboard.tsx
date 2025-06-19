@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -14,7 +15,8 @@ import {
   Users,
   Activity,
   Clock,
-  Crown
+  Crown,
+  AlertTriangle
 } from "lucide-react";
 
 interface FacilityData {
@@ -90,6 +92,15 @@ const FacilityDashboard = ({
       color: 'bg-blue-600',
       hoverColor: 'hover:bg-blue-700',
       featured: true // Mark as featured for special styling
+    },
+    {
+      id: 'incidents',
+      title: 'Incident Reporting',
+      description: 'Report and manage safety incidents',
+      icon: AlertTriangle,
+      color: 'bg-red-600',
+      hoverColor: 'hover:bg-red-700',
+      requiresFeature: 'incident_reporting'
     },
     {
       id: 'qr-codes',
