@@ -2,21 +2,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Play, Pause, SkipForward, RotateCcw } from "lucide-react";
+import { X, Play, Pause, RotateCcw } from "lucide-react";
 
 interface VideoOverlayModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const videos = [
-  "/lovable-uploads/Sarah Safety - Part 1.mp4",
-  "/lovable-uploads/Sarah Safety - Part 2.mp4",
-  "/lovable-uploads/Sarah Safety - Part 3.mp4"
-];
+const videoUrl = "/Sarah Safety Full Video (2).mp4";
 
 export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) => {
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -27,7 +22,7 @@ export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) =
       videoRef.current.play();
       setIsPlaying(true);
     }
-  }, [isOpen, currentVideoIndex]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (showControls) {
@@ -38,14 +33,6 @@ export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) =
     }
     return () => clearTimeout(controlsTimeoutRef.current);
   }, [showControls]);
-
-  const handleVideoEnd = () => {
-    if (currentVideoIndex < videos.length - 1) {
-      setCurrentVideoIndex(currentVideoIndex + 1);
-    } else {
-      setIsPlaying(false);
-    }
-  };
 
   const handlePlayPause = () => {
     if (videoRef.current) {
@@ -58,15 +45,12 @@ export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) =
     }
   };
 
-  const handleNext = () => {
-    if (currentVideoIndex < videos.length - 1) {
-      setCurrentVideoIndex(currentVideoIndex + 1);
-    }
-  };
-
   const handleReplay = () => {
-    setCurrentVideoIndex(0);
-    setIsPlaying(true);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
   };
 
   const handleMouseMove = () => {
@@ -74,7 +58,6 @@ export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) =
   };
 
   const handleClose = () => {
-    setCurrentVideoIndex(0);
     setIsPlaying(false);
     onClose();
   };
@@ -101,9 +84,8 @@ export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) =
           {/* Video */}
           <video
             ref={videoRef}
-            src={videos[currentVideoIndex]}
+            src={videoUrl}
             className="max-w-full max-h-full"
-            onEnded={handleVideoEnd}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           />
@@ -123,17 +105,6 @@ export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) =
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </Button>
 
-            {currentVideoIndex < videos.length - 1 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleNext}
-                className="text-white hover:bg-white/20"
-              >
-                <SkipForward className="w-5 h-5" />
-              </Button>
-            )}
-
             <Button
               variant="ghost"
               size="icon"
@@ -142,20 +113,15 @@ export const VideoOverlayModal = ({ isOpen, onClose }: VideoOverlayModalProps) =
             >
               <RotateCcw className="w-5 h-5" />
             </Button>
-
-            <span className="text-white text-sm">
-              {currentVideoIndex + 1} / {videos.length}
-            </span>
           </div>
 
-          {/* Video titles */}
+          {/* Video title */}
           <div
             className={`absolute top-8 left-1/2 transform -translate-x-1/2 text-white text-center transition-opacity duration-300 ${
               showControls ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <h3 className="text-2xl font-bold mb-2">Sarah Safety</h3>
-            <p className="text-lg">Part {currentVideoIndex + 1}</p>
+            <h3 className="text-2xl font-bold">Sarah Safety</h3>
           </div>
         </div>
       </DialogContent>

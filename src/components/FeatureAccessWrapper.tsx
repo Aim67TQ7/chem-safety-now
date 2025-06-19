@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,9 +43,15 @@ const FeatureAccessWrapper = ({
         if (sub.subscription_status === 'premium') {
           setHasAccess(true);
         }
-        // Basic users or active trial users get basic features
+        // Basic users get basic features, trial users get ALL basic features during trial
         else if (sub.subscription_status === 'basic' || isActiveTrial) {
-          setHasAccess(isBasicFeature || access);
+          // Trial users get full access to all basic features during their 7-day trial
+          if (isActiveTrial) {
+            setHasAccess(isBasicFeature);
+          } else {
+            // Basic subscribers get basic features based on server access check
+            setHasAccess(isBasicFeature && access);
+          }
         }
         // Otherwise use the server-side access check
         else {
