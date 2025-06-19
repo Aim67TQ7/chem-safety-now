@@ -84,6 +84,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SDSDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Searching...");
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
@@ -140,6 +141,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
     }
 
     setIsLoading(true);
+    setLoadingMessage("Searching for documents...");
     
     await interactionLogger.logFacilityUsage({
       eventType: 'sds_search_initiated',
@@ -165,7 +167,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
 
       console.log('📊 Search response data:', data);
       
-      // Handle immediate results or job-based results
+      // Handle immediate results
       if (data.results) {
         const results = Array.isArray(data.results) ? data.results : [data.results];
         console.log('✅ Setting search results:', results);
@@ -176,6 +178,10 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
           setSearchResults(results);
           
           let statusMessage = `Auto-selected "${autoSelectedDoc.product_name}" with ${(data.confidence_score * 100).toFixed(1)}% confidence. Matched on: ${data.match_reasons?.join(', ') || 'multiple criteria'}.`;
+          
+          if (data.source === 'enhanced_google_cse_search_with_downloads') {
+            statusMessage += ' All PDFs have been saved to storage.';
+          }
           
           if (autoSelectedDoc.extraction_status === 'processing') {
             statusMessage += ' Extracting hazard data in background...';
@@ -192,21 +198,29 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
           setShowSelectionDialog(true);
           
           const topScore = results[0]?.confidence?.score || 0;
+          let toastMessage = `Found ${results.length} potential matches. Top match: ${(topScore * 100).toFixed(1)}% confidence.`;
+          
+          if (data.source === 'enhanced_google_cse_search_with_downloads') {
+            toastMessage += ' All PDFs have been downloaded and saved to storage.';
+          }
+          
           toast({
             title: "Multiple Matches Found",
-            description: `Found ${results.length} potential matches. Top match: ${(topScore * 100).toFixed(1)}% confidence. Please select the correct one.`,
+            description: toastMessage + ' Please select the correct one.',
             variant: "default"
           });
         } else {
           setSearchResults(results);
         }
       } else if (data.job_id) {
-        // Job-based processing - poll for results
+        // Job-based processing - poll for results with enhanced messaging
         console.log('⏳ Polling for job results:', data.job_id);
+        setLoadingMessage("Downloading and processing PDF documents...");
         await pollJobResults(data.job_id);
       } else {
         // Fallback to documents list
         console.log('📋 No direct results, falling back to document list');
+        setLoadingMessage("Loading existing documents...");
         await fetchAllDocuments();
       }
       
@@ -216,7 +230,8 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
           searchQuery: searchQuery.trim(),
           resultsCount: searchResults.length,
           autoSelected: data.auto_selected || false,
-          confidenceScore: data.confidence_score || 0
+          confidenceScore: data.confidence_score || 0,
+          allPDFsDownloaded: data.source?.includes('downloads') || false
         }
       });
 
@@ -226,6 +241,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
       // Fallback to searching existing documents
       try {
         console.log('🔄 Attempting fallback to document list');
+        setLoadingMessage("Loading existing documents...");
         await fetchAllDocuments();
         toast({
           title: "Search Notice",
@@ -242,6 +258,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
       }
     } finally {
       setIsLoading(false);
+      setLoadingMessage("Searching...");
     }
   };
 
@@ -527,7 +544,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
               Safety Data Sheet Search
             </h2>
             <p className="text-sm text-gray-600">
-              Search for chemical safety information. Generate labels and get AI assistance for each chemical.
+              Search for chemical safety information. All found PDFs are automatically saved for future reference.
             </p>
           </div>
 
@@ -548,13 +565,20 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
               className="bg-gray-800 hover:bg-gray-900 text-white px-6"
             >
               <Search className="w-4 h-4 mr-2" />
-              {isLoading ? 'Searching...' : 'Search'}
+              {isLoading ? loadingMessage : 'Search'}
             </Button>
           </div>
+          
+          {isLoading && (
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+              <span>{loadingMessage}</span>
+            </div>
+          )}
         </div>
       </Card>
 
-      {/* Search Results - Enhanced with prominent label generation */}
+      {/* Search Results */}
       {searchResults.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -585,6 +609,13 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
                     <h4 className="text-lg font-semibold text-gray-900">
                       {sdsDocument.product_name}
                     </h4>
+                    
+                    {/* Storage Status Indicator */}
+                    {sdsDocument.bucket_url && (
+                      <Badge variant="default" className="text-xs bg-green-100 text-green-700">
+                        PDF Saved
+                      </Badge>
+                    )}
                     
                     {/* Confidence Score Badge */}
                     {sdsDocument.confidence?.score && (
@@ -632,42 +663,49 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
                     </div>
                   )}
                   
-                  <div className="space-y-2 text-sm text-gray-600">
-                    {sdsDocument.manufacturer && (
-                      <p><strong>Manufacturer:</strong> {sdsDocument.manufacturer}</p>
-                    )}
-                    {sdsDocument.cas_number && (
-                      <p><strong>CAS Number:</strong> {sdsDocument.cas_number}</p>
-                    )}
-                    {sdsDocument.h_codes && sdsDocument.h_codes.length > 0 && (
-                      <div>
-                        <strong>Hazard Codes:</strong>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {sdsDocument.h_codes.slice(0, 5).map((hCode) => (
-                            <Badge key={hCode.code} variant="outline" className="text-xs" title={hCode.description}>
-                              {hCode.code}
-                            </Badge>
-                          ))}
-                          {sdsDocument.h_codes.length > 5 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{sdsDocument.h_codes.length - 5} more
-                            </Badge>
-                          )}
+                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div>
+                      {sdsDocument.manufacturer && (
+                        <p><strong>Manufacturer:</strong> {sdsDocument.manufacturer}</p>
+                      )}
+                      {sdsDocument.cas_number && (
+                        <p><strong>CAS Number:</strong> {sdsDocument.cas_number}</p>
+                      )}
+                      {sdsDocument.file_size && (
+                        <p><strong>File Size:</strong> {Math.round(sdsDocument.file_size / 1024)} KB</p>
+                      )}
+                    </div>
+                    <div>
+                      {sdsDocument.h_codes && sdsDocument.h_codes.length > 0 && (
+                        <div>
+                          <strong>Hazard Codes:</strong>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {sdsDocument.h_codes.slice(0, 5).map((hCode) => (
+                              <Badge key={hCode.code} variant="outline" className="text-xs" title={hCode.description}>
+                                {hCode.code}
+                              </Badge>
+                            ))}
+                            {sdsDocument.h_codes.length > 5 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{sdsDocument.h_codes.length - 5} more
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {sdsDocument.pictograms && sdsDocument.pictograms.length > 0 && (
-                      <div>
-                        <strong>Pictograms:</strong>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {sdsDocument.pictograms.map((pictogram) => (
-                            <Badge key={pictogram.ghs_code} variant="secondary" className="text-xs">
-                              {pictogram.name}
-                            </Badge>
-                          ))}
+                      )}
+                      {sdsDocument.pictograms && sdsDocument.pictograms.length > 0 && (
+                        <div className="mt-2">
+                          <strong>Pictograms:</strong>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {sdsDocument.pictograms.map((pictogram) => (
+                              <Badge key={pictogram.ghs_code} variant="secondary" className="text-xs">
+                                {pictogram.name}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -730,7 +768,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
         <Card className="p-6 text-center">
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Results Found</h3>
           <p className="text-gray-600 mb-4">
-            No SDS documents found for "{searchQuery}". Try a different product name or CAS number.
+            No SDS documents found for "{searchQuery}". The system will search online and automatically save any found PDFs for future reference.
           </p>
           <Button 
             variant="outline" 

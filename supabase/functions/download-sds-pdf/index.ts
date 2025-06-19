@@ -13,6 +13,31 @@ interface DownloadRequest {
   file_name: string;
 }
 
+// Function to ensure storage bucket exists
+async function ensureStorageBucket() {
+  const bucketName = 'sds-documents';
+  
+  // Check if bucket exists
+  const { data: buckets } = await supabase.storage.listBuckets();
+  const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+  
+  if (!bucketExists) {
+    console.log('📦 Creating sds-documents storage bucket...');
+    const { error: createError } = await supabase.storage.createBucket(bucketName, {
+      public: true,
+      allowedMimeTypes: ['application/pdf'],
+      fileSizeLimit: 52428800 // 50MB limit
+    });
+    
+    if (createError) {
+      console.error('❌ Failed to create storage bucket:', createError);
+      throw new Error(`Failed to create storage bucket: ${createError.message}`);
+    }
+    
+    console.log('✅ Successfully created sds-documents storage bucket');
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -24,6 +49,9 @@ Deno.serve(async (req) => {
     
     console.log('📥 Starting PDF download for document:', document_id);
     console.log('📥 Source URL:', source_url);
+
+    // Ensure storage bucket exists
+    await ensureStorageBucket();
 
     // Step 1: Download the PDF from the source URL
     const response = await fetch(source_url, {
@@ -101,25 +129,25 @@ Deno.serve(async (req) => {
     }
 
     // Step 6: Trigger text extraction (background task)
-    console.log('🔍 Triggering text extraction...');
-    try {
-      const { data: extractionData, error: extractionError } = await supabase.functions.invoke('extract-sds-text', {
-        body: {
-          document_id: document_id,
-          bucket_url: bucketUrl
-        }
-      });
+    EdgeRuntime.waitUntil((async () => {
+      console.log('🔍 Triggering text extraction...');
+      try {
+        const { error: extractionError } = await supabase.functions.invoke('extract-sds-text', {
+          body: {
+            document_id: document_id,
+            bucket_url: bucketUrl
+          }
+        });
 
-      if (extractionError) {
-        console.error('❌ Text extraction failed:', extractionError);
-        // Don't fail the whole operation, just log the error
-      } else {
-        console.log('✅ Text extraction completed:', extractionData?.extracted_data);
+        if (extractionError) {
+          console.error('❌ Text extraction failed:', extractionError);
+        } else {
+          console.log('✅ Text extraction initiated successfully');
+        }
+      } catch (extractionError) {
+        console.error('❌ Text extraction error:', extractionError);
       }
-    } catch (extractionError) {
-      console.error('❌ Text extraction error:', extractionError);
-      // Continue without failing the main operation
-    }
+    })());
 
     console.log('✅ PDF download and storage completed successfully');
 
