@@ -646,7 +646,7 @@ const LabelPrinter = ({
             </div>
           </div>
 
-          {/* Enhanced Preview Content with HMIS Prominence */}
+          {/* Enhanced Preview Content with Larger HMIS and Pictograms */}
           <div className="flex-1 overflow-auto p-4 bg-gray-100 flex items-center justify-center">
             <div 
               className="bg-white border-2 border-gray-800 p-4 shadow-lg"
@@ -666,21 +666,21 @@ const LabelPrinter = ({
                   {productId && <div className="text-xs">ID: {productId}</div>}
                 </div>
                 
-                {/* HMIS - Most Prominent Feature */}
+                {/* HMIS - 33% Larger */}
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-sm font-bold mb-2">HMIS RATING</div>
-                    <div className="relative w-20 h-20 mx-auto">
-                      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute inset-0">
-                        <rect x="0" y="0" width="40" height="40" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
-                        <rect x="40" y="0" width="40" height="40" fill="#EF4444" stroke="#000" strokeWidth="1"/>
-                        <rect x="0" y="40" width="40" height="40" fill="#FDE047" stroke="#000" strokeWidth="1"/>
-                        <rect x="40" y="40" width="40" height="40" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                    <div className="relative w-[106px] h-[106px] mx-auto">
+                      <svg width="106" height="106" viewBox="0 0 106 106" className="absolute inset-0">
+                        <rect x="0" y="0" width="53" height="53" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
+                        <rect x="53" y="0" width="53" height="53" fill="#EF4444" stroke="#000" strokeWidth="1"/>
+                        <rect x="0" y="53" width="53" height="53" fill="#FDE047" stroke="#000" strokeWidth="1"/>
+                        <rect x="53" y="53" width="53" height="53" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
                         
-                        <text x="20" y="28" textAnchor="middle" className="text-lg font-bold fill-white">{hmisHealth}</text>
-                        <text x="60" y="28" textAnchor="middle" className="text-lg font-bold fill-white">{hmisFlammability}</text>
-                        <text x="20" y="68" textAnchor="middle" className="text-lg font-bold fill-black">{hmisPhysical}</text>
-                        <text x="60" y="68" textAnchor="middle" className="text-sm font-bold fill-black">{hmisSpecial || ""}</text>
+                        <text x="26.5" y="35" textAnchor="middle" className="text-xl font-bold fill-white">{hmisHealth}</text>
+                        <text x="79.5" y="35" textAnchor="middle" className="text-xl font-bold fill-white">{hmisFlammability}</text>
+                        <text x="26.5" y="88" textAnchor="middle" className="text-xl font-bold fill-black">{hmisPhysical}</text>
+                        <text x="79.5" y="88" textAnchor="middle" className="text-base font-bold fill-black">{hmisSpecial || ""}</text>
                       </svg>
                     </div>
                   </div>
@@ -696,7 +696,7 @@ const LabelPrinter = ({
                       {selectedPictograms.slice(0, 4).map((id) => {
                         const pictogram = pictograms.find(p => p.id === id);
                         return pictogram ? (
-                          <div key={id} className="w-4 h-4">
+                          <div key={id} className="w-8 h-8">
                             <img 
                               src={pictogram.imageUrl} 
                               alt={pictogram.name}
