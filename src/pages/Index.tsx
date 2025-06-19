@@ -49,8 +49,7 @@ const Index = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Stop Wasting Hours on Paperwork with
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600"> Instant Digital Access</span>
+            Stop Wasting Hours on Paperwork
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Eliminate time-consuming searches through filing cabinets and paper binders. 
