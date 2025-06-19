@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
-import { Send, Bot, User, AlertCircle } from "lucide-react";
+import { Send, Bot, User, AlertCircle, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { interactionLogger } from "@/services/interactionLogger";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface AIAssistantProps {
   facilityData: any;
   selectedDocument?: any;
+  onGenerateLabel?: (document: any) => void;
 }
 
 interface Message {
@@ -21,7 +22,7 @@ interface Message {
   timestamp: Date;
 }
 
-const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
+const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssistantProps) => {
   const getInitialMessage = () => {
     let content = `Hi there! I'm Sarah, your Chemical Safety Manager. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
     
@@ -309,6 +310,25 @@ const AIAssistant = ({ facilityData, selectedDocument }: AIAssistantProps) => {
           </div>
         </div>
       </Card>
+
+      {/* Quick Actions for Selected Document */}
+      {selectedDocument && onGenerateLabel && (
+        <Card className="p-4 bg-green-50 border-green-200">
+          <h4 className="text-sm font-semibold text-green-900 mb-3 flex items-center">
+            <Printer className="w-4 h-4 mr-2" />
+            Quick Actions for {selectedDocument.product_name}
+          </h4>
+          
+          <Button
+            onClick={() => onGenerateLabel(selectedDocument)}
+            className="w-full bg-green-600 hover:bg-green-700 text-white"
+            size="sm"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Generate GHS Label
+          </Button>
+        </Card>
+      )}
 
       {/* Contextual Example Queries */}
       <Card className="p-4">

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import AIAssistant from "@/components/AIAssistant";
 import { Bot, X } from "lucide-react";
 
@@ -12,9 +11,16 @@ interface AIAssistantPopupProps {
   onClose: () => void;
   facilityData: any;
   selectedDocument?: any;
+  onGenerateLabel?: (document: any) => void;
 }
 
-const AIAssistantPopup = ({ isOpen, onClose, facilityData, selectedDocument }: AIAssistantPopupProps) => {
+const AIAssistantPopup = ({ 
+  isOpen, 
+  onClose, 
+  facilityData, 
+  selectedDocument, 
+  onGenerateLabel 
+}: AIAssistantPopupProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-[90vw] h-[85vh] overflow-hidden flex flex-col p-0">
@@ -52,6 +58,7 @@ const AIAssistantPopup = ({ isOpen, onClose, facilityData, selectedDocument }: A
           <AIAssistant 
             facilityData={facilityData} 
             selectedDocument={selectedDocument}
+            onGenerateLabel={onGenerateLabel}
           />
         </div>
       </DialogContent>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -443,6 +442,19 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
     });
   };
 
+  const handleGenerateLabelFromAI = async (sdsDocument: SDSDocument) => {
+    console.log('🏷️ Opening label printer from AI for:', sdsDocument.product_name);
+    setShowAIAssistant(false);
+    setSelectedDocument(sdsDocument);
+    setShowLabelPrinter(true);
+    
+    await interactionLogger.logSDSInteraction({
+      sdsDocumentId: sdsDocument.id,
+      actionType: 'generate_label_from_ai',
+      searchQuery: searchQuery
+    });
+  };
+
   const getSignalWordVariant = (signalWord?: string) => {
     if (!signalWord) return 'secondary';
     return signalWord.toLowerCase() === 'danger' ? 'destructive' : 'secondary';
@@ -507,7 +519,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
         </Alert>
       )}
 
-      {/* Search Header - Simplified to focus on search only */}
+      {/* Search Header */}
       <Card className="p-6">
         <div className="space-y-4">
           <div>
@@ -515,7 +527,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
               Safety Data Sheet Search
             </h2>
             <p className="text-sm text-gray-600">
-              Search for chemical safety information. Use the buttons in each result for AI assistance and label generation.
+              Search for chemical safety information. Generate labels and get AI assistance for each chemical.
             </p>
           </div>
 
@@ -542,7 +554,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
         </div>
       </Card>
 
-      {/* Search Results - Enhanced with document-specific actions */}
+      {/* Search Results - Enhanced with prominent label generation */}
       {searchResults.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -659,36 +671,53 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
                   </div>
                 </div>
 
-                <div className="flex flex-col space-y-2 ml-4">
+                {/* Enhanced Action Buttons - Prominent Label Generation */}
+                <div className="flex flex-col space-y-2 ml-4 min-w-[140px]">
+                  {/* Prominent Generate Label Button */}
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={() => handleViewDocument(sdsDocument)}
-                    className="w-full"
+                    onClick={() => handleGenerateLabel(sdsDocument)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
+                    title={`Generate GHS compliant label for ${sdsDocument.product_name}`}
                   >
-                    <FileText className="w-4 h-4 mr-1" />
-                    View
+                    <Printer className="w-4 h-4 mr-2" />
+                    Generate Label
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDownloadDocument(sdsDocument)}
-                    className="w-full"
-                    disabled={!sdsDocument.bucket_url}
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    Download
-                  </Button>
+                  
+                  {/* Ask AI Button */}
                   <Button
                     size="sm"
                     variant="default"
                     onClick={() => handleAskAI(sdsDocument)}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    title={`Chat with Sarah, your AI Safety Manager about ${sdsDocument.product_name}`}
+                    title={`Chat with Sarah about ${sdsDocument.product_name} safety`}
                   >
-                    <Bot className="w-4 h-4 mr-1" />
+                    <Bot className="w-4 h-4 mr-2" />
                     Ask Sarah
                   </Button>
+                  
+                  {/* Secondary Actions */}
+                  <div className="flex space-x-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewDocument(sdsDocument)}
+                      className="flex-1"
+                      title="View PDF document"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownloadDocument(sdsDocument)}
+                      className="flex-1"
+                      disabled={!sdsDocument.bucket_url}
+                      title="Download PDF"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -726,6 +755,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
           }}
           facilityData={facilityData}
           selectedDocument={selectedDocument}
+          onGenerateLabel={handleGenerateLabelFromAI}
         />
       )}
 
