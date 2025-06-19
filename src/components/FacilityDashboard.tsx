@@ -211,10 +211,10 @@ const FacilityDashboard = ({
                   onClick={onChatWithSarah}
                   className="flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100"
                 >
-                  <Avatar className="w-6 h-6">
+                  <Avatar className="w-8 h-8">
                     <AvatarImage 
                       src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
-                      alt="Sarah - Chemical Safety Manager"
+                      alt="Sarah - Safety Manager"
                     />
                     <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
                       <Bot className="w-3 h-3" />
@@ -255,12 +255,6 @@ const FacilityDashboard = ({
                 `}
                 onClick={() => isLocked ? onUpgrade && onUpgrade() : onQuickAction(action.id)}
               >
-                {action.featured && (
-                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
-                    START HERE
-                  </div>
-                )}
-                
                 <div className="p-6 relative">
                   {isLocked && (
                     <div className="absolute top-2 right-2">

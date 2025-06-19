@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ interface Message {
 
 const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssistantProps) => {
   const getInitialMessage = () => {
-    let content = `Hi there! I'm Sarah, your Chemical Safety Manager. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
+    let content = `Hi there! I'm Sarah, your Safety Manager. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
     
     if (selectedDocument) {
       content += `\n\nI can see you're working with **${selectedDocument.product_name}**${selectedDocument.manufacturer ? ` from ${selectedDocument.manufacturer}` : ''}. I have the complete SDS data for this chemical, so I can give you specific guidance on handling, storage, PPE requirements, and emergency procedures.`;
@@ -280,13 +281,13 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <Avatar className="w-8 h-8 flex-shrink-0">
+                  <Avatar className="w-12 h-12 flex-shrink-0">
                     <AvatarImage 
-                      src="/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png" 
-                      alt="Sarah - Chemical Safety Manager"
+                      src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
+                      alt="Sarah - Safety Manager"
                     />
                     <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                      <Bot className="w-4 h-4" />
+                      <Bot className="w-6 h-6" />
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -313,13 +314,13 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
           {isProcessing && (
             <div className="flex justify-start">
               <div className="flex items-start space-x-3">
-                <Avatar className="w-8 h-8 flex-shrink-0">
+                <Avatar className="w-12 h-12 flex-shrink-0">
                   <AvatarImage 
-                    src="/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png" 
-                    alt="Sarah - Chemical Safety Manager"
+                    src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
+                    alt="Sarah - Safety Manager"
                   />
                   <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                    <Bot className="w-4 h-4" />
+                    <Bot className="w-6 h-6" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
