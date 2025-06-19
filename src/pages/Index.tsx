@@ -1,10 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award, Zap } from "lucide-react";
 import SarahSafetyAvatar from "@/components/SarahSafetyAvatar";
 
 const Index = () => {
@@ -103,9 +104,22 @@ const Index = () => {
                 <strong className="text-red-900">Paper-based systems cost facilities an average of 15+ hours per week in manual filing, searching, and compliance updates.</strong>
               </AlertDescription>
             </Alert>
+
+            {/* New Beta Features Announcement */}
+            <div className="max-w-4xl mx-auto mb-8">
+              <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-lg p-6 text-white">
+                <div className="flex items-center justify-center mb-3">
+                  <Zap className="w-6 h-6 mr-2" />
+                  <span className="text-xl font-bold">2 New Features Added Monthly</span>
+                </div>
+                <p className="text-lg">
+                  Lock in your price now as an early subscriber and you will have full access to Beta Testing new modules as they are released.
+                </p>
+              </div>
+            </div>
             
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              📱 Why Smart Facilities Replaced Paper Systems
+              📱 Why Smart Facilities Are Replacing Paper Systems
             </h2>
             <p className="text-xl text-gray-700 font-semibold mb-16">
               ChemLabel-GPT eliminates the time drain and compliance risks of paper-based safety management.
