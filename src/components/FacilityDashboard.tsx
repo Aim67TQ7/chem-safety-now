@@ -215,7 +215,7 @@ const FacilityDashboard = ({
                     >
                       <Avatar className="w-20 h-20 ring-2 ring-blue-200 hover:ring-blue-400 transition-all duration-300 hover:animate-pulse">
                         <AvatarImage 
-                          src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
+                          src="/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" 
                           alt="Sarah - Safety Manager"
                           className="object-cover"
                         />
