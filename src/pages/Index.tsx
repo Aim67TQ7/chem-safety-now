@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award } from "lucide-react";
+import SarahSafetyAvatar from "@/components/SarahSafetyAvatar";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -38,9 +38,7 @@ const Index = () => {
                 <p className="text-sm text-gray-600">AI-Powered Chemical Safety</p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
-              OSHA Compliant
-            </Badge>
+            <SarahSafetyAvatar />
           </div>
         </div>
       </header>
