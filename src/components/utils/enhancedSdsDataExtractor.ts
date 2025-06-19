@@ -28,28 +28,36 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
   if (selectedDocument.ai_extracted_data && selectedDocument.ai_extraction_confidence > 50) {
     const aiData = selectedDocument.ai_extracted_data;
     
-    // Map GHS pictograms from AI data
-    const pictograms = (aiData.ghs_pictograms || []).map((p: any) => {
-      // Map GHS codes to our pictogram IDs
-      const codeMapping: Record<string, string> = {
-        'GHS01': 'exploding_bomb',
-        'GHS02': 'flame',
-        'GHS03': 'flame_over_circle',
-        'GHS04': 'gas_cylinder',
-        'GHS05': 'corrosion',
-        'GHS06': 'skull_crossbones',
-        'GHS07': 'exclamation',
-        'GHS08': 'health_hazard',
-        'GHS09': 'environment'
-      };
-      
-      return codeMapping[p.code] || p.name?.toLowerCase().replace(/\s+/g, '_') || 'exclamation';
-    });
+    // Map GHS pictograms from AI data with proper type safety
+    const pictograms: string[] = [];
+    if (Array.isArray(aiData.ghs_pictograms)) {
+      aiData.ghs_pictograms.forEach((p: any) => {
+        // Map GHS codes to our pictogram IDs
+        const codeMapping: Record<string, string> = {
+          'GHS01': 'exploding_bomb',
+          'GHS02': 'flame',
+          'GHS03': 'flame_over_circle',
+          'GHS04': 'gas_cylinder',
+          'GHS05': 'corrosion',
+          'GHS06': 'skull_crossbones',
+          'GHS07': 'exclamation',
+          'GHS08': 'health_hazard',
+          'GHS09': 'environment'
+        };
+        
+        const mappedPictogram = codeMapping[p.code] || p.name?.toLowerCase().replace(/\s+/g, '_') || 'exclamation';
+        pictograms.push(mappedPictogram);
+      });
+    }
 
     // Fix hazardCodes type safety
-    const hazardCodes = Array.isArray(selectedDocument.h_codes) 
-      ? selectedDocument.h_codes.map((h: any) => typeof h === 'string' ? h : h?.code || String(h))
-      : [];
+    const hazardCodes: string[] = [];
+    if (Array.isArray(selectedDocument.h_codes)) {
+      selectedDocument.h_codes.forEach((h: any) => {
+        const code = typeof h === 'string' ? h : (h?.code || String(h));
+        hazardCodes.push(code);
+      });
+    }
 
     return {
       productName: aiData.product_title || selectedDocument.product_name,
