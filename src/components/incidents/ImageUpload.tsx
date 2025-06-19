@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Camera, Upload, X, Image as ImageIcon } from 'lucide-react';
@@ -19,11 +19,16 @@ interface ImageUploadProps {
   disabled?: boolean;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ 
+// Create a ref type for the component
+export type ImageUploadRef = {
+  uploadImages: () => Promise<string[]>;
+};
+
+const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({ 
   onImagesChange, 
   maxImages = 4, 
   disabled = false 
-}) => {
+}, ref) => {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -179,9 +184,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   // Expose uploadImages method to parent component
-  React.useImperativeHandle(React.forwardRef<{ uploadImages: () => Promise<string[]> }>(() => ({
+  useImperativeHandle(ref, () => ({
     uploadImages
-  })));
+  }));
 
   return (
     <div className="space-y-4">
@@ -292,11 +297,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       )}
     </div>
   );
-};
+});
 
-// Create a ref type for the component
-export type ImageUploadRef = {
-  uploadImages: () => Promise<string[]>;
-};
+ImageUpload.displayName = 'ImageUpload';
 
 export default ImageUpload;
