@@ -1,7 +1,9 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Search, 
   Bot, 
@@ -202,26 +204,31 @@ const FacilityDashboard = ({
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-4">
               {renderSubscriptionStatus()}
               {onChatWithSarah && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onChatWithSarah}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100"
-                >
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage 
-                      src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
-                      alt="Sarah - Safety Manager"
-                    />
-                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
-                      <Bot className="w-3 h-3" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>Chat with Sarah</span>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div 
+                      onClick={onChatWithSarah}
+                      className="cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-lg group"
+                    >
+                      <Avatar className="w-20 h-20 ring-2 ring-blue-200 hover:ring-blue-400 transition-all duration-300 hover:animate-pulse">
+                        <AvatarImage 
+                          src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
+                          alt="Sarah - Safety Manager"
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                          <Bot className="w-8 h-8" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Chat with Sarah</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
               <Button
                 variant="outline"
