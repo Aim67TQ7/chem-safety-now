@@ -1,24 +1,22 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
-  QrCode, 
-  Printer, 
   Bot, 
-  Monitor,
   Settings,
   Building2,
-  Calendar,
-  Users,
   Activity,
-  Clock,
   Crown,
   AlertTriangle,
-  Link
+  Link,
+  Clock,
+  TrendingUp,
+  Award
 } from "lucide-react";
+import FacilityActivityCard from "@/components/FacilityActivityCard";
+import SafetyGameCard from "@/components/SafetyGameCard";
 
 interface FacilityData {
   id: string;
@@ -94,7 +92,7 @@ const FacilityDashboard = ({
       icon: Search,
       color: 'bg-blue-600',
       hoverColor: 'hover:bg-blue-700',
-      featured: true // Mark as featured for special styling
+      featured: true
     },
     {
       id: 'incidents',
@@ -113,15 +111,6 @@ const FacilityDashboard = ({
       color: 'bg-green-600',
       hoverColor: 'hover:bg-green-700',
       requiresFeature: 'access_tools'
-    },
-    {
-      id: 'labels',
-      title: 'Label Printer',
-      description: 'Create safety labels',
-      icon: Printer,
-      color: 'bg-orange-600',
-      hoverColor: 'hover:bg-orange-700',
-      requiresFeature: 'label_printing'
     }
   ];
 
@@ -224,7 +213,7 @@ const FacilityDashboard = ({
                 >
                   <Avatar className="w-6 h-6">
                     <AvatarImage 
-                      src="/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png" 
+                      src="/lovable-uploads/f96c7ce3-ace7-434d-a4a6-fcec5716efa8.png" 
                       alt="Sarah - Chemical Safety Manager"
                     />
                     <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
@@ -251,7 +240,7 @@ const FacilityDashboard = ({
       {/* Quick Actions */}
       <Card className="p-6">
         <h3 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             const isLocked = action.requiresFeature && !hasFeatureAccess(action.requiresFeature);
@@ -305,16 +294,22 @@ const FacilityDashboard = ({
         </div>
       </Card>
 
-      {/* Facility Information */}
+      {/* Enhanced Dashboard Cards */}
       <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building2 className="w-5 h-5" />
-              <span>Facility Details</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <FacilityActivityCard facilityId={facilityData.id} />
+        <SafetyGameCard facilityId={facilityData.id} />
+      </div>
+
+      {/* Facility Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Building2 className="w-5 h-5" />
+            <span>Facility Details</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Email:</span>
               <span className="font-medium">{facilityData.email || 'Not set'}</span>
@@ -327,17 +322,8 @@ const FacilityDashboard = ({
               <span className="text-gray-600">Created:</span>
               <span className="font-medium">{formatDate(facilityData.created_at)}</span>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="w-5 h-5" />
-              <span>Quick Stats</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+          </div>
+          <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Status:</span>
               <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
@@ -352,9 +338,9 @@ const FacilityDashboard = ({
               <span className="text-gray-600">Tools Available:</span>
               <span className="font-medium">{quickActions.length}</span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
