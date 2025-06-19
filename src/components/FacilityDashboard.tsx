@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -257,7 +256,7 @@ const FacilityDashboard = ({
                 key={action.id}
                 className={`
                   relative cursor-pointer transition-all duration-300 hover:shadow-lg group
-                  ${action.featured ? 'ring-2 ring-blue-500 ring-opacity-50 animate-soft-glow bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : ''}
+                  ${action.featured ? 'ring-2 ring-blue-500 ring-opacity-50 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : ''}
                   ${isLocked ? 'opacity-60' : ''}
                 `}
                 onClick={() => isLocked ? onUpgrade && onUpgrade() : onQuickAction(action.id)}

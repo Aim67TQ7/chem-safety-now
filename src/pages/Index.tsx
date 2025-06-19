@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -50,13 +49,14 @@ const Index = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Upgrade From Paper Binders to
+            Replace Hours of Paper Filing with
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600"> Instant Digital Access</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Stop searching through file cabinets and dusty binders for safety data sheets. 
-            Get instant QR code access to chemical safety information, AI-powered assistance, 
-            and automatic OSHA compliance tracking — all from any smartphone.
+            Eliminate time-consuming searches through filing cabinets and paper binders. 
+            Get instant smartphone access to safety data sheets and incident reporting, 
+            automated compliance tracking, and save hours of manual paperwork — 
+            all while improving safety response times and regulatory readiness.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-8">
@@ -78,15 +78,15 @@ const Index = () => {
           <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center">
               <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-              7-Day Free Trial
+              Save 10+ Hours/Week
             </div>
             <div className="flex items-center">
               <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-              No App Required
+              No Paper Filing
             </div>
             <div className="flex items-center">
               <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-              Setup in Minutes
+              Auto Compliance
             </div>
           </div>
         </div>
@@ -101,17 +101,17 @@ const Index = () => {
               <AlertDescription className="text-red-800 font-medium">
                 <strong>2,888 OSHA citations</strong> were issued last year under Hazard Communication — the #2 most-cited standard in the U.S.
                 <br />
-                Most involved missing SDSs, mislabeled containers, or inaccessible safety info in outdated paper filing systems.
+                Most violations involved <strong>missing SDSs, outdated paper files, lost incident reports, and inaccessible safety info</strong> during inspections.
                 <br />
-                <strong className="text-red-900">Violations can trigger fines up to $16.5K each — and serious repeat offenders face up to $165K per violation.</strong>
+                <strong className="text-red-900">Paper-based systems cost facilities an average of 15+ hours per week in manual filing, searching, and compliance updates.</strong>
               </AlertDescription>
             </Alert>
             
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              📱 Why Modern Facilities Choose Digital Over Paper
+              📱 Why Smart Facilities Replaced Paper Systems
             </h2>
             <p className="text-xl text-gray-700 font-semibold mb-16">
-              ChemLabel-GPT eliminates the risks of paper-based safety data management.
+              ChemLabel-GPT eliminates the time drain and compliance risks of paper-based safety management.
             </p>
           </div>
           
@@ -119,40 +119,40 @@ const Index = () => {
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-center mb-4">
                 <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
-                <h3 className="text-xl font-semibold">Mobile SDS Access</h3>
+                <h3 className="text-xl font-semibold">Instant SDS Access</h3>
               </div>
               <p className="text-gray-600">
-                Scan QR codes to pull SDS documents in seconds — no more hunting through binders.
+                Scan QR codes for instant safety data — no more wasting time digging through filing cabinets or outdated binders.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-center mb-4">
                 <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
-                <h3 className="text-xl font-semibold">AI-Powered Safety Assistant</h3>
+                <h3 className="text-xl font-semibold">Digital Incident Reports</h3>
               </div>
               <p className="text-gray-600">
-                Ask real-time safety questions. Get instant answers — no more flipping through pages.
+                Submit and track incidents digitally — eliminate paperwork delays and improve response times with automated workflows.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-center mb-4">
                 <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
-                <h3 className="text-xl font-semibold">One-Click Label Generator</h3>
+                <h3 className="text-xl font-semibold">Automated Compliance</h3>
               </div>
               <p className="text-gray-600">
-                Generate compliant secondary container labels instantly — no more handwritten labels.
+                Auto-generate compliance reports — no more manual tracking or scrambling to find documents during inspections.
               </p>
             </Card>
 
             <Card className="p-6 text-center hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-center mb-4">
                 <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
-                <h3 className="text-xl font-semibold">Audit-Ready Analytics</h3>
+                <h3 className="text-xl font-semibold">Real-Time Updates</h3>
               </div>
               <p className="text-gray-600">
-                Automatic digital tracking — no more missing paperwork during inspections.
+                Always current information — eliminate outdated paper documents and ensure teams access the latest safety data.
               </p>
             </Card>
           </div>
@@ -163,7 +163,7 @@ const Index = () => {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
-            From Paper Chaos to Digital Simplicity
+            From Hours of Filing to Seconds of Access
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -171,9 +171,9 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">1</span>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Scan QR Code</h3>
+              <h3 className="text-xl font-semibold mb-3">Scan & Access Instantly</h3>
               <p className="text-gray-600">
-                Workers use their phones to scan facility QR codes — no more searching file cabinets.
+                Workers scan QR codes with their phones — instantly access safety information instead of searching through filing systems for 10+ minutes.
               </p>
             </div>
 
@@ -181,9 +181,9 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">2</span>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Search Chemicals</h3>
+              <h3 className="text-xl font-semibold mb-3">Report Digitally</h3>
               <p className="text-gray-600">
-                Instantly search for any chemical by product name — faster than flipping through binders.
+                Submit incident reports and access procedures digitally — eliminate paper forms and speed up response times from hours to minutes.
               </p>
             </div>
 
@@ -191,10 +191,79 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">3</span>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Stay Compliant</h3>
+              <h3 className="text-xl font-semibold mb-3">Auto-Track Compliance</h3>
               <p className="text-gray-600">
-                All activity is logged automatically — no more manual paperwork for OSHA compliance.
+                All activity auto-logs for compliance — eliminate manual documentation and be audit-ready without hours of preparation.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Paper vs Digital Comparison Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
+            The Real Cost of Paper Systems
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8">
+              <h3 className="text-2xl font-bold text-red-800 mb-6 flex items-center">
+                <Clock className="w-6 h-6 mr-3" />
+                Paper-Based Problems
+              </h3>
+              <ul className="space-y-4 text-red-700">
+                <li className="flex items-start">
+                  <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>15+ hours weekly</strong> spent filing, searching, and updating paper documents</span>
+                </li>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Lost documents</strong> during critical safety incidents</span>
+                </li>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Outdated information</strong> creating compliance risks</span>
+                </li>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Manual compliance reports</strong> taking hours to compile</span>
+                </li>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Inspection panic</strong> when documents can't be found</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-8">
+              <h3 className="text-2xl font-bold text-green-800 mb-6 flex items-center">
+                <TrendingUp className="w-6 h-6 mr-3" />
+                Digital Advantages
+              </h3>
+              <ul className="space-y-4 text-green-700">
+                <li className="flex items-start">
+                  <Award className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Seconds to access</strong> any safety document or incident report</span>
+                </li>
+                <li className="flex items-start">
+                  <Award className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Always available</strong> information from any smartphone</span>
+                </li>
+                <li className="flex items-start">
+                  <Award className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Auto-updated data</strong> ensures current information</span>
+                </li>
+                <li className="flex items-start">
+                  <Award className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Automatic compliance tracking</strong> and report generation</span>
+                </li>
+                <li className="flex items-start">
+                  <Award className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                  <span><strong>Audit-ready documentation</strong> at the click of a button</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
