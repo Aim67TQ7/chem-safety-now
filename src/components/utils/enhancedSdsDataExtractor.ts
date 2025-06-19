@@ -29,7 +29,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     const aiData = selectedDocument.ai_extracted_data;
     
     // Map GHS pictograms from AI data
-    const pictograms = aiData.ghs_pictograms?.map((p: any) => {
+    const pictograms = (aiData.ghs_pictograms || []).map((p: any) => {
       // Map GHS codes to our pictogram IDs
       const codeMapping: Record<string, string> = {
         'GHS01': 'exploding_bomb',
@@ -44,14 +44,14 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       };
       
       return codeMapping[p.code] || p.name?.toLowerCase().replace(/\s+/g, '_') || 'exclamation';
-    }) || [];
+    });
 
     return {
       productName: aiData.product_title || selectedDocument.product_name,
       manufacturer: aiData.manufacturer || selectedDocument.manufacturer,
       casNumber: selectedDocument.cas_number,
       signalWord: selectedDocument.signal_word || 'WARNING',
-      hazardCodes: selectedDocument.h_codes?.map((h: any) => h.code || h) || [],
+      hazardCodes: (selectedDocument.h_codes || []).map((h: any) => h.code || h),
       pictograms: [...new Set(pictograms)], // Remove duplicates
       hmisRatings: {
         health: selectedDocument.hmis_codes?.health?.toString() || '2',

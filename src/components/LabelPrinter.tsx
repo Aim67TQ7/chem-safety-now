@@ -10,7 +10,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Download, Printer, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { interactionLogger } from "@/services/interactionLogger";
-import { extractSDSData, extractEnhancedSDSData } from "./utils/sdsDataExtractor";
+import { extractSDSData } from "./utils/sdsDataExtractor";
+import { extractEnhancedSDSData } from "./utils/enhancedSdsDataExtractor";
 import { supabase } from "@/integrations/supabase/client";
 
 interface LabelPrinterProps {
@@ -28,6 +29,7 @@ const LabelPrinter = ({
   const [manufacturer, setManufacturer] = useState(initialManufacturer);
   const [casNumber, setCasNumber] = useState("");
   const [chemicalFormula, setChemicalFormula] = useState("");
+  const [chemicalCompound, setChemicalCompound] = useState("");
   const [productId, setProductId] = useState("");
   const [ppeRequirements, setPpeRequirements] = useState<string[]>([]);
   const [labelSize, setLabelSize] = useState("4x6");
