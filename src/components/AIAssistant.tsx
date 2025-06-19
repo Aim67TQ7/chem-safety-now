@@ -211,6 +211,55 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
       .replace(/\n/g, '<br>');
   };
 
+  const handleGenerateEnhancedLabel = async () => {
+    if (!selectedDocument || !onGenerateLabel) return;
+
+    try {
+      // First, enhance the SDS data with AI if not already done
+      if (!selectedDocument.ai_extracted_data || selectedDocument.ai_extraction_confidence < 70) {
+        console.log('🤖 Enhancing SDS data with AI before label generation...');
+        
+        const { data, error } = await supabase.functions.invoke('ai-enhanced-sds-extraction', {
+          body: { document_id: selectedDocument.id }
+        });
+
+        if (error) {
+          console.error('AI enhancement error:', error);
+          // Continue with basic data if AI enhancement fails
+        } else if (data?.success) {
+          console.log(`✅ AI enhancement completed with ${data.confidence}% confidence`);
+        }
+      }
+
+      // Log the AI-enhanced label generation
+      await interactionLogger.logSDSInteraction({
+        sdsDocumentId: selectedDocument.id,
+        actionType: 'generate_label_from_ai',
+        metadata: {
+          productName: selectedDocument.product_name,
+          aiEnhanced: true,
+          confidence: selectedDocument.ai_extraction_confidence || 0
+        }
+      });
+
+      // Generate the label
+      onGenerateLabel(selectedDocument);
+      
+      toast({
+        title: "AI-Enhanced Label Ready",
+        description: `Generating label with AI-extracted safety data for ${selectedDocument.product_name}`,
+      });
+
+    } catch (error) {
+      console.error('Enhanced label generation error:', error);
+      toast({
+        title: "Error",
+        description: "Unable to generate enhanced label. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="h-full flex flex-col space-y-4">
       {/* Chat Messages - Now with proper height management */}
@@ -311,22 +360,28 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
         </div>
       </Card>
 
-      {/* Quick Actions for Selected Document */}
+      {/* Enhanced Quick Actions for Selected Document */}
       {selectedDocument && onGenerateLabel && (
-        <Card className="p-4 bg-green-50 border-green-200">
+        <Card className="p-4 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
           <h4 className="text-sm font-semibold text-green-900 mb-3 flex items-center">
             <Printer className="w-4 h-4 mr-2" />
-            Quick Actions for {selectedDocument.product_name}
+            🤖 AI-Enhanced Actions for {selectedDocument.product_name}
           </h4>
           
-          <Button
-            onClick={() => onGenerateLabel(selectedDocument)}
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
-            size="sm"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Generate GHS Label
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={handleGenerateEnhancedLabel}
+              className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+              size="sm"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Generate AI-Enhanced GHS Label
+            </Button>
+            
+            <p className="text-xs text-gray-600">
+              This will use AI to extract accurate HMIS ratings, PPE requirements, and chemical data for your safety label.
+            </p>
+          </div>
         </Card>
       )}
 

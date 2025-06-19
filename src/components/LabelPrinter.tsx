@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Download, Printer, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { interactionLogger } from "@/services/interactionLogger";
-import { extractSDSData } from "./utils/sdsDataExtractor";
+import { extractSDSData, extractEnhancedSDSData } from "./utils/sdsDataExtractor";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LabelPrinterProps {
   initialProductName?: string;
@@ -39,6 +39,9 @@ const LabelPrinter = ({
   const [hmisPhysical, setHmisPhysical] = useState("0");
   const [hmisSpecial, setHmisSpecial] = useState("");
   const [previewZoom, setPreviewZoom] = useState(100);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [aiConfidence, setAiConfidence] = useState(0);
+  const [dataSource, setDataSource] = useState<'ai_enhanced' | 'basic_extraction' | 'manual'>('manual');
   const { toast } = useToast();
 
   // Auto-populate from SDS data
@@ -60,6 +63,34 @@ const LabelPrinter = ({
         if (sdsData.hmisRatings.flammability) setHmisFlammability(sdsData.hmisRatings.flammability);
         if (sdsData.hmisRatings.physical) setHmisPhysical(sdsData.hmisRatings.physical);
       }
+    }
+  }, [selectedDocument, initialProductName, initialManufacturer]);
+
+  // Auto-populate from enhanced SDS data with AI prioritization
+  useEffect(() => {
+    if (selectedDocument) {
+      const sdsData = extractEnhancedSDSData(selectedDocument);
+      
+      if (sdsData.productName && !initialProductName) setProductName(sdsData.productName);
+      if (sdsData.manufacturer && !initialManufacturer) setManufacturer(sdsData.manufacturer);
+      if (sdsData.casNumber) setCasNumber(sdsData.casNumber);
+      if (sdsData.chemicalFormula) setChemicalFormula(sdsData.chemicalFormula);
+      if (sdsData.chemicalCompound) setChemicalCompound(sdsData.chemicalCompound);
+      if (sdsData.productId) setProductId(sdsData.productId);
+      if (sdsData.signalWord) setSignalWord(sdsData.signalWord);
+      if (sdsData.hazardCodes) setSelectedHazards(sdsData.hazardCodes);
+      if (sdsData.pictograms) setSelectedPictograms(sdsData.pictograms);
+      if (sdsData.ppeRequirements) setPpeRequirements(sdsData.ppeRequirements);
+      
+      if (sdsData.hmisRatings) {
+        if (sdsData.hmisRatings.health) setHmisHealth(sdsData.hmisRatings.health);
+        if (sdsData.hmisRatings.flammability) setHmisFlammability(sdsData.hmisRatings.flammability);
+        if (sdsData.hmisRatings.physical) setHmisPhysical(sdsData.hmisRatings.physical);
+        if (sdsData.hmisRatings.special) setHmisSpecial(sdsData.hmisRatings.special);
+      }
+      
+      setAiConfidence(sdsData.extractionConfidence || 0);
+      setDataSource(sdsData.dataSource || 'manual');
     }
   }, [selectedDocument, initialProductName, initialManufacturer]);
 
@@ -194,16 +225,60 @@ const LabelPrinter = ({
     }
   };
 
+  const handleEnhanceWithAI = async () => {
+    if (!selectedDocument) return;
+    
+    setIsEnhancing(true);
+    try {
+      console.log('🤖 Requesting AI-enhanced SDS extraction...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-enhanced-sds-extraction', {
+        body: { document_id: selectedDocument.id }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "AI Enhancement Complete",
+          description: `Data extracted with ${data.confidence}% confidence. Refreshing form...`
+        });
+        
+        // Refresh the form with new AI data
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('AI enhancement error:', error);
+      toast({
+        title: "AI Enhancement Error",
+        description: "Unable to enhance data with AI. Using existing extraction.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   const selectedLabelSize = labelSizes.find(size => size.value === labelSize) || labelSizes[1];
   const previewWidth = (selectedLabelSize.width * previewZoom) / 100;
   const previewHeight = (selectedLabelSize.height * previewZoom) / 100;
 
-  const getDataSourceBadge = (hasSDSData: boolean) => {
-    return hasSDSData ? (
-      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 text-xs">
-        From SDS
+  const getDataSourceBadge = (hasData: boolean) => {
+    if (!hasData) return null;
+    
+    const badgeProps = {
+      'ai_enhanced': { className: "ml-2 bg-green-100 text-green-800 text-xs", text: `AI Enhanced (${aiConfidence}%)` },
+      'basic_extraction': { className: "ml-2 bg-blue-100 text-blue-800 text-xs", text: "Auto Extracted" },
+      'manual': { className: "ml-2 bg-gray-100 text-gray-800 text-xs", text: "Manual Entry" }
+    };
+    
+    const props = badgeProps[dataSource] || badgeProps.manual;
+    
+    return (
+      <Badge variant="secondary" className={props.className}>
+        {props.text}
       </Badge>
-    ) : null;
+    );
   };
 
   return (
@@ -211,20 +286,136 @@ const LabelPrinter = ({
       {/* Form Panel */}
       <ResizablePanel defaultSize={60} minSize={40}>
         <div className="h-full overflow-y-auto p-4 space-y-6">
+          
+          {/* AI Enhancement Section */}
+          {selectedDocument && dataSource !== 'ai_enhanced' && (
+            <Card className="p-4 bg-blue-50 border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-blue-900 mb-1">🤖 AI-Enhanced Extraction Available</h3>
+                  <p className="text-xs text-blue-700">
+                    Get more accurate HMIS ratings, PPE requirements, and chemical data using AI analysis.
+                  </p>
+                </div>
+                <Button
+                  onClick={handleEnhanceWithAI}
+                  disabled={isEnhancing}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  {isEnhancing ? 'Enhancing...' : 'Enhance with AI'}
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* HMIS Rating - Now the most prominent section */}
+          <Card className="p-4 border-2 border-red-200 bg-red-50">
+            <h3 className="text-xl font-bold text-red-900 mb-4 flex items-center">
+              🏥 HMIS Rating (Most Important)
+              {selectedDocument && getDataSourceBadge(true)}
+            </h3>
+            
+            {/* Large HMIS Preview */}
+            <div className="flex justify-center mb-6">
+              <div className="relative w-32 h-32 border-4 border-black">
+                <svg width="128" height="128" viewBox="0 0 128 128" className="absolute inset-0">
+                  {/* Health (Blue) - Top Left */}
+                  <rect x="0" y="0" width="64" height="64" fill="#3B82F6" stroke="#000" strokeWidth="2"/>
+                  <text x="32" y="40" textAnchor="middle" className="text-2xl font-bold fill-white">{hmisHealth}</text>
+                  <text x="32" y="55" textAnchor="middle" className="text-xs fill-white">HEALTH</text>
+                  
+                  {/* Flammability (Red) - Top Right */}
+                  <rect x="64" y="0" width="64" height="64" fill="#EF4444" stroke="#000" strokeWidth="2"/>
+                  <text x="96" y="40" textAnchor="middle" className="text-2xl font-bold fill-white">{hmisFlammability}</text>
+                  <text x="96" y="55" textAnchor="middle" className="text-xs fill-white">FIRE</text>
+                  
+                  {/* Physical (Yellow) - Bottom Left */}
+                  <rect x="0" y="64" width="64" height="64" fill="#FDE047" stroke="#000" strokeWidth="2"/>
+                  <text x="32" y="104" textAnchor="middle" className="text-2xl font-bold fill-black">{hmisPhysical}</text>
+                  <text x="32" y="119" textAnchor="middle" className="text-xs fill-black">PHYSICAL</text>
+                  
+                  {/* Special (White) - Bottom Right */}
+                  <rect x="64" y="64" width="64" height="64" fill="#FFFFFF" stroke="#000" strokeWidth="2"/>
+                  <text x="96" y="104" textAnchor="middle" className="text-xl font-bold fill-black">{hmisSpecial || "—"}</text>
+                  <text x="96" y="119" textAnchor="middle" className="text-xs fill-black">SPECIAL</text>
+                </svg>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="hmisHealth" className="text-sm font-semibold">Health (Blue) *</Label>
+                <Select value={hmisHealth} onValueChange={setHmisHealth}>
+                  <SelectTrigger className="mt-1 border-2 border-blue-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3, 4].map((rating) => (
+                      <SelectItem key={rating} value={rating.toString()}>
+                        {rating} - {['Minimal', 'Slight', 'Moderate', 'Serious', 'Severe'][rating]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hmisFlammability" className="text-sm font-semibold">Flammability (Red) *</Label>
+                <Select value={hmisFlammability} onValueChange={setHmisFlammability}>
+                  <SelectTrigger className="mt-1 border-2 border-red-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3, 4].map((rating) => (
+                      <SelectItem key={rating} value={rating.toString()}>
+                        {rating} - {['Will not burn', 'Above 200°F', 'Above 100°F', 'Below 100°F', 'Below 73°F'][rating]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hmisPhysical" className="text-sm font-semibold">Physical (Yellow) *</Label>
+                <Select value={hmisPhysical} onValueChange={setHmisPhysical}>
+                  <SelectTrigger className="mt-1 border-2 border-yellow-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3, 4].map((rating) => (
+                      <SelectItem key={rating} value={rating.toString()}>
+                        {rating} - {['Stable', 'Unstable if heated', 'Violent change', 'Shock/heat', 'May detonate'][rating]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hmisSpecial" className="text-sm font-semibold">Special (White)</Label>
+                <Input
+                  id="hmisSpecial"
+                  value={hmisSpecial}
+                  onChange={(e) => setHmisSpecial(e.target.value)}
+                  placeholder="OX, W, etc."
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </Card>
+
           {/* Product Information */}
           <Card className="p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Product Information
+              📋 Product Information
               {selectedDocument && getDataSourceBadge(true)}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="productName">Product Name *</Label>
+                <Label htmlFor="productName">Product Title *</Label>
                 <Input
                   id="productName"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
-                  placeholder="Enter chemical/product name"
+                  placeholder="Enter product title"
                   className="mt-1"
                 />
               </div>
@@ -239,16 +430,14 @@ const LabelPrinter = ({
                 />
               </div>
               <div>
-                <Label htmlFor="casNumber">CAS Number</Label>
+                <Label htmlFor="chemicalCompound">Chemical Compound</Label>
                 <Input
-                  id="casNumber"
-                  value={casNumber}
-                  onChange={(e) => setCasNumber(e.target.value)}
-                  placeholder="Enter CAS number"
+                  id="chemicalCompound"
+                  value={chemicalCompound}
+                  onChange={(e) => setChemicalCompound(e.target.value)}
+                  placeholder="Enter chemical compound name"
                   className="mt-1"
-                  readOnly={!!selectedDocument}
                 />
-                {selectedDocument && getDataSourceBadge(!!casNumber)}
               </div>
               <div>
                 <Label htmlFor="chemicalFormula">Chemical Formula</Label>
@@ -270,19 +459,30 @@ const LabelPrinter = ({
                   className="mt-1"
                 />
               </div>
+              <div>
+                <Label htmlFor="casNumber">CAS Number</Label>
+                <Input
+                  id="casNumber"
+                  value={casNumber}
+                  onChange={(e) => setCasNumber(e.target.value)}
+                  placeholder="Enter CAS number"
+                  className="mt-1"
+                  readOnly={!!selectedDocument}
+                />
+              </div>
             </div>
           </Card>
 
           {/* PPE Requirements */}
           {ppeRequirements.length > 0 && (
-            <Card className="p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                PPE Requirements
+            <Card className="p-4 bg-orange-50 border-orange-200">
+              <h3 className="text-lg font-semibold text-orange-900 mb-4">
+                🦺 Required PPE
                 {getDataSourceBadge(true)}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {ppeRequirements.map((ppe, index) => (
-                  <Badge key={index} variant="outline" className="bg-blue-50 text-blue-800 border-blue-300">
+                  <Badge key={index} variant="outline" className="bg-orange-100 text-orange-800 border-orange-300 text-sm px-3 py-1">
                     {ppe}
                   </Badge>
                 ))}
@@ -386,76 +586,11 @@ const LabelPrinter = ({
             </div>
           </Card>
 
-          {/* HMIS Rating */}
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              HMIS Rating
-              {selectedDocument && getDataSourceBadge(true)}
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="hmisHealth">Health (Blue)</Label>
-                <Select value={hmisHealth} onValueChange={setHmisHealth}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3, 4].map((rating) => (
-                      <SelectItem key={rating} value={rating.toString()}>
-                        {rating}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="hmisFlammability">Flammability (Red)</Label>
-                <Select value={hmisFlammability} onValueChange={setHmisFlammability}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3, 4].map((rating) => (
-                      <SelectItem key={rating} value={rating.toString()}>
-                        {rating}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="hmisPhysical">Physical (Yellow)</Label>
-                <Select value={hmisPhysical} onValueChange={setHmisPhysical}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3, 4].map((rating) => (
-                      <SelectItem key={rating} value={rating.toString()}>
-                        {rating}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="hmisSpecial">Special (White)</Label>
-                <Input
-                  id="hmisSpecial"
-                  value={hmisSpecial}
-                  onChange={(e) => setHmisSpecial(e.target.value)}
-                  placeholder="Special hazards"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          </Card>
-
           {/* Action Buttons */}
           <div className="flex space-x-3 justify-center pb-4">
             <Button
               onClick={handleDownloadLabel}
-              disabled={!productName.trim()}
+              disabled={!productName.trim() || hmisHealth === "" || hmisFlammability === "" || hmisPhysical === ""}
               className="bg-gray-800 hover:bg-gray-900 text-white"
             >
               <Download className="w-4 h-4 mr-2" />
@@ -463,7 +598,7 @@ const LabelPrinter = ({
             </Button>
             <Button
               onClick={handlePrintLabel}
-              disabled={!productName.trim()}
+              disabled={!productName.trim() || hmisHealth === "" || hmisFlammability === "" || hmisPhysical === ""}
               variant="outline"
             >
               <Printer className="w-4 h-4 mr-2" />
@@ -509,7 +644,7 @@ const LabelPrinter = ({
             </div>
           </div>
 
-          {/* Preview Content */}
+          {/* Enhanced Preview Content with HMIS Prominence */}
           <div className="flex-1 overflow-auto p-4 bg-gray-100 flex items-center justify-center">
             <div 
               className="bg-white border-2 border-gray-800 p-4 shadow-lg"
@@ -520,73 +655,67 @@ const LabelPrinter = ({
                 minHeight: '300px'
               }}
             >
-              <div className="h-full flex flex-col justify-between text-center space-y-2">
-                <div className="space-y-1">
+              <div className="h-full flex flex-col justify-between space-y-2">
+                {/* Product Title - Prominent */}
+                <div className="text-center border-b-2 border-gray-800 pb-2">
                   <div className="text-lg font-bold">{productName || "Product Name"}</div>
-                  {manufacturer && <div className="text-sm">{manufacturer}</div>}
-                  {casNumber && <div className="text-xs">CAS: {casNumber}</div>}
-                  {chemicalFormula && <div className="text-xs">{chemicalFormula}</div>}
+                  {chemicalCompound && <div className="text-sm font-medium">{chemicalCompound}</div>}
+                  {manufacturer && <div className="text-xs">{manufacturer}</div>}
                   {productId && <div className="text-xs">ID: {productId}</div>}
                 </div>
                 
-                <div className="border-t border-gray-800 pt-2">
-                  <div className="text-lg font-bold text-red-600">{signalWord}</div>
-                </div>
-                
-                {selectedPictograms.length > 0 && (
-                  <div className="flex justify-center space-x-1 py-2 flex-wrap">
-                    {selectedPictograms.map((id) => {
-                      const pictogram = pictograms.find(p => p.id === id);
-                      return pictogram ? (
-                        <div key={id} className="w-6 h-6">
-                          <img 
-                            src={pictogram.imageUrl} 
-                            alt={pictogram.name}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
-                )}
-
-                {selectedHazards.length > 0 && (
-                  <div className="text-xs space-y-1">
-                    {selectedHazards.slice(0, 3).map((code) => (
-                      <div key={code}>{code}</div>
-                    ))}
-                    {selectedHazards.length > 3 && (
-                      <div>+{selectedHazards.length - 3} more</div>
-                    )}
-                  </div>
-                )}
-
-                {ppeRequirements.length > 0 && (
-                  <div className="border-t border-gray-800 pt-2">
-                    <div className="text-xs font-bold mb-1">PPE Required</div>
-                    <div className="text-xs">
-                      {ppeRequirements.slice(0, 2).join(', ')}
-                      {ppeRequirements.length > 2 && '...'}
-                    </div>
-                  </div>
-                )}
-
-                <div className="border-t border-gray-800 pt-2">
-                  <div className="text-xs font-bold mb-1">HMIS</div>
-                  <div className="flex justify-center">
-                    <div className="relative w-12 h-12">
-                      <svg width="48" height="48" viewBox="0 0 48 48" className="absolute inset-0">
-                        <rect x="0" y="0" width="24" height="24" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
-                        <rect x="24" y="0" width="24" height="24" fill="#EF4444" stroke="#000" strokeWidth="1"/>
-                        <rect x="0" y="24" width="24" height="24" fill="#FDE047" stroke="#000" strokeWidth="1"/>
-                        <rect x="24" y="24" width="24" height="24" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                {/* HMIS - Most Prominent Feature */}
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-sm font-bold mb-2">HMIS RATING</div>
+                    <div className="relative w-20 h-20 mx-auto">
+                      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute inset-0">
+                        <rect x="0" y="0" width="40" height="40" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
+                        <rect x="40" y="0" width="40" height="40" fill="#EF4444" stroke="#000" strokeWidth="1"/>
+                        <rect x="0" y="40" width="40" height="40" fill="#FDE047" stroke="#000" strokeWidth="1"/>
+                        <rect x="40" y="40" width="40" height="40" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
                         
-                        <text x="12" y="16" textAnchor="middle" className="text-xs font-bold fill-white">{hmisHealth}</text>
-                        <text x="36" y="16" textAnchor="middle" className="text-xs font-bold fill-white">{hmisFlammability}</text>
-                        <text x="12" y="40" textAnchor="middle" className="text-xs font-bold fill-black">{hmisPhysical}</text>
-                        <text x="36" y="40" textAnchor="middle" className="text-xs font-bold fill-black">{hmisSpecial || ""}</text>
+                        <text x="20" y="28" textAnchor="middle" className="text-lg font-bold fill-white">{hmisHealth}</text>
+                        <text x="60" y="28" textAnchor="middle" className="text-lg font-bold fill-white">{hmisFlammability}</text>
+                        <text x="20" y="68" textAnchor="middle" className="text-lg font-bold fill-black">{hmisPhysical}</text>
+                        <text x="60" y="68" textAnchor="middle" className="text-sm font-bold fill-black">{hmisSpecial || ""}</text>
                       </svg>
                     </div>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="space-y-1 text-center text-xs">
+                  {casNumber && <div>CAS: {casNumber}</div>}
+                  {chemicalFormula && <div>{chemicalFormula}</div>}
+                  
+                  {selectedPictograms.length > 0 && (
+                    <div className="flex justify-center space-x-1 py-1">
+                      {selectedPictograms.slice(0, 4).map((id) => {
+                        const pictogram = pictograms.find(p => p.id === id);
+                        return pictogram ? (
+                          <div key={id} className="w-4 h-4">
+                            <img 
+                              src={pictogram.imageUrl} 
+                              alt={pictogram.name}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+
+                  {ppeRequirements.length > 0 && (
+                    <div className="border-t border-gray-300 pt-1">
+                      <div className="font-bold">PPE Required</div>
+                      <div>{ppeRequirements.slice(0, 2).join(', ')}{ppeRequirements.length > 2 && '...'}</div>
+                    </div>
+                  )}
+
+                  {/* Print date */}
+                  <div className="border-t border-gray-300 pt-1 text-xs text-gray-500">
+                    Printed: {new Date().toLocaleDateString()}
                   </div>
                 </div>
               </div>
