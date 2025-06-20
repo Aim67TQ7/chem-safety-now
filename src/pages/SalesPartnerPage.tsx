@@ -106,7 +106,7 @@ const SalesPartnerPage = () => {
             Join Our Sales Partner Program
           </h1>
           <p className="text-xl text-gray-600 mb-6">
-            Earn 30% commission selling cutting-edge chemical safety solutions
+            Earn 30% commission on all customer payments with no hidden fees
           </p>
           <div className="flex justify-center items-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center">
@@ -146,8 +146,8 @@ const SalesPartnerPage = () => {
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 text-sm">
-                Earn 30% commission on all sales through automatic Stripe payment splitting. 
-                Set up your Stripe account for seamless commission distribution.
+                Earn 30% commission on every customer payment at their selected plan price, 
+                including recurring monthly payments. Automatic Stripe payment splitting with no hidden fees.
               </p>
             </CardContent>
           </Card>
@@ -177,14 +177,14 @@ const SalesPartnerPage = () => {
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Basic Plan Sales</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">All Plan Sales</h4>
                 <p className="text-2xl font-bold text-green-600 mb-1">30% Commission</p>
-                <p className="text-sm text-gray-600">Automatic payment splitting via Stripe</p>
+                <p className="text-sm text-gray-600">On every customer payment including recurring monthly subscriptions</p>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Premium Plan Sales</h4>
-                <p className="text-2xl font-bold text-green-600 mb-1">30% Commission</p>
-                <p className="text-sm text-gray-600">Higher commission amounts on premium plans</p>
+                <h4 className="font-semibold text-gray-900 mb-2">Payment Processing</h4>
+                <p className="text-2xl font-bold text-green-600 mb-1">No Hidden Fees</p>
+                <p className="text-sm text-gray-600">Automatic Stripe payment splitting at time of customer payment</p>
               </div>
             </div>
           </CardContent>
@@ -289,8 +289,16 @@ const SalesPartnerPage = () => {
                     onCheckedChange={(checked) => handleInputChange('agreeToTerms', checked)}
                   />
                   <label htmlFor="terms" className="text-sm text-gray-700">
-                    I agree to the Sales Partner Terms and Conditions, including commission structure, 
-                    payment terms, and partnership obligations.
+                    I agree to the{" "}
+                    <a 
+                      href="/sales-partner-terms" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Sales Partner Terms and Conditions
+                    </a>
+                    , including commission structure, payment terms, and partnership obligations.
                   </label>
                 </div>
 

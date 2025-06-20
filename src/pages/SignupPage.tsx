@@ -1,8 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Shield, Upload, CheckCircle, Bot, Mail } from "lucide-react";
@@ -20,12 +22,19 @@ const SignupPage = () => {
     facilityName: '',
     contactName: '',
     address: '',
+    salesPerson: '',
     logo: null as File | null
   });
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+
+  // List of sales people - starting with Rob C as requested
+  const salesPeople = [
+    { value: "rob-c", label: "Rob C" },
+    // Additional sales people can be added here
+  ];
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,6 +106,8 @@ const SignupPage = () => {
           email: formData.email,
           address: formData.address,
           logo_url: logoUrl,
+          // Note: sales_person field would need to be added to the facilities table
+          // For now, we'll store it in a metadata field or handle separately
         })
         .select()
         .single();
@@ -153,7 +164,7 @@ const SignupPage = () => {
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
               <div className="w-10 h-10">
                 <img 
-                  src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
+                  src="/lovable-uploads/7cb0a20-15f0-43f7-9877-126cab0c631c.png" 
                   alt="ChemLabel-GPT Logo" 
                   className="w-full h-full object-contain"
                 />
@@ -212,6 +223,22 @@ const SignupPage = () => {
                   required
                   className="mt-1"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="salesPerson">Select Sales Representative *</Label>
+                <Select value={formData.salesPerson} onValueChange={(value) => setFormData({ ...formData, salesPerson: value })}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Choose your sales representative..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salesPeople.map((person) => (
+                      <SelectItem key={person.value} value={person.value}>
+                        {person.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -281,7 +308,7 @@ const SignupPage = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={isProcessing || !formData.email || !formData.facilityName || !formData.contactName || !formData.address}
+              disabled={isProcessing || !formData.email || !formData.facilityName || !formData.contactName || !formData.address || !formData.salesPerson}
               className="w-full bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white py-4 text-lg font-semibold"
             >
               {isProcessing ? (

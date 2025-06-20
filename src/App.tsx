@@ -14,6 +14,7 @@ import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import SalesPartnerPage from "./pages/SalesPartnerPage";
+import SalesPartnerTermsPage from "./pages/SalesPartnerTermsPage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/sales-partner" element={<SalesPartnerPage />} />
+          <Route path="/sales-partner-terms" element={<SalesPartnerTermsPage />} />
           {navItems.map(({ to, page }) => (
             <Route key={to} path={to} element={page} />
           ))}
