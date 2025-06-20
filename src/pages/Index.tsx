@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -333,9 +332,17 @@ const Index = () => {
               </div>
               <span className="text-xl font-bold">ChemLabel-GPT</span>
             </div>
-            <p className="text-gray-400">
-              © 2025 ChemLabel-GPT. OSHA Compliant Chemical Safety Solutions.
-            </p>
+            <div className="flex items-center space-x-6">
+              <a 
+                href="/sales-partner" 
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
+                Sales Partner Program
+              </a>
+              <p className="text-gray-400">
+                © 2025 ChemLabel-GPT. OSHA Compliant Chemical Safety Solutions.
+              </p>
+            </div>
           </div>
         </div>
       </footer>
