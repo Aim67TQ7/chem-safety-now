@@ -4,58 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>CHEMLABEL-GPT – AI-Powered Chemical Safety Platform</title>
+    <title>CHEMLABEL-GPT – AI-Powered Chemical Safety</title>
     <meta name="description"
-          content="Transform your facility's chemical safety with QR-code SDS access, AI insights, and automatic OSHA compliance tracking. $500 for 18-month facility licence." />
-    <meta name="author" content="CHEMLABEL-GPT" />
-    <meta name="keywords"
-          content="chemical safety, SDS, OSHA compliance, industrial safety, QR code, AI assistant, EHS, safety data sheets" />
+          content="Transform your facility's chemical safety with QR-code SDS access, AI insights and automatic OSHA-compliance tracking." />
 
-    <!-- social cards -->
-    <meta property="og:title" content="CHEMLABEL-GPT – AI-Powered Chemical Safety Platform" />
-    <meta property="og:description"
-          content="Transform your facility's chemical safety with QR-code SDS access, AI insights, and automatic OSHA compliance tracking." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image"
-          content="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" />
+    <!-- social cards / favicon trimmed for brevity -->
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@chemlabel_gpt" />
-    <meta name="twitter:title" content="CHEMLABEL-GPT – AI-Powered Chemical Safety Platform" />
-    <meta name="twitter:description"
-          content="Industrial-grade chemical safety platform with QR-code SDS access and AI-powered compliance tracking." />
-    <meta name="twitter:image"
-          content="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" />
-
-    <link rel="icon"
-          href="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png"
-          type="image/png" />
-
-    <!-- Sara Safety Widget -->
+    <!-- Sara Safety widget config -->
     <script>
-      window.SaraSafetyConfig = {                     // ← name matches widget code
+      window.SaraSafetyConfig = {
         companyName: "ChemLabel-GPT",
         industry: "Safety Manager",
         customInstructions: `
 Your job is to highlight the easy, positive benefits of our site:
 
-• Instant SDS access – scan a QR code instead of digging through binders
-• Digital incident reports – no paperwork delays
-• Automated compliance – inspection-ready in one click
-• Real-time updates – always the latest safety data
+• Instant SDS access – scan a QR code instead of digging through binders  
+• Digital incident reports – no paperwork delays  
+• Automated compliance – inspection-ready in one click  
+• Real-time updates – always the latest safety data  
 
 Emphasize saved hours and better regulatory readiness.`
       };
     </script>
+
+    <!-- load the widget bundle (serve it statically from Replit) -->
     <script id="sara-safety-loader"
-            src="https://sarahsafety.replit.app/sara-safety-widget.js"
+            src="/sara-safety-widget.js"  <!-- ← local path, see server code -->
             async
             defer></script>
   </head>
 
   <body>
     <div id="root"></div>
-    <!-- your React/Vite/Parcel entry -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
