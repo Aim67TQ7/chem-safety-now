@@ -8,7 +8,16 @@
     <meta name="description"
           content="Transform your facility's chemical safety with QR-code SDS access, AI insights and automatic OSHA-compliance tracking.">
 
-    <!-- Sara Safety widget config -->
+    <!-- ── Optional: silence Sentry / Lovable noise in local dev ──────────── -->
+    <script>
+      if (location.hostname === "localhost" || location.hostname.endsWith(".dev")) {
+        window.__SENTRY_DISABLE_TRANSPORT__ = true;      // Sentry
+        window.__LOVABLE_DISABLE_ANALYTICS__ = true;     // Lovable
+        console.info("Sentry & Lovable analytics disabled in dev.");
+      }
+    </script>
+
+    <!-- ── Sara Safety widget config ─────────────────────────────────────── -->
     <script>
       window.SaraSafetyConfig = {
         companyName: "ChemLabel-GPT",
@@ -25,14 +34,16 @@ Emphasize saved hours and better regulatory readiness.`
       };
     </script>
 
-    <!-- Load the widget bundle (MUST live in /public) -->
+    <!-- ── Load the widget bundle  (file must be in /public) ──────────────── -->
+    <!-- NOTE:  relative path keeps it working in private Replit deployments -->
     <script id="sara-safety-loader"
-            src="/sara-safety-widget.js"
+            src="sara-safety-widget.js"
             async defer></script>
   </head>
 
   <body>
     <div id="root"></div>
+
     <!-- Your React / Vite entry -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
