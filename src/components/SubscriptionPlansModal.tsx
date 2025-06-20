@@ -89,6 +89,7 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl">
+          <DialogTitle className="sr-only">Loading Subscription Plans</DialogTitle>
           <div className="flex justify-center py-8">Loading subscription plans...</div>
         </DialogContent>
       </Dialog>

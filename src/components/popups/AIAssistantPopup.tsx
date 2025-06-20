@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import AIAssistant from "@/components/AIAssistant";
 import { X } from "lucide-react";
@@ -23,6 +23,10 @@ const AIAssistantPopup = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-[90vw] h-[85vh] overflow-hidden flex flex-col p-0">
+        <DialogTitle className="sr-only">
+          AI Safety Assistant
+        </DialogTitle>
+        
         <div className="absolute top-4 right-4 z-10">
           <Button
             variant="ghost"
