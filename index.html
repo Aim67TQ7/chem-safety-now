@@ -6,25 +6,7 @@
 
     <title>CHEMLABEL-GPT – AI-Powered Chemical Safety</title>
 
-    <!-- ──────────────────────────────
-         OPTIONAL DEV PATCH
-         Disable Lovable analytics when running on localhost or *.dev
-    ──────────────────────────────── -->
-    <script>
-      if (
-        location.hostname === "localhost" ||
-        location.hostname.endsWith(".dev")
-      ) {
-        /* Any Lovable snippet will read this flag
-           and skip network calls that cause CORS errors */
-        window.__LOVABLE_DISABLE_ANALYTICS__ = true;
-        console.info("Lovable analytics disabled for local dev.");
-      }
-    </script>
-
-    <!-- ──────────────────────────────
-         Sara Safety widget config
-    ──────────────────────────────── -->
+    <!-- Sara Safety widget config -->
     <script>
       window.SaraSafetyConfig = {
         companyName: "ChemLabel-GPT",
@@ -32,28 +14,23 @@
         customInstructions: `
 Your job is to highlight the easy, positive benefits of our site:
 
-• Instant SDS access – scan a QR code instead of digging through binders  
-• Digital incident reports – no paperwork delays  
-• Automated compliance – inspection-ready in one click  
-• Real-time updates – always the latest safety data  
+• Instant SDS access – scan a QR code instead of digging through binders
+• Digital incident reports – no paperwork delays
+• Automated compliance – inspection-ready in one click
+• Real-time updates – always the latest safety data
 
 Emphasize saved hours and better regulatory readiness.`
       };
     </script>
 
-    <!-- ──────────────────────────────
-         Load the widget bundle (must exist in /public)
-    ──────────────────────────────── -->
-    <script
-      id="sara-safety-loader"
-      src="/sara-safety-widget.js"
-      async
-      defer></script>
+    <!-- loads the local widget bundle -->
+    <script id="sara-safety-loader"
+            src="/sara-safety-widget.js"
+            async defer></script>
   </head>
 
   <body>
     <div id="root"></div>
-    <!-- Your React / Vite entry -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
