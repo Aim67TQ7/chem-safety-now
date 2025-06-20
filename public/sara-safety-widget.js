@@ -1,41 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+/*  Sara Safety Widget – demo bubble version
+    Put this file in /public so the browser can load /sara-safety-widget.js
+*/
+(function () {
+  window.SaraSafety = {
+    init(cfg) {
+      console.log("Sara Safety Widget initialized with config:", cfg);
 
-    <title>CHEMLABEL-GPT – AI-Powered Chemical Safety</title>
-    <meta name="description"
-          content="Transform your facility's chemical safety with QR-code SDS access, AI insights and automatic OSHA-compliance tracking." />
+      const bubble = document.createElement("div");
+      bubble.className = "sara-safety-bubble";
+      bubble.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        max-width: 320px;
+        background: #6366f1;
+        color: #ffffff;
+        padding: 16px 20px;
+        border-radius: 14px;
+        z-index: 99999;
+        font: 14px/1.35 Arial, sans-serif;
+        box-shadow: 0 6px 18px rgba(0,0,0,.3);
+        cursor: pointer;
+      `;
+      bubble.innerHTML = `
+        <strong>Sara Safety Assistant</strong><br>
+        Click to start a chat&hellip;
+      `;
+      bubble.onclick = () =>
+        alert("Here’s where the production chat UI would open.");
+      document.body.appendChild(bubble);
+    },
 
-    <!-- social cards / favicon trimmed for brevity -->
+    updateConfig(cfg) {
+      console.log("Sara Safety config updated:", cfg);
+    },
 
-    <!-- Sara Safety widget config -->
-    <script>
-      window.SaraSafetyConfig = {
-        companyName: "ChemLabel-GPT",
-        industry: "Safety Manager",
-        customInstructions: `
-Your job is to highlight the easy, positive benefits of our site:
+    destroy() {
+      document
+        .querySelectorAll(".sara-safety-bubble")
+        .forEach((n) => n.remove());
+      console.log("Sara Safety widget destroyed");
+    },
+  };
 
-• Instant SDS access – scan a QR code instead of digging through binders  
-• Digital incident reports – no paperwork delays  
-• Automated compliance – inspection-ready in one click  
-• Real-time updates – always the latest safety data  
-
-Emphasize saved hours and better regulatory readiness.`
-      };
-    </script>
-
-    <!-- load the widget bundle (serve it statically from Replit) -->
-    <script id="sara-safety-loader"
-            src="/sara-safety-widget.js"  <!-- ← local path, see server code -->
-            async
-            defer></script>
-  </head>
-
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+  // Auto-init if config exists
+  if (window.SaraSafetyConfig) window.SaraSafety.init(window.SaraSafetyConfig);
+})();
