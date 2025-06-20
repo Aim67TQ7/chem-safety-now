@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>CHEMLABEL-GPT – AI-Powered Chemical Safety</title>
+    <meta name="description"
+          content="Transform your facility's chemical safety with QR-code SDS access, AI insights and automatic OSHA-compliance tracking.">
 
     <!-- Sara Safety widget config -->
     <script>
@@ -23,7 +25,7 @@ Emphasize saved hours and better regulatory readiness.`
       };
     </script>
 
-    <!-- loads the local widget bundle -->
+    <!-- Load the widget bundle (MUST live in /public) -->
     <script id="sara-safety-loader"
             src="/sara-safety-widget.js"
             async defer></script>
@@ -31,6 +33,7 @@ Emphasize saved hours and better regulatory readiness.`
 
   <body>
     <div id="root"></div>
+    <!-- Your React / Vite entry -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
