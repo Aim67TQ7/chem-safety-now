@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>CHEMLABEL-GPT – AI-Powered Chemical Safety</title>
+    <meta name="description"
+          content="Transform your facility's chemical safety with QR-code SDS access, AI insights and automatic OSHA-compliance tracking." />
+
+    <!-- social cards / favicon trimmed for brevity -->
+
+    <!-- Sara Safety widget config -->
+    <script>
+      window.SaraSafetyConfig = {
+        companyName: "ChemLabel-GPT",
+        industry: "Safety Manager",
+        customInstructions: `
+Your job is to highlight the easy, positive benefits of our site:
+
+• Instant SDS access – scan a QR code instead of digging through binders  
+• Digital incident reports – no paperwork delays  
+• Automated compliance – inspection-ready in one click  
+• Real-time updates – always the latest safety data  
+
+Emphasize saved hours and better regulatory readiness.`
+      };
+    </script>
+
+    <!-- load the widget bundle (serve it statically from Replit) -->
+    <script id="sara-safety-loader"
+            src="/sara-safety-widget.js"  <!-- ← local path, see server code -->
+            async
+            defer></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
