@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award, Zap } from "lucide-react";
-import SarahSafetyAvatar from "@/components/SarahSafetyAvatar";
+import SafetyStanAvatar from "@/components/SafetyStanAvatar";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const Index = () => {
                 <p className="text-sm text-gray-600">AI-Powered Chemical Safety</p>
               </div>
             </div>
-            <SarahSafetyAvatar />
+            <SafetyStanAvatar />
           </div>
         </div>
       </header>

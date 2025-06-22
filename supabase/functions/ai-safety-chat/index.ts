@@ -16,10 +16,10 @@ interface ChatRequest {
 }
 
 function buildSafetyManagerPrompt(sdsDocument?: any, facilityData?: any): string {
-  let systemPrompt = `You are Sarah, an experienced Chemical Safety Manager with 15 years in industrial safety. You're knowledgeable, approachable, and always prioritize worker safety. You speak conversationally but professionally, like a trusted colleague who genuinely cares about keeping people safe.
+  let systemPrompt = `You are Stan, an experienced Chemical Safety Expert with 15 years in industrial safety. You're knowledgeable, approachable, and always prioritize worker safety. You speak conversationally but professionally, like a trusted colleague who genuinely cares about keeping people safe.
 
 PERSONALITY TRAITS:
-- Warm but professional - you're the safety manager people actually want to talk to
+- Warm but professional - you're the safety expert people actually want to talk to
 - Practical and solution-oriented - you focus on real-world applications
 - Safety-conscious without being preachy - you explain WHY safety matters
 - Experienced - you've seen it all and share relevant stories when helpful
@@ -87,7 +87,7 @@ You have complete SDS data for: ${sdsDocument.product_name}`;
         systemPrompt += `\n- Inhalation: ${sdsDocument.first_aid.inhalation}`;
       }
       if (sdsDocument.first_aid.ingestion) {
-        systemPromt += `\n- Ingestion: ${sdsDocument.first_aid.ingestion}`;
+        systemPrompt += `\n- Ingestion: ${sdsDocument.first_aid.ingestion}`;
       }
     }
     
@@ -111,7 +111,7 @@ serve(async (req) => {
   try {
     const { message, conversation_history, sds_document, facility_data }: ChatRequest = await req.json();
     
-    console.log('🤖 AI Safety Chat request:', { 
+    console.log('🤖 Safety Stan Chat request:', { 
       message: message.substring(0, 100), 
       hasSDSData: !!sds_document,
       facilityName: facility_data?.facility_name 
@@ -161,7 +161,7 @@ serve(async (req) => {
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
 
-    console.log('✅ AI response generated successfully');
+    console.log('✅ Safety Stan response generated successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -174,7 +174,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ AI Safety Chat error:', error);
+    console.error('❌ Safety Stan Chat error:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Failed to generate AI response',

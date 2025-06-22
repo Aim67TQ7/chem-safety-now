@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send, Bot, User, AlertCircle, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { interactionLogger } from "@/services/interactionLogger";
@@ -13,6 +13,7 @@ interface AIAssistantProps {
   facilityData: any;
   selectedDocument?: any;
   onGenerateLabel?: (document: any) => void;
+  onThinkingChange?: (isThinking: boolean) => void;
 }
 
 interface Message {
@@ -22,9 +23,9 @@ interface Message {
   timestamp: Date;
 }
 
-const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssistantProps) => {
+const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinkingChange }: AIAssistantProps) => {
   const getInitialMessage = () => {
-    let content = `Hi there! I'm Sarah, your Safety Manager. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
+    let content = `Hi there! I'm Stan, your Safety Expert. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
     
     if (selectedDocument) {
       content += `\n\nI can see you're working with **${selectedDocument.product_name}**${selectedDocument.manufacturer ? ` from ${selectedDocument.manufacturer}` : ''}. I have the complete SDS data for this chemical, so I can give you specific guidance on handling, storage, PPE requirements, and emergency procedures.`;
@@ -47,6 +48,13 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
   const [currentMessage, setCurrentMessage] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+
+  // Notify parent component when thinking state changes
+  useEffect(() => {
+    if (onThinkingChange) {
+      onThinkingChange(isProcessing);
+    }
+  }, [isProcessing, onThinkingChange]);
 
   const getContextualExampleQueries = () => {
     if (selectedDocument) {
@@ -282,11 +290,11 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
                 ) : (
                   <Avatar className="w-12 h-12 flex-shrink-0">
                     <AvatarImage 
-                      src="/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" 
-                      alt="Sarah - Safety Manager"
+                      src="/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png" 
+                      alt="Safety Stan"
                     />
-                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                      <Bot className="w-6 h-6" />
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+                      SS
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -315,16 +323,16 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
               <div className="flex items-start space-x-3">
                 <Avatar className="w-12 h-12 flex-shrink-0">
                   <AvatarImage 
-                    src="/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" 
-                    alt="Sarah - Safety Manager"
+                    src="/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
+                    alt="Safety Stan - Thinking"
                   />
-                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                    <Bot className="w-6 h-6" />
+                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+                    SS
                   </AvatarFallback>
                 </Avatar>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
-                    <div className="animate-pulse text-sm text-gray-600">Sarah is thinking...</div>
+                    <div className="animate-pulse text-sm text-gray-600">Stan is thinking...</div>
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -342,7 +350,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
           <div className="flex space-x-3">
             <Input
               type="text"
-              placeholder="Ask Sarah about chemical safety, PPE, procedures..."
+              placeholder="Ask Stan about chemical safety, PPE, procedures..."
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -415,7 +423,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel }: AIAssi
         </h4>
         
         <p className="text-xs text-amber-800">
-          Sarah provides guidance based on SDS data and general safety practices. For site-specific applications, 
+          Stan provides guidance based on SDS data and general safety practices. For site-specific applications, 
           emergency situations, or complex scenarios, always consult your facility's safety procedures and qualified safety professionals. 
           This assistant supplements but does not replace proper safety training and local expertise.
         </p>
