@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { interactionLogger } from "@/services/interactionLogger";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface GlobalSafetyStanWidgetProps {
   initialPosition?: { x: number; y: number };
@@ -45,11 +45,18 @@ export default function GlobalSafetyStanWidget({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
 
   const avatarRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if we're on the homepage
+  const isHomepage = location.pathname === '/';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -58,6 +65,25 @@ export default function GlobalSafetyStanWidget({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Update initial message based on page
+  useEffect(() => {
+    if (isHomepage) {
+      setMessages([{
+        id: '1',
+        role: 'assistant',
+        content: `Hi! I'm Stan, your Safety Expert. Ready to see how ChemLabel-GPT can save your facility hours of paperwork?\n\nJust give me your email and I'll show you around!`,
+        timestamp: new Date()
+      }]);
+    } else {
+      setMessages([{
+        id: '1',
+        role: 'assistant',
+        content: `Hi there! I'm Stan, your Safety Expert. I'm here to help you with any safety questions about chemicals, PPE, procedures, or workplace safety.\n\nWhat can I help you with today?`,
+        timestamp: new Date()
+      }]);
+    }
+  }, [isHomepage]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!avatarRef.current) return;
@@ -94,6 +120,18 @@ export default function GlobalSafetyStanWidget({
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging, dragOffset]);
+
+  const handleEmailSubmit = () => {
+    if (emailInput.trim() && emailInput.includes('@')) {
+      navigate(`/signup?email=${encodeURIComponent(emailInput.trim())}`);
+    } else {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const sendMessage = async (messageText?: string) => {
     const userMessage = messageText || input.trim();
@@ -223,9 +261,32 @@ export default function GlobalSafetyStanWidget({
       .replace(/\n/g, '<br>');
   };
 
+  // Calculate chat position to avoid overlap with Stanley
+  const getChatPosition = () => {
+    const chatWidth = 360;
+    const chatHeight = isMinimized ? 100 : 480;
+    const stanleyWidth = 60; // 3x the original 20px width
+    
+    let chatX = position.x + stanleyWidth + 20; // Position to the right of Stanley
+    let chatY = position.y;
+
+    // If chat would go off the right edge, position it to the left of Stanley
+    if (chatX + chatWidth > window.innerWidth) {
+      chatX = position.x - chatWidth - 20;
+    }
+
+    // Keep chat within screen bounds
+    chatX = Math.max(20, Math.min(chatX, window.innerWidth - chatWidth - 20));
+    chatY = Math.max(20, Math.min(chatY, window.innerHeight - chatHeight - 20));
+
+    return { x: chatX, y: chatY };
+  };
+
+  const chatPosition = getChatPosition();
+
   return (
     <>
-      {/* Floating Stanley Avatar - Full Body */}
+      {/* Floating Stanley Avatar - 3x Size */}
       <div
         ref={avatarRef}
         className="fixed z-40 cursor-move select-none"
@@ -239,8 +300,8 @@ export default function GlobalSafetyStanWidget({
         onClick={() => !isDragging && setIsOpen(true)}
       >
         <div className="relative group">
-          {/* Stanley's full body without circle constraint */}
-          <div className="w-20 h-24 flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
+          {/* Stanley's full body - 3x larger */}
+          <div className="w-60 h-72 flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
             <img
               src={isThinking 
                 ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
@@ -264,8 +325,8 @@ export default function GlobalSafetyStanWidget({
           ref={chatRef}
           className="fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-200"
           style={{
-            left: `${Math.min(position.x, window.innerWidth - 380)}px`,
-            top: `${Math.min(position.y + 70, window.innerHeight - 500)}px`,
+            left: `${chatPosition.x}px`,
+            top: `${chatPosition.y}px`,
             width: '360px',
             height: isMinimized ? 'auto' : '480px'
           }}
@@ -314,41 +375,43 @@ export default function GlobalSafetyStanWidget({
 
           {!isMinimized && (
             <>
-              {/* Quick Actions */}
-              <div className="p-3 bg-gray-50 border-b">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() => sendQuickAction('OSHA Compliance Check')}
-                    disabled={isLoading}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    OSHA Check
-                  </Button>
-                  <Button
-                    onClick={() => sendQuickAction('Chemical Safety Review')}
-                    disabled={isLoading}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    Chemical Safety
-                  </Button>
-                  <Button
-                    onClick={() => sendQuickAction('PPE Requirements')}
-                    disabled={isLoading}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    PPE Guide
-                  </Button>
+              {/* Quick Actions - Only show on non-homepage */}
+              {!isHomepage && (
+                <div className="p-3 bg-gray-50 border-b">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => sendQuickAction('OSHA Compliance Check')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      OSHA Check
+                    </Button>
+                    <Button
+                      onClick={() => sendQuickAction('Chemical Safety Review')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      Chemical Safety
+                    </Button>
+                    <Button
+                      onClick={() => sendQuickAction('PPE Requirements')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      PPE Guide
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: '300px' }}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: isHomepage ? '240px' : '300px' }}>
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -416,26 +479,51 @@ export default function GlobalSafetyStanWidget({
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
+              {/* Input - Different for homepage */}
               <div className="p-3 border-t">
-                <div className="flex space-x-2">
-                  <Input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Ask Stan about safety..."
-                    disabled={isLoading}
-                    className="flex-1 text-sm"
-                  />
-                  <Button
-                    onClick={() => sendMessage()}
-                    disabled={isLoading || !input.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Send
-                  </Button>
-                </div>
+                {isHomepage ? (
+                  <div className="space-y-3">
+                    <div className="text-center text-sm text-gray-600 mb-2">
+                      Enter your email to get started:
+                    </div>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="email"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleEmailSubmit()}
+                        placeholder="your.email@company.com"
+                        className="flex-1 text-sm"
+                      />
+                      <Button
+                        onClick={handleEmailSubmit}
+                        disabled={!emailInput.trim() || !emailInput.includes('@')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Go!
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                      placeholder="Ask Stan about safety..."
+                      disabled={isLoading}
+                      className="flex-1 text-sm"
+                    />
+                    <Button
+                      onClick={() => sendMessage()}
+                      disabled={isLoading || !input.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Send
+                    </Button>
+                  </div>
+                )}
               </div>
             </>
           )}
