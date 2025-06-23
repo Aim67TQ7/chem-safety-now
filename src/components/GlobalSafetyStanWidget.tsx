@@ -286,10 +286,10 @@ export default function GlobalSafetyStanWidget({
 
   return (
     <>
-      {/* Floating Stanley Avatar - 3x Size */}
+      {/* Floating Stanley Avatar - 3x Size - In front of entire site */}
       <div
         ref={avatarRef}
-        className="fixed z-40 cursor-move select-none"
+        className="fixed z-[9999] cursor-move select-none"
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
@@ -319,11 +319,11 @@ export default function GlobalSafetyStanWidget({
         </div>
       </div>
 
-      {/* Chat Interface */}
+      {/* Chat Interface - Above Stanley but transparent */}
       {isOpen && (
         <div
           ref={chatRef}
-          className="fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-200"
+          className="fixed z-[10000] bg-white/80 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-200"
           style={{
             left: `${chatPosition.x}px`,
             top: `${chatPosition.y}px`,
@@ -332,7 +332,7 @@ export default function GlobalSafetyStanWidget({
           }}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white p-4 rounded-t-lg">
+          <div className="bg-gradient-to-r from-blue-600/90 to-green-600/90 text-white p-4 rounded-t-lg backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 border-2 border-white rounded-lg overflow-hidden bg-white">
@@ -377,14 +377,14 @@ export default function GlobalSafetyStanWidget({
             <>
               {/* Quick Actions - Only show on non-homepage */}
               {!isHomepage && (
-                <div className="p-3 bg-gray-50 border-b">
+                <div className="p-3 bg-gray-50/80 border-b backdrop-blur-sm">
                   <div className="flex flex-wrap gap-2">
                     <Button
                       onClick={() => sendQuickAction('OSHA Compliance Check')}
                       disabled={isLoading}
                       variant="outline"
                       size="sm"
-                      className="text-xs"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
                     >
                       OSHA Check
                     </Button>
@@ -393,7 +393,7 @@ export default function GlobalSafetyStanWidget({
                       disabled={isLoading}
                       variant="outline"
                       size="sm"
-                      className="text-xs"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
                     >
                       Chemical Safety
                     </Button>
@@ -402,7 +402,7 @@ export default function GlobalSafetyStanWidget({
                       disabled={isLoading}
                       variant="outline"
                       size="sm"
-                      className="text-xs"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
                     >
                       PPE Guide
                     </Button>
@@ -432,8 +432,8 @@ export default function GlobalSafetyStanWidget({
                       
                       <div className={`rounded-lg p-3 text-sm ${
                         message.role === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-900'
+                          ? 'bg-blue-600/90 text-white'
+                          : 'bg-gray-100/90 text-gray-900'
                       }`}>
                         <div 
                           dangerouslySetInnerHTML={{ 
@@ -441,7 +441,7 @@ export default function GlobalSafetyStanWidget({
                           }} 
                         />
                         <div className={`text-xs mt-1 ${
-                          message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                          message.role === 'user' ? 'text-blue-100' : 'text-gray-600'
                         }`}>
                           {message.timestamp.toLocaleTimeString([], { 
                             hour: '2-digit', 
@@ -463,14 +463,14 @@ export default function GlobalSafetyStanWidget({
                           className="w-full h-full object-contain"
                         />
                       </div>
-                      <div className="bg-gray-100 rounded-lg p-3 text-sm">
+                      <div className="bg-gray-100/90 rounded-lg p-3 text-sm">
                         <div className="flex items-center space-x-2">
                           <div className="flex space-x-1">
                             <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
                             <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                             <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                           </div>
-                          <span className="text-gray-600">Stan is thinking...</span>
+                          <span className="text-gray-700">Stan is thinking...</span>
                         </div>
                       </div>
                     </div>
@@ -480,10 +480,10 @@ export default function GlobalSafetyStanWidget({
               </div>
 
               {/* Input - Different for homepage */}
-              <div className="p-3 border-t">
+              <div className="p-3 border-t bg-white/80 backdrop-blur-sm rounded-b-lg">
                 {isHomepage ? (
                   <div className="space-y-3">
-                    <div className="text-center text-sm text-gray-600 mb-2">
+                    <div className="text-center text-sm text-gray-700 mb-2">
                       Enter your email to get started:
                     </div>
                     <div className="flex space-x-2">
@@ -493,7 +493,7 @@ export default function GlobalSafetyStanWidget({
                         onChange={(e) => setEmailInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleEmailSubmit()}
                         placeholder="your.email@company.com"
-                        className="flex-1 text-sm"
+                        className="flex-1 text-sm text-gray-900 bg-white/90"
                       />
                       <Button
                         onClick={handleEmailSubmit}
@@ -513,7 +513,7 @@ export default function GlobalSafetyStanWidget({
                       onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                       placeholder="Ask Stan about safety..."
                       disabled={isLoading}
-                      className="flex-1 text-sm"
+                      className="flex-1 text-sm text-gray-900 bg-white/90"
                     />
                     <Button
                       onClick={() => sendMessage()}
