@@ -42,15 +42,13 @@ interface FacilityDashboardProps {
   subscriptionInfo?: SubscriptionInfo;
   onQuickAction: (action: string) => void;
   onUpgrade?: () => void;
-  onChatWithSarah?: () => void;
 }
 
 const FacilityDashboard = ({
   facilityData,
   subscriptionInfo,
   onQuickAction,
-  onUpgrade,
-  onChatWithSarah
+  onUpgrade
 }: FacilityDashboardProps) => {
   // Helper function to check feature access with improved logic
   const hasFeatureAccess = (featureName: string): boolean => {
@@ -177,7 +175,7 @@ const FacilityDashboard = ({
 
   return (
     <div className="space-y-8">
-      {/* Facility Header Card with Subscription Status, Chat with Sarah, and Settings Button */}
+      {/* Facility Header Card with Subscription Status and Settings Button */}
       <Card className="bg-gradient-to-r from-blue-50 to-red-50">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -205,30 +203,6 @@ const FacilityDashboard = ({
             </div>
             <div className="flex items-center space-x-4">
               {renderSubscriptionStatus()}
-              {onChatWithSarah && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div 
-                      onClick={onChatWithSarah}
-                      className="cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-lg group"
-                    >
-                      <Avatar className="w-20 h-20 ring-2 ring-blue-200 hover:ring-blue-400 transition-all duration-300 hover:animate-pulse">
-                        <AvatarImage 
-                          src="/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" 
-                          alt="Sarah - Safety Manager"
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                          <Bot className="w-8 h-8" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Chat with Sarah</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
               <Button
                 variant="outline"
                 size="sm"
