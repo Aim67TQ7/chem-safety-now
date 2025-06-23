@@ -24,7 +24,7 @@ interface Message {
 }
 
 export default function GlobalSafetyStanWidget({
-  initialPosition = { x: 50, y: 50 },
+  initialPosition = { x: 100, y: 150 }, // More visible starting position
   companyName = 'ChemLabel-GPT',
   customInstructions = '',
   industry = 'Chemical Safety'
@@ -100,9 +100,16 @@ export default function GlobalSafetyStanWidget({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      
+      // Keep Stanley within screen bounds
+      const maxX = window.innerWidth - 240; // Stanley width
+      const maxY = window.innerHeight - 288; // Stanley height
+      
       setPosition({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY))
       });
     };
 
@@ -261,13 +268,14 @@ export default function GlobalSafetyStanWidget({
       .replace(/\n/g, '<br>');
   };
 
-  // Calculate chat position to avoid overlap with Stanley
+  // Calculate chat position to stay beside Stanley
   const getChatPosition = () => {
     const chatWidth = 360;
-    const chatHeight = isMinimized ? 100 : 480;
-    const stanleyWidth = 60; // 3x the original 20px width
+    const chatHeight = isMinimized ? 100 : 520; // Increased height for promotion
+    const stanleyWidth = 240;
     
-    let chatX = position.x + stanleyWidth + 20; // Position to the right of Stanley
+    // Always position chat to the right of Stanley first
+    let chatX = position.x + stanleyWidth + 20;
     let chatY = position.y;
 
     // If chat would go off the right edge, position it to the left of Stanley
@@ -275,7 +283,18 @@ export default function GlobalSafetyStanWidget({
       chatX = position.x - chatWidth - 20;
     }
 
-    // Keep chat within screen bounds
+    // If still off-screen, position above or below Stanley
+    if (chatX < 0) {
+      chatX = position.x;
+      chatY = position.y - chatHeight - 20;
+      
+      // If above goes off-screen, position below
+      if (chatY < 0) {
+        chatY = position.y + 288 + 20; // Stanley height + margin
+      }
+    }
+
+    // Final bounds check
     chatX = Math.max(20, Math.min(chatX, window.innerWidth - chatWidth - 20));
     chatY = Math.max(20, Math.min(chatY, window.innerHeight - chatHeight - 20));
 
@@ -328,7 +347,7 @@ export default function GlobalSafetyStanWidget({
             left: `${chatPosition.x}px`,
             top: `${chatPosition.y}px`,
             width: '360px',
-            height: isMinimized ? 'auto' : '480px'
+            height: isMinimized ? 'auto' : '520px'
           }}
         >
           {/* Header */}
@@ -411,7 +430,7 @@ export default function GlobalSafetyStanWidget({
               )}
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: isHomepage ? '240px' : '300px' }}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: isHomepage ? '240px' : '260px' }}>
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -480,10 +499,10 @@ export default function GlobalSafetyStanWidget({
               </div>
 
               {/* Input - Different for homepage */}
-              <div className="p-3 border-t bg-white/80 backdrop-blur-sm rounded-b-lg">
+              <div className="p-3 border-t bg-white/80 backdrop-blur-sm">
                 {isHomepage ? (
                   <div className="space-y-3">
-                    <div className="text-center text-sm text-gray-700 mb-2">
+                    <div className="text-center text-sm text-gray-800 mb-2">
                       Enter your email to get started:
                     </div>
                     <div className="flex space-x-2">
@@ -524,6 +543,23 @@ export default function GlobalSafetyStanWidget({
                     </Button>
                   </div>
                 )}
+              </div>
+
+              {/* WebAtars Promotion */}
+              <div className="px-3 pb-3">
+                <div className="bg-gradient-to-r from-purple-100/80 to-blue-100/80 rounded-lg p-2 text-center border border-purple-200/50">
+                  <p className="text-xs text-gray-800">
+                    Powered by{' '}
+                    <a 
+                      href="https://n0v8v.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="font-semibold text-purple-700 hover:text-purple-900 underline"
+                    >
+                      WebAtars by n0v8v.com
+                    </a>
+                  </p>
+                </div>
               </div>
             </>
           )}
