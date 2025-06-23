@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -151,10 +152,10 @@ export default function GlobalSafetyStanWidget({
   };
 
   const extractFormDataFromResponse = (response: string) => {
-    if (!onFormDataUpdate) return;
+    if (!onFormDataUpdate) return [];
 
     const message = response.toLowerCase();
-    let extractedData = [];
+    let extractedData: string[] = [];
     
     // More flexible patterns for facility/company name
     // Check if user is directly providing a facility name
@@ -267,7 +268,7 @@ export default function GlobalSafetyStanWidget({
       // For signup page, handle form assistance
       if (isSignupPage) {
         // Extract any form data from user message FIRST
-        const extractedData = extractFormDataFromResponse(userMessage);
+        const extractedData = extractFormDataFromResponse(userMessage) || [];
         
         // Check if user is asking questions not related to signup
         const signupRelatedKeywords = ['facility', 'company', 'name', 'address', 'contact', 'setup', 'form'];
@@ -276,7 +277,7 @@ export default function GlobalSafetyStanWidget({
         );
 
         // If asking about other topics and form isn't complete, redirect to signup completion
-        if (!isSignupRelated && !isFormComplete() && !extractedData.length) {
+        if (!isSignupRelated && !isFormComplete() && extractedData.length === 0) {
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
