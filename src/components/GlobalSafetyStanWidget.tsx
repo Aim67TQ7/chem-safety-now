@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -115,7 +116,7 @@ export default function GlobalSafetyStanWidget({
       
       // Keep Stanley within screen bounds
       const maxX = window.innerWidth - 240; // Stanley width
-      const maxY = window.innerHeight - 288; // Stanley height
+      const maxY = window.innerHeight - 346; // Stanley height (20% taller: 288 * 1.2 = 346)
       
       setPosition({
         x: Math.max(0, Math.min(newX, maxX)),
@@ -183,6 +184,10 @@ export default function GlobalSafetyStanWidget({
     }
   };
 
+  const isFormComplete = () => {
+    return formData?.facilityName && formData?.contactName && formData?.address && formData?.email;
+  };
+
   const sendMessage = async (messageText?: string) => {
     const userMessage = messageText || input.trim();
     if (!userMessage || isLoading) return;
@@ -204,6 +209,26 @@ export default function GlobalSafetyStanWidget({
     try {
       // For signup page, handle form assistance
       if (isSignupPage) {
+        // Check if user is asking questions not related to signup
+        const signupRelatedKeywords = ['facility', 'company', 'name', 'address', 'contact', 'setup', 'form'];
+        const isSignupRelated = signupRelatedKeywords.some(keyword => 
+          userMessage.toLowerCase().includes(keyword)
+        );
+
+        // If asking about other topics and form isn't complete, redirect to signup completion
+        if (!isSignupRelated && !isFormComplete()) {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `I'd be happy to help with that! I have those answers easily available once we get you inside. Let's finish setting up your facility first - I just need a few more details from you. What's your facility name?`,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          setIsLoading(false);
+          setIsThinking(false);
+          return;
+        }
+
         // Extract any form data from user message
         extractFormDataFromResponse(userMessage);
 
@@ -230,7 +255,7 @@ export default function GlobalSafetyStanWidget({
             facility_data: {
               facility_name: companyName,
               industry: industry,
-              custom_instructions: `You are Stan, helping with facility setup. Be direct and helpful. Ask one question at a time to gather missing information. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
+              custom_instructions: `You are Stan, helping with facility setup. Be direct and helpful. Ask one question at a time to gather missing information. Always prioritize completing the signup form first before answering other questions. If users ask about other topics, redirect them back to completing the signup. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
             }
           }
         });
@@ -362,7 +387,7 @@ export default function GlobalSafetyStanWidget({
       
       // If above goes off-screen, position below
       if (chatY < 0) {
-        chatY = position.y + 288 + 20; // Stanley height + margin
+        chatY = position.y + 346 + 20; // Stanley height (20% taller) + margin
       }
     }
 
@@ -377,7 +402,7 @@ export default function GlobalSafetyStanWidget({
 
   return (
     <>
-      {/* Floating Stanley Avatar - 3x Size - In front of entire site */}
+      {/* Floating Stanley Avatar - 20% taller - In front of entire site */}
       <div
         ref={avatarRef}
         className="fixed z-[9999] cursor-move select-none"
@@ -391,8 +416,8 @@ export default function GlobalSafetyStanWidget({
         onClick={() => !isDragging && setIsOpen(true)}
       >
         <div className="relative group">
-          {/* Stanley's full body - 3x larger */}
-          <div className="w-60 h-72 flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
+          {/* Stanley's full body - 20% taller (288 * 1.2 = 346) */}
+          <div className="w-60 h-[346px] flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
             <img
               src={isThinking 
                 ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
