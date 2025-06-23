@@ -504,6 +504,7 @@ export default function GlobalSafetyStanWidget({
       {/* Floating Stanley Avatar - 20% taller - In front of entire site */}
       <div
         ref={avatarRef}
+        data-stanley-avatar
         className="fixed z-[9999] cursor-move select-none"
         style={{
           left: `${position.x}px`,
