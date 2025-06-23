@@ -14,6 +14,13 @@ interface GlobalSafetyStanWidgetProps {
   companyName?: string;
   customInstructions?: string;
   industry?: string;
+  onFormDataUpdate?: (field: string, value: string) => void;
+  formData?: {
+    facilityName?: string;
+    contactName?: string;
+    address?: string;
+    email?: string;
+  };
 }
 
 interface Message {
@@ -27,26 +34,21 @@ export default function GlobalSafetyStanWidget({
   initialPosition = { x: 100, y: 150 }, // More visible starting position
   companyName = 'ChemLabel-GPT',
   customInstructions = '',
-  industry = 'Chemical Safety'
+  industry = 'Chemical Safety',
+  onFormDataUpdate,
+  formData
 }: GlobalSafetyStanWidgetProps) {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: `Hi there! I'm Stan, your Safety Expert. I'm here to help you with any safety questions about chemicals, PPE, procedures, or workplace safety.\n\nWhat can I help you with today?`,
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [emailInput, setEmailInput] = useState('');
-  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [hasAskedSetupQuestion, setHasAskedSetupQuestion] = useState(false);
 
   const avatarRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -55,8 +57,9 @@ export default function GlobalSafetyStanWidget({
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if we're on the homepage
+  // Check if we're on different pages
   const isHomepage = location.pathname === '/';
+  const isSignupPage = location.pathname === '/signup';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -75,6 +78,13 @@ export default function GlobalSafetyStanWidget({
         content: `Hi! I'm Stan, your Safety Expert. Ready to see how ChemLabel-GPT can save your facility hours of paperwork?\n\nJust give me your email and I'll show you around!`,
         timestamp: new Date()
       }]);
+    } else if (isSignupPage) {
+      setMessages([{
+        id: '1',
+        role: 'assistant',
+        content: `Hi! I'm Stan, and I'm here to help you set up your facility quickly and easily.\n\nI can help you fill out the form by asking you a few questions, or you can close this chat and fill it out manually. What would you prefer?`,
+        timestamp: new Date()
+      }]);
     } else {
       setMessages([{
         id: '1',
@@ -83,7 +93,7 @@ export default function GlobalSafetyStanWidget({
         timestamp: new Date()
       }]);
     }
-  }, [isHomepage]);
+  }, [isHomepage, isSignupPage]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!avatarRef.current) return;
@@ -140,6 +150,39 @@ export default function GlobalSafetyStanWidget({
     }
   };
 
+  const extractFormDataFromResponse = (response: string) => {
+    if (!onFormDataUpdate) return;
+
+    const lines = response.toLowerCase();
+    
+    // Extract facility/company name
+    const facilityMatch = lines.match(/(?:facility|company)(?:\s+name)?[:\s]+([^.\n]+)/i);
+    if (facilityMatch && facilityMatch[1]) {
+      const facilityName = facilityMatch[1].trim().replace(/["""]/g, '');
+      if (facilityName.length > 2) {
+        onFormDataUpdate('facilityName', facilityName);
+      }
+    }
+
+    // Extract contact name
+    const contactMatch = lines.match(/(?:contact|name|my name)[:\s]+([^.\n]+)/i);
+    if (contactMatch && contactMatch[1]) {
+      const contactName = contactMatch[1].trim().replace(/["""]/g, '');
+      if (contactName.length > 2 && !contactName.includes('facility') && !contactName.includes('company')) {
+        onFormDataUpdate('contactName', contactName);
+      }
+    }
+
+    // Extract address
+    const addressMatch = lines.match(/(?:address|located)[:\s]+([^.\n]+)/i);
+    if (addressMatch && addressMatch[1]) {
+      const address = addressMatch[1].trim().replace(/["""]/g, '');
+      if (address.length > 5) {
+        onFormDataUpdate('address', address);
+      }
+    }
+  };
+
   const sendMessage = async (messageText?: string) => {
     const userMessage = messageText || input.trim();
     if (!userMessage || isLoading) return;
@@ -158,88 +201,105 @@ export default function GlobalSafetyStanWidget({
     };
     setMessages(prev => [...prev, newMessage]);
 
-    // Log the user question
-    await interactionLogger.logFacilityUsage({
-      eventType: 'global_stan_question_asked',
-      eventDetail: {
-        question: userMessage,
-        messageCount: messages.length + 1,
-        companyName,
-        industry
-      }
-    });
-
     try {
-      // Prepare conversation history for the AI
-      const conversationHistory = messages.slice(1).map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
+      // For signup page, handle form assistance
+      if (isSignupPage) {
+        // Extract any form data from user message
+        extractFormDataFromResponse(userMessage);
 
-      console.log('🤖 Calling AI Safety Chat function...');
-
-      const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
-        body: {
-          message: userMessage,
-          conversation_history: conversationHistory,
-          sds_document: null,
-          facility_data: {
-            facility_name: companyName,
-            industry: industry,
-            custom_instructions: customInstructions
-          }
+        // Build context about current form state
+        let formContext = '';
+        if (formData) {
+          formContext = `Current form data:
+- Facility Name: ${formData.facilityName || 'Not filled'}
+- Contact Name: ${formData.contactName || 'Not filled'}
+- Address: ${formData.address || 'Not filled'}
+- Email: ${formData.email || 'Not filled'}`;
         }
-      });
 
-      if (error) {
-        console.error('❌ AI function error:', error);
-        throw new Error(error.message || 'Failed to get AI response');
+        const conversationHistory = messages.slice(1).map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }));
+
+        const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
+          body: {
+            message: userMessage,
+            conversation_history: conversationHistory,
+            sds_document: null,
+            facility_data: {
+              facility_name: companyName,
+              industry: industry,
+              custom_instructions: `You are Stan, helping with facility setup. Be direct and helpful. Ask one question at a time to gather missing information. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
+            }
+          }
+        });
+
+        if (error) throw new Error(error.message || 'Failed to get AI response');
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+
+        // Extract form data from AI response as well
+        extractFormDataFromResponse(data.response);
+
+      } else {
+        // Regular chat functionality for other pages
+        const conversationHistory = messages.slice(1).map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }));
+
+        const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
+          body: {
+            message: userMessage,
+            conversation_history: conversationHistory,
+            sds_document: null,
+            facility_data: {
+              facility_name: companyName,
+              industry: industry,
+              custom_instructions: customInstructions
+            }
+          }
+        });
+
+        if (error) throw new Error(error.message || 'Failed to get AI response');
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
       }
 
-      if (!data?.response) {
-        throw new Error('No response received from AI');
-      }
-
-      const responseTime = Date.now() - questionStartTime;
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Log the AI conversation
-      await interactionLogger.logAIConversation({
-        question: userMessage,
-        response: data.response,
-        responseTimeMs: responseTime,
-        metadata: {
-          messageCount: messages.length + 2,
-          responseType: 'global_stan_chat',
+      // Log the interaction
+      await interactionLogger.logFacilityUsage({
+        eventType: 'global_stan_question_asked',
+        eventDetail: {
+          question: userMessage,
+          messageCount: messages.length + 1,
           companyName,
           industry,
-          usage: data.usage
+          page: location.pathname
         }
       });
 
     } catch (error) {
       console.error('Global Stan error:', error);
       
-      await interactionLogger.logFacilityUsage({
-        eventType: 'global_stan_error',
-        eventDetail: {
-          question: userMessage,
-          error: error.message
-        }
-      });
-
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm sorry, I'm having trouble responding right now. Please try again in a moment, or contact your safety officer if you have an urgent safety concern.",
+        content: "I'm sorry, I'm having trouble responding right now. Please try again in a moment.",
         timestamp: new Date()
       };
 
@@ -257,7 +317,19 @@ export default function GlobalSafetyStanWidget({
   };
 
   const sendQuickAction = async (action: string) => {
-    await sendMessage(`Please help me with: ${action}`);
+    if (isSignupPage) {
+      if (action === 'start_setup') {
+        await sendMessage("I'd like your help filling out the form step by step.");
+      } else if (action === 'manual_form') {
+        setIsOpen(false);
+        toast({
+          title: "Form Ready",
+          description: "You can now fill out the form manually. I'll be here if you need help!",
+        });
+      }
+    } else {
+      await sendMessage(`Please help me with: ${action}`);
+    }
   };
 
   const formatMessage = (content: string) => {
@@ -367,7 +439,7 @@ export default function GlobalSafetyStanWidget({
                 <div>
                   <h3 className="font-semibold text-sm">Safety Stan</h3>
                   <p className="text-xs opacity-90">
-                    {isThinking ? "Thinking..." : "Safety Expert"}
+                    {isThinking ? "Thinking..." : isSignupPage ? "Setup Assistant" : "Safety Expert"}
                   </p>
                 </div>
               </div>
@@ -530,7 +602,7 @@ export default function GlobalSafetyStanWidget({
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      placeholder="Ask Stan about safety..."
+                      placeholder={isSignupPage ? "Tell me about your facility..." : "Ask Stan about safety..."}
                       disabled={isLoading}
                       className="flex-1 text-sm text-gray-900 bg-white/90"
                     />

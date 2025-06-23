@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,7 @@ import { Shield, Upload, CheckCircle, Bot, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SetupFailureDialog } from "@/components/SetupFailureDialog";
+import GlobalSafetyStanWidget from "@/components/GlobalSafetyStanWidget";
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -35,6 +35,20 @@ const SignupPage = () => {
     { value: "rob-c", label: "Rob C" },
     // Additional sales people can be added here
   ];
+
+  const handleFormDataUpdate = (field: string, value: string) => {
+    console.log('Stan is updating form field:', field, value);
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Show feedback to user
+    toast({
+      title: "Form Updated",
+      description: `${field.charAt(0).toUpperCase() + field.slice(1)} has been filled in by Stan!`,
+    });
+  };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -345,6 +359,12 @@ const SignupPage = () => {
           </form>
         </Card>
       </div>
+
+      {/* Stan Widget */}
+      <GlobalSafetyStanWidget 
+        onFormDataUpdate={handleFormDataUpdate}
+        formData={formData}
+      />
 
       {/* Setup Failure Dialog */}
       <SetupFailureDialog
