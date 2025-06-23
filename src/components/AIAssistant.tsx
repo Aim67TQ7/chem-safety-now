@@ -26,7 +26,7 @@ interface Message {
 
 const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinkingChange }: AIAssistantProps) => {
   const getInitialMessage = () => {
-    let content = `Hi there! I'm Stan, your Safety Expert. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
+    let content = `Hi there! I'm Stanley, your Safety Expert. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
     
     if (selectedDocument) {
       content += `\n\nI can see you're working with **${selectedDocument.product_name}**${selectedDocument.manufacturer ? ` from ${selectedDocument.manufacturer}` : ''}. I have the complete SDS data for this chemical, so I can give you specific guidance on handling, storage, PPE requirements, and emergency procedures.`;
@@ -292,7 +292,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinki
                   <Avatar className="w-12 h-12 flex-shrink-0">
                     <AvatarImage 
                       src="/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png" 
-                      alt="Safety Stan"
+                      alt="Safety Stanley"
                     />
                     <AvatarFallback className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
                       SS
@@ -325,7 +325,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinki
                 <Avatar className="w-12 h-12 flex-shrink-0">
                   <AvatarImage 
                     src="/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
-                    alt="Safety Stan - Thinking"
+                    alt="Safety Stanley - Thinking"
                   />
                   <AvatarFallback className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
                     SS
@@ -333,7 +333,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinki
                 </Avatar>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
-                    <div className="animate-pulse text-sm text-gray-600">Stan is thinking...</div>
+                    <div className="animate-pulse text-sm text-gray-600">Stanley is thinking...</div>
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -351,7 +351,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinki
           <div className="flex space-x-3">
             <Input
               type="text"
-              placeholder="Ask Stan about chemical safety, PPE, procedures..."
+              placeholder="Ask Stanley about chemical safety, PPE, procedures..."
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -424,7 +424,7 @@ const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinki
         </h4>
         
         <p className="text-xs text-amber-800">
-          Stan provides guidance based on SDS data and general safety practices. For site-specific applications, 
+          Stanley provides guidance based on SDS data and general safety practices. For site-specific applications, 
           emergency situations, or complex scenarios, always consult your facility's safety procedures and qualified safety professionals. 
           This assistant supplements but does not replace proper safety training and local expertise.
         </p>

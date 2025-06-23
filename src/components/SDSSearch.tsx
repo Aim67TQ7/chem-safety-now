@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle, RefreshCw, Save } from "lucide-react";
+import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle, RefreshCw, Save, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
+import SDSViewerPopup from "@/components/popups/SDSViewerPopup";
 import SDSSelectionDialog from "@/components/SDSSelectionDialog";
 import { interactionLogger } from "@/services/interactionLogger";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -87,6 +88,7 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
   const [loadingMessage, setLoadingMessage] = useState("Searching...");
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
+  const [showSDSViewer, setShowSDSViewer] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
   const [backendHealth, setBackendHealth] = useState<'checking' | 'healthy' | 'unhealthy'>('checking');
   const [connectionError, setConnectionError] = useState<string>('');
@@ -370,6 +372,18 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
     });
   };
 
+  const handleViewSDS = async (sdsDocument: SDSDocument) => {
+    console.log('👁️ Opening SDS viewer for:', sdsDocument.product_name);
+    setSelectedDocument(sdsDocument);
+    setShowSDSViewer(true);
+    
+    await interactionLogger.logSDSInteraction({
+      sdsDocumentId: sdsDocument.id,
+      actionType: 'view_sds',
+      searchQuery: searchQuery
+    });
+  };
+
   const handleViewDocument = async (sdsDocument: SDSDocument) => {
     await interactionLogger.logSDSInteraction({
       sdsDocumentId: sdsDocument.id,
@@ -470,6 +484,20 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
       actionType: 'generate_label_from_ai',
       searchQuery: searchQuery
     });
+  };
+
+  const handleGenerateLabelFromViewer = async (sdsDocument: SDSDocument) => {
+    console.log('🏷️ Opening label printer from viewer for:', sdsDocument.product_name);
+    setShowSDSViewer(false);
+    setSelectedDocument(sdsDocument);
+    setShowLabelPrinter(true);
+  };
+
+  const handleAskAIFromViewer = async (sdsDocument: SDSDocument) => {
+    console.log('🤖 Opening AI assistant from viewer for:', sdsDocument.product_name);
+    setShowSDSViewer(false);
+    setSelectedDocument(sdsDocument);
+    setShowAIAssistant(true);
   };
 
   const getSignalWordVariant = (signalWord?: string) => {
@@ -722,20 +750,29 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
                     Generate Label
                   </Button>
                   
-                  {/* Ask AI Button */}
+                  {/* Ask Stanley Button */}
                   <Button
                     size="sm"
                     variant="default"
                     onClick={() => handleAskAI(sdsDocument)}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    title={`Chat with Sarah about ${sdsDocument.product_name} safety`}
+                    title={`Chat with Stanley about ${sdsDocument.product_name} safety`}
                   >
                     <Bot className="w-4 h-4 mr-2" />
-                    Ask Sarah
+                    Ask Stanley
                   </Button>
                   
                   {/* Secondary Actions */}
                   <div className="flex space-x-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewSDS(sdsDocument)}
+                      className="flex-1"
+                      title="View SDS details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -808,6 +845,21 @@ const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
           initialProductName={selectedDocument?.product_name}
           initialManufacturer={selectedDocument?.manufacturer}
           selectedDocument={selectedDocument}
+        />
+      )}
+
+      {showSDSViewer && selectedDocument && (
+        <SDSViewerPopup
+          isOpen={showSDSViewer}
+          onClose={() => {
+            console.log('🔒 Closing SDS viewer popup');
+            setShowSDSViewer(false);
+            setSelectedDocument(null);
+          }}
+          sdsDocument={selectedDocument}
+          onGenerateLabel={handleGenerateLabelFromViewer}
+          onAskAI={handleAskAIFromViewer}
+          onDownload={() => handleDownloadDocument(selectedDocument)}
         />
       )}
 

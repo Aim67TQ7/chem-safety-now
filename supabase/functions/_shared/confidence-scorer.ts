@@ -15,13 +15,15 @@ interface ScoringWeights {
   casNumber: number;
   manufacturer: number;
   contentMatch: number;
+  sdsBonus: number;
 }
 
 const DEFAULT_WEIGHTS: ScoringWeights = {
-  productName: 0.4,  // 40%
-  casNumber: 0.3,    // 30%
-  manufacturer: 0.2, // 20%
-  contentMatch: 0.1  // 10%
+  productName: 0.7,   // 70% for product name match
+  casNumber: 0.15,    // 15%
+  manufacturer: 0.1,  // 10%
+  contentMatch: 0.05, // 5%
+  sdsBonus: 0.1       // 10% bonus for SDS documents
 };
 
 export class ConfidenceScorer {
@@ -73,17 +75,21 @@ export class ConfidenceScorer {
   }
 
   /**
-   * Score product name match (more generous)
+   * Score product name match with improved scoring
    */
   private scoreProductName(searchTerm: string, documentName: string): { score: number; reason?: string } {
     const similarity = this.stringSimilarity(searchTerm, documentName);
     
-    if (similarity >= 0.9) return { score: 1, reason: 'Product name (exact)' };
-    if (similarity >= 0.7) return { score: 0.9, reason: 'Product name (near match)' };
-    if (similarity >= 0.5) return { score: 0.8, reason: 'Product name (good match)' };
-    if (similarity >= 0.3) return { score: 0.6, reason: 'Product name (partial)' };
+    // Exact match gets full score
+    if (similarity >= 0.95) return { score: 1, reason: 'Product name (exact)' };
     
-    // Check if search term is contained within document name (more generous)
+    // Very close match
+    if (similarity >= 0.8) return { score: 0.9, reason: 'Product name (very close)' };
+    
+    // Good match
+    if (similarity >= 0.6) return { score: 0.8, reason: 'Product name (good match)' };
+    
+    // Check if search term is contained within document name
     const searchLower = searchTerm.toLowerCase();
     const docLower = documentName.toLowerCase();
     
@@ -98,10 +104,10 @@ export class ConfidenceScorer {
     const commonWords = searchWords.filter(word => docWords.includes(word));
     if (commonWords.length > 0) {
       const ratio = commonWords.length / Math.max(searchWords.length, docWords.length);
-      return { score: Math.min(0.5 + ratio * 0.3, 0.8), reason: 'Product name (word match)' };
+      return { score: Math.min(0.4 + ratio * 0.3, 0.6), reason: 'Product name (partial words)' };
     }
     
-    return { score: similarity };
+    return { score: similarity * 0.5 }; // Reduced score for poor matches
   }
 
   /**
@@ -124,26 +130,26 @@ export class ConfidenceScorer {
   }
 
   /**
-   * Score manufacturer match (more generous)
+   * Score manufacturer match with improved accuracy
    */
   private scoreManufacturer(searchTerm: string, documentManufacturer?: string): { score: number; reason?: string } {
     if (!documentManufacturer) return { score: 0 };
     
     const similarity = this.stringSimilarity(searchTerm, documentManufacturer);
     
-    if (similarity >= 0.8) return { score: 1, reason: 'Manufacturer (exact)' };
-    if (similarity >= 0.6) return { score: 0.8, reason: 'Manufacturer (close)' };
-    if (similarity >= 0.4) return { score: 0.6, reason: 'Manufacturer (partial)' };
+    // Exact or very close manufacturer match should score very high
+    if (similarity >= 0.9) return { score: 1, reason: 'Manufacturer (exact)' };
+    if (similarity >= 0.7) return { score: 0.8, reason: 'Manufacturer (close)' };
     
     // Check for contained matches
     const searchLower = searchTerm.toLowerCase();
     const mfgLower = documentManufacturer.toLowerCase();
     
     if (mfgLower.includes(searchLower) || searchLower.includes(mfgLower)) {
-      return { score: 0.7, reason: 'Manufacturer (contains)' };
+      return { score: 0.6, reason: 'Manufacturer (contains)' };
     }
     
-    return { score: similarity };
+    return { score: similarity * 0.4 }; // Reduced scoring for poor matches
   }
 
   /**
@@ -195,6 +201,15 @@ export class ConfidenceScorer {
   }
 
   /**
+   * Check if document is an SDS document
+   */
+  private isSdsDocument(document: any): boolean {
+    return document.document_type === 'safety_data_sheet' || 
+           document.file_name?.toLowerCase().includes('sds') ||
+           document.file_name?.toLowerCase().includes('safety data sheet');
+  }
+
+  /**
    * Calculate overall confidence score for a document match
    */
   public calculateConfidence(searchTerm: string, document: any): MatchResult {
@@ -203,12 +218,27 @@ export class ConfidenceScorer {
     const manufacturerResult = this.scoreManufacturer(searchTerm, document.manufacturer);
     const contentResult = this.scoreContentMatch(searchTerm, document);
     
-    // Calculate weighted score
-    const totalScore = 
+    // Special case: If manufacturer + product name both match well, score very high (98%)
+    if (manufacturerResult.score >= 0.8 && productNameResult.score >= 0.8) {
+      return {
+        score: 0.98,
+        reasons: ['Product + Manufacturer (high confidence)'],
+        autoSelect: true
+      };
+    }
+    
+    // Calculate base weighted score
+    let totalScore = 
       (productNameResult.score * this.weights.productName) +
       (casNumberResult.score * this.weights.casNumber) +
       (manufacturerResult.score * this.weights.manufacturer) +
       (contentResult.score * this.weights.contentMatch);
+    
+    // Add SDS bonus if applicable
+    if (this.isSdsDocument(document)) {
+      totalScore += this.weights.sdsBonus;
+      totalScore = Math.min(totalScore, 1); // Cap at 100%
+    }
     
     // Collect match reasons
     const reasons: string[] = [];
@@ -216,9 +246,10 @@ export class ConfidenceScorer {
     if (casNumberResult.reason) reasons.push(casNumberResult.reason);
     if (manufacturerResult.reason) reasons.push(manufacturerResult.reason);
     if (contentResult.reason) reasons.push(contentResult.reason);
+    if (this.isSdsDocument(document)) reasons.push('SDS document (+10%)');
     
-    // More relaxed auto-selection criteria
-    const autoSelect = totalScore >= 0.7; // Lowered from 0.9 to 0.7
+    // Auto-selection criteria: 80% or higher confidence
+    const autoSelect = totalScore >= 0.8;
     
     return {
       score: totalScore,
