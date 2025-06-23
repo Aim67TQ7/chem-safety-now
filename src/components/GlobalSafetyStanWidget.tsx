@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -154,34 +153,92 @@ export default function GlobalSafetyStanWidget({
   const extractFormDataFromResponse = (response: string) => {
     if (!onFormDataUpdate) return;
 
-    const lines = response.toLowerCase();
+    const message = response.toLowerCase();
+    let extractedData = [];
     
-    // Extract facility/company name
-    const facilityMatch = lines.match(/(?:facility|company)(?:\s+name)?[:\s]+([^.\n]+)/i);
-    if (facilityMatch && facilityMatch[1]) {
-      const facilityName = facilityMatch[1].trim().replace(/["""]/g, '');
-      if (facilityName.length > 2) {
-        onFormDataUpdate('facilityName', facilityName);
+    // More flexible patterns for facility/company name
+    // Check if user is directly providing a facility name
+    if (message.includes('facility') || message.includes('company')) {
+      // Look for patterns like "my facility is X" or "company name is X"
+      const facilityPatterns = [
+        /(?:facility|company)(?:\s+name)?\s+is\s+([^.\n,]+)/i,
+        /(?:my|our)\s+(?:facility|company)(?:\s+name)?\s+is\s+([^.\n,]+)/i,
+        /(?:facility|company):\s*([^.\n,]+)/i,
+        /(?:called|named)\s+([^.\n,]+)/i
+      ];
+      
+      for (const pattern of facilityPatterns) {
+        const match = response.match(pattern);
+        if (match && match[1]) {
+          const facilityName = match[1].trim().replace(/["""]/g, '');
+          if (facilityName.length > 2) {
+            onFormDataUpdate('facilityName', facilityName);
+            extractedData.push(`facility name: ${facilityName}`);
+            break;
+          }
+        }
+      }
+    } else {
+      // If no explicit facility keyword, check if they're just stating a company name
+      // Look for proper nouns or company-like names
+      const words = response.trim().split(/\s+/);
+      if (words.length <= 5 && words.length >= 1) {
+        // Check if it looks like a company name (contains capital letters, common business words)
+        const businessKeywords = ['inc', 'llc', 'corp', 'company', 'industries', 'manufacturing', 'group', 'solutions', 'systems', 'technologies'];
+        const hasBusinessKeyword = businessKeywords.some(keyword => 
+          message.includes(keyword)
+        );
+        
+        // Or if it's a short phrase that looks like a name
+        if (hasBusinessKeyword || (words.length <= 3 && response.length > 3 && response.length < 50)) {
+          const potentialName = response.trim().replace(/["""]/g, '');
+          if (potentialName.length > 2 && !potentialName.includes('?') && !potentialName.includes('help')) {
+            onFormDataUpdate('facilityName', potentialName);
+            extractedData.push(`facility name: ${potentialName}`);
+          }
+        }
       }
     }
 
     // Extract contact name
-    const contactMatch = lines.match(/(?:contact|name|my name)[:\s]+([^.\n]+)/i);
-    if (contactMatch && contactMatch[1]) {
-      const contactName = contactMatch[1].trim().replace(/["""]/g, '');
-      if (contactName.length > 2 && !contactName.includes('facility') && !contactName.includes('company')) {
-        onFormDataUpdate('contactName', contactName);
+    const contactPatterns = [
+      /(?:my\s+name\s+is|i'm|i\s+am)\s+([^.\n,]+)/i,
+      /(?:contact|name):\s*([^.\n,]+)/i,
+      /(?:call\s+me)\s+([^.\n,]+)/i
+    ];
+    
+    for (const pattern of contactPatterns) {
+      const match = response.match(pattern);
+      if (match && match[1]) {
+        const contactName = match[1].trim().replace(/["""]/g, '');
+        if (contactName.length > 2 && !contactName.includes('facility') && !contactName.includes('company')) {
+          onFormDataUpdate('contactName', contactName);
+          extractedData.push(`contact name: ${contactName}`);
+          break;
+        }
       }
     }
 
     // Extract address
-    const addressMatch = lines.match(/(?:address|located)[:\s]+([^.\n]+)/i);
-    if (addressMatch && addressMatch[1]) {
-      const address = addressMatch[1].trim().replace(/["""]/g, '');
-      if (address.length > 5) {
-        onFormDataUpdate('address', address);
+    const addressPatterns = [
+      /(?:address|located|at)\s+(?:is\s+)?([^.\n]+(?:street|st|avenue|ave|road|rd|drive|dr|blvd|boulevard|lane|ln|way|court|ct|circle|cir)[^.\n]*)/i,
+      /(?:address|located|at):\s*([^.\n]+)/i,
+      /\d+\s+[^.\n,]+(street|st|avenue|ave|road|rd|drive|dr|blvd|boulevard|lane|ln|way|court|ct|circle|cir)[^.\n]*/i
+    ];
+    
+    for (const pattern of addressPatterns) {
+      const match = response.match(pattern);
+      if (match && match[1]) {
+        const address = match[1].trim().replace(/["""]/g, '');
+        if (address.length > 5) {
+          onFormDataUpdate('address', address);
+          extractedData.push(`address: ${address}`);
+          break;
+        }
       }
     }
+
+    return extractedData;
   };
 
   const isFormComplete = () => {
@@ -209,6 +266,9 @@ export default function GlobalSafetyStanWidget({
     try {
       // For signup page, handle form assistance
       if (isSignupPage) {
+        // Extract any form data from user message FIRST
+        const extractedData = extractFormDataFromResponse(userMessage);
+        
         // Check if user is asking questions not related to signup
         const signupRelatedKeywords = ['facility', 'company', 'name', 'address', 'contact', 'setup', 'form'];
         const isSignupRelated = signupRelatedKeywords.some(keyword => 
@@ -216,7 +276,7 @@ export default function GlobalSafetyStanWidget({
         );
 
         // If asking about other topics and form isn't complete, redirect to signup completion
-        if (!isSignupRelated && !isFormComplete()) {
+        if (!isSignupRelated && !isFormComplete() && !extractedData.length) {
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
@@ -229,51 +289,90 @@ export default function GlobalSafetyStanWidget({
           return;
         }
 
-        // Extract any form data from user message
-        extractFormDataFromResponse(userMessage);
-
-        // Build context about current form state
-        let formContext = '';
-        if (formData) {
-          formContext = `Current form data:
+        // If we extracted data, acknowledge it before getting AI response
+        if (extractedData.length > 0) {
+          // Add a brief acknowledgment with what was captured
+          const acknowledgment = `Perfect! I've added ${extractedData.join(' and ')} to your form. `;
+          
+          // Build context about current form state
+          let formContext = '';
+          if (formData) {
+            formContext = `Current form data:
 - Facility Name: ${formData.facilityName || 'Not filled'}
 - Contact Name: ${formData.contactName || 'Not filled'}
 - Address: ${formData.address || 'Not filled'}
 - Email: ${formData.email || 'Not filled'}`;
-        }
-
-        const conversationHistory = messages.slice(1).map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        }));
-
-        const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
-          body: {
-            message: userMessage,
-            conversation_history: conversationHistory,
-            sds_document: null,
-            facility_data: {
-              facility_name: companyName,
-              industry: industry,
-              custom_instructions: `You are Stan, helping with facility setup. Be direct and helpful. Ask one question at a time to gather missing information. Always prioritize completing the signup form first before answering other questions. If users ask about other topics, redirect them back to completing the signup. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
-            }
           }
-        });
 
-        if (error) throw new Error(error.message || 'Failed to get AI response');
+          const conversationHistory = messages.slice(1).map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }));
 
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.response,
-          timestamp: new Date()
-        };
+          const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
+            body: {
+              message: userMessage,
+              conversation_history: conversationHistory,
+              sds_document: null,
+              facility_data: {
+                facility_name: companyName,
+                industry: industry,
+                custom_instructions: `You are Stan, helping with facility setup. Start your response with: "${acknowledgment}" then continue being direct and helpful. Ask one question at a time to gather missing information. Always prioritize completing the signup form first before answering other questions. If users ask about other topics, redirect them back to completing the signup. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
+              }
+            }
+          });
 
-        setMessages(prev => [...prev, assistantMessage]);
+          if (error) throw new Error(error.message || 'Failed to get AI response');
 
-        // Extract form data from AI response as well
-        extractFormDataFromResponse(data.response);
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.response,
+            timestamp: new Date()
+          };
 
+          setMessages(prev => [...prev, assistantMessage]);
+        } else {
+          // Regular AI response without extracted data
+          // Build context about current form state
+          let formContext = '';
+          if (formData) {
+            formContext = `Current form data:
+- Facility Name: ${formData.facilityName || 'Not filled'}
+- Contact Name: ${formData.contactName || 'Not filled'}
+- Address: ${formData.address || 'Not filled'}
+- Email: ${formData.email || 'Not filled'}`;
+          }
+
+          const conversationHistory = messages.slice(1).map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }));
+
+          const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
+            body: {
+              message: userMessage,
+              conversation_history: conversationHistory,
+              sds_document: null,
+              facility_data: {
+                facility_name: companyName,
+                industry: industry,
+                custom_instructions: `You are Stan, helping with facility setup. Be direct and helpful. Ask one question at a time to gather missing information. Always prioritize completing the signup form first before answering other questions. If users ask about other topics, redirect them back to completing the signup. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
+              }
+            }
+          });
+
+          if (error) throw new Error(error.message || 'Failed to get AI response');
+
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.response,
+            timestamp: new Date()
+          };
+
+          setMessages(prev => [...prev, assistantMessage]);
+        }
       } else {
         // Regular chat functionality for other pages
         const conversationHistory = messages.slice(1).map(msg => ({
