@@ -125,7 +125,7 @@ export const IncidentAnalysisPanel: React.FC<IncidentAnalysisPanelProps> = ({
 
       toast({
         title: "Analysis Complete",
-        description: `Sarah has completed the ${analysisType.replace('_', ' ')} analysis.`,
+        description: `Stan has completed the ${analysisType.replace('_', ' ')} analysis.`,
       });
 
     } catch (error) {
@@ -155,22 +155,22 @@ export const IncidentAnalysisPanel: React.FC<IncidentAnalysisPanelProps> = ({
 
   return (
     <div className="space-y-6">
-      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-green-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <Avatar className="w-8 h-8">
               <AvatarImage 
-                src="/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png" 
-                alt="Sarah - Chemical Safety Manager"
+                src="/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png" 
+                alt="Stan - Chemical Safety Manager"
               />
-              <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+              <AvatarFallback className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
                 <Brain className="w-4 h-4" />
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="text-lg font-semibold">AI Safety Analysis</div>
               <div className="text-sm font-normal text-gray-600">
-                Get expert insights from Sarah, your AI Chemical Safety Manager
+                Get expert insights from Stan, your AI Chemical Safety Manager
               </div>
             </div>
           </CardTitle>
@@ -257,7 +257,7 @@ export const IncidentAnalysisPanel: React.FC<IncidentAnalysisPanelProps> = ({
             <Brain className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <p className="text-lg font-medium mb-2">No AI Analysis Yet</p>
             <p className="text-sm">
-              Click on any analysis type above to get Sarah's expert insights on this incident.
+              Click on any analysis type above to get Stan's expert insights on this incident.
             </p>
           </CardContent>
         </Card>
