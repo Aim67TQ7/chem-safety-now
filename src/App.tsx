@@ -15,6 +15,7 @@ import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import SalesPartnerPage from "./pages/SalesPartnerPage";
 import SalesPartnerTermsPage from "./pages/SalesPartnerTermsPage";
+import GlobalSafetyStanWidget from "./components/GlobalSafetyStanWidget";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,14 @@ const App = () => (
             <Route key={to} path={to} element={page} />
           ))}
         </Routes>
+        
+        {/* Global Safety Stan Widget - appears on all pages */}
+        <GlobalSafetyStanWidget 
+          initialPosition={{ x: window.innerWidth - 100, y: window.innerHeight - 100 }}
+          companyName="ChemLabel-GPT"
+          industry="Chemical Safety Management"
+          customInstructions="You are Safety Stan, an expert in chemical safety, OSHA compliance, and workplace safety. Help users with safety questions, SDS information, and compliance guidance."
+        />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
