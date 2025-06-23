@@ -10,7 +10,6 @@ import { Shield, Upload, CheckCircle, Bot, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SetupFailureDialog } from "@/components/SetupFailureDialog";
-import GlobalSafetyStanWidget from "@/components/GlobalSafetyStanWidget";
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -359,12 +358,6 @@ const SignupPage = () => {
           </form>
         </Card>
       </div>
-
-      {/* Stan Widget */}
-      <GlobalSafetyStanWidget 
-        onFormDataUpdate={handleFormDataUpdate}
-        formData={formData}
-      />
 
       {/* Setup Failure Dialog */}
       <SetupFailureDialog
