@@ -225,7 +225,7 @@ export default function GlobalSafetyStanWidget({
 
   return (
     <>
-      {/* Floating Avatar */}
+      {/* Floating Stanley Avatar - Full Body */}
       <div
         ref={avatarRef}
         className="fixed z-40 cursor-move select-none"
@@ -239,18 +239,17 @@ export default function GlobalSafetyStanWidget({
         onClick={() => !isDragging && setIsOpen(true)}
       >
         <div className="relative group">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-green-600 shadow-lg border-3 border-white flex items-center justify-center hover:shadow-xl transition-all duration-200">
-            <Avatar className="w-14 h-14">
-              <AvatarImage 
-                src={isThinking 
-                  ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
-                  : "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png"
-                } 
-                alt="Safety Stan"
-                draggable={false}
-              />
-              <AvatarFallback className="bg-blue-600 text-white">SS</AvatarFallback>
-            </Avatar>
+          {/* Stanley's full body without circle constraint */}
+          <div className="w-20 h-24 flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
+            <img
+              src={isThinking 
+                ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
+                : "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png"
+              }
+              alt="Safety Stan"
+              className="w-full h-full object-contain"
+              draggable={false}
+            />
           </div>
           <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
             Safety Expert Stan
@@ -275,16 +274,16 @@ export default function GlobalSafetyStanWidget({
           <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white p-4 rounded-t-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Avatar className="w-10 h-10 border-2 border-white">
-                  <AvatarImage 
+                <div className="w-10 h-10 border-2 border-white rounded-lg overflow-hidden bg-white">
+                  <img
                     src={isThinking 
                       ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
                       : "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png"
-                    } 
+                    }
                     alt="Safety Stan"
+                    className="w-full h-full object-contain"
                   />
-                  <AvatarFallback className="bg-blue-600 text-white">SS</AvatarFallback>
-                </Avatar>
+                </div>
                 <div>
                   <h3 className="font-semibold text-sm">Safety Stan</h3>
                   <p className="text-xs opacity-90">
@@ -359,13 +358,13 @@ export default function GlobalSafetyStanWidget({
                       message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                     }`}>
                       {message.role === 'assistant' && (
-                        <Avatar className="w-8 h-8 flex-shrink-0">
-                          <AvatarImage 
-                            src="/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png" 
+                        <div className="w-8 h-8 border border-gray-200 rounded-lg overflow-hidden bg-white flex-shrink-0">
+                          <img
+                            src="/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png"
                             alt="Safety Stan"
+                            className="w-full h-full object-contain"
                           />
-                          <AvatarFallback className="bg-blue-600 text-white">SS</AvatarFallback>
-                        </Avatar>
+                        </div>
                       )}
                       
                       <div className={`rounded-lg p-3 text-sm ${
@@ -394,13 +393,13 @@ export default function GlobalSafetyStanWidget({
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="flex items-start space-x-3">
-                      <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarImage 
-                          src="/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
+                      <div className="w-8 h-8 border border-gray-200 rounded-lg overflow-hidden bg-white flex-shrink-0">
+                        <img
+                          src="/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png"
                           alt="Safety Stan - Thinking"
+                          className="w-full h-full object-contain"
                         />
-                        <AvatarFallback className="bg-blue-600 text-white">SS</AvatarFallback>
-                      </Avatar>
+                      </div>
                       <div className="bg-gray-100 rounded-lg p-3 text-sm">
                         <div className="flex items-center space-x-2">
                           <div className="flex space-x-1">
