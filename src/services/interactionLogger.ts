@@ -64,7 +64,7 @@ class InteractionLogger {
   // Log SDS interactions
   async logSDSInteraction(params: {
     sdsDocumentId: string;
-    actionType: 'view' | 'download' | 'generate_label' | 'ask_ai' | 'generate_label_from_ai';
+    actionType: 'view' | 'view_sds' | 'download' | 'generate_label' | 'ask_ai' | 'generate_label_from_ai';
     searchQuery?: string;
     metadata?: any;
   }) {
