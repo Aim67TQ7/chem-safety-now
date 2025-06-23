@@ -1,25 +1,16 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import FacilityDashboard from "@/components/FacilityDashboard";
-import SDSSearch from "@/components/SDSSearch";
-import AccessTools from "@/components/AccessTools";
-import LabelPrinter from "@/components/LabelPrinter";
+import SubscriptionPlansModal from "@/components/modals/SubscriptionPlansModal";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
-import FacilitySettings from "@/components/FacilitySettings";
-import FeatureAccessWrapper from "@/components/FeatureAccessWrapper";
-import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
-import SubscriptionPlansModal from "@/components/SubscriptionPlansModal";
-import FeedbackPopup from "@/components/FeedbackPopup";
-import { SubscriptionService } from "@/services/subscriptionService";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { IncidentsList } from "@/components/incidents/IncidentsList";
-import { IncidentReportForm } from "@/components/incidents/IncidentReportForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
+import QRCodePopup from "@/components/popups/QRCodePopup";
+import SDSViewerPopup from "@/components/popups/SDSViewerPopup";
+import SDSSelectionDialog from "@/components/dialogs/SDSSelectionDialog";
+import SetupFailureDialog from "@/components/dialogs/SetupFailureDialog";
 
 interface FacilityData {
   id: string;
@@ -40,325 +31,225 @@ interface SubscriptionInfo {
 }
 
 const FacilityPage = () => {
-  const { facilitySlug } = useParams();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
-  const [currentView, setCurrentView] = useState('dashboard');
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showAIAssistantPopup, setShowAIAssistantPopup] = useState(false);
-  const [selectedIncidentType, setSelectedIncidentType] = useState<'near_miss' | 'reportable' | null>(null);
-  const [activeTab, setActiveTab] = useState('list');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showLabelPrinter, setShowLabelPrinter] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [showSDSViewer, setShowSDSViewer] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [sdsSearchResults, setSdsSearchResults] = useState<any[]>([]);
+  const [showSDSSelection, setShowSDSSelection] = useState(false);
+  const [isSetupMode, setIsSetupMode] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'settings':
+        navigate(`/facility/${facilitySlug}/settings`);
+        break;
+      case 'sds_search':
+      case 'search':
+        setShowAIAssistant(true);
+        break;
+      case 'label_printing':
+        if (selectedDocument) {
+          setShowLabelPrinter(true);
+        } else {
+          toast({
+            title: "No SDS Selected",
+            description: "Please select an SDS document first.",
+            variant: "destructive"
+          });
+        }
+        break;
+      case 'access-tools':
+        setShowQRCode(true);
+        break;
+      default:
+        toast({
+          title: "Action Unavailable",
+          description: `The action "${action}" is not yet implemented.`,
+        });
+    }
+  };
+
+  const handleUpgrade = () => {
+    setShowUpgradeModal(true);
+  };
 
   useEffect(() => {
     const fetchFacilityData = async () => {
-      if (!facilitySlug) {
-        setError('Facility slug is required');
-        setLoading(false);
-        return;
-      }
-
+      setIsLoading(true);
+      setError(null);
       try {
-        const { data, error } = await supabase
+        if (!facilitySlug) {
+          setError('Facility slug is missing.');
+          return;
+        }
+
+        // Fetch facility data
+        const { data: facility, error: facilityError } = await supabase
           .from('facilities')
           .select('*')
           .eq('slug', facilitySlug)
           .single();
 
-        if (error) {
-          console.error('Error fetching facility:', error);
-          setError('Facility not found');
-          setLoading(false);
+        if (facilityError) {
+          console.error('Error fetching facility:', facilityError);
+          setError('Failed to load facility data.');
           return;
         }
 
-        setFacilityData(data);
-
-        // Check subscription status
-        const subscription = await SubscriptionService.getFacilitySubscription(data.id);
-        if (subscription) {
-          setSubscriptionInfo(subscription);
-          
-          // Check if trial has expired and redirect if needed
-          if (SubscriptionService.isTrialExpired(subscription)) {
-            navigate(`/subscribe/${facilitySlug}`);
-            return;
-          }
+        if (!facility) {
+          setError('Facility not found.');
+          return;
         }
 
-        setLoading(false);
-      } catch (error) {
-        console.error('Failed to fetch facility data:', error);
-        setError('Failed to load facility');
-        setLoading(false);
+        setFacilityData(facility);
+
+        // Fetch subscription info
+        const { data: subscription, error: subscriptionError } = await supabase
+          .from('facility_subscriptions')
+          .select('*')
+          .eq('facility_id', facility.id)
+          .single();
+
+        if (subscriptionError) {
+          console.error('Error fetching subscription:', subscriptionError);
+          // Do not block loading for subscription errors, just log it
+        }
+
+        setSubscriptionInfo(subscription || null);
+
+        // Check if setup is required
+        if (!facility.contact_name || !facility.address) {
+          setIsSetupMode(true);
+        }
+
+      } catch (err: any) {
+        console.error('Error:', err);
+        setError(err.message || 'Failed to load data.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchFacilityData();
-  }, [facilitySlug, navigate]);
+  }, [facilitySlug]);
 
-  const handleFacilityUpdate = (updatedData: FacilityData) => {
-    setFacilityData(updatedData);
+  const handleDocumentSelect = (document: any) => {
+    setSelectedDocument(document);
+    setShowSDSSelection(false);
+    setShowSDSViewer(true);
   };
 
-  const handleUpgrade = () => {
-    setShowSubscriptionModal(true);
-  };
-
-  const handleIncidentSuccess = () => {
-    toast({
-      title: "Incident Report Submitted",
-      description: "Your incident report has been successfully submitted.",
-    });
-    setSelectedIncidentType(null);
-    setActiveTab('list');
-  };
-
-  const handleIncidentCancel = () => {
-    setSelectedIncidentType(null);
-  };
-
-  const handleChatWithSarah = () => {
-    setShowAIAssistantPopup(true);
-  };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading facility...</div>;
-  }
-
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center">Error: {error}</div>;
-  }
-
-  if (!facilityData) {
-    return <div className="min-h-screen flex items-center justify-center">Facility not found.</div>;
-  }
-
-  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
-
-  const renderIncidentTypeSelection = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Select Incident Type</h3>
-        <p className="text-gray-600">Choose the type of incident you want to report</p>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading facility dashboard...</p>
+        </div>
       </div>
-      
-      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-orange-300"
-          onClick={() => setSelectedIncidentType('near_miss')}
-        >
-          <CardHeader className="text-center">
-            <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-            <CardTitle className="text-orange-700">Near Miss Incident</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 text-center">
-              Report incidents that could have resulted in injury, illness, or property damage but didn't.
-            </p>
-            <ul className="mt-4 text-sm text-gray-500 space-y-1">
-              <li>• Close calls and potential hazards</li>
-              <li>• Unsafe conditions discovered</li>
-              <li>• Equipment malfunctions without injury</li>
-            </ul>
-          </CardContent>
-        </Card>
+    );
+  }
 
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-red-300"
-          onClick={() => setSelectedIncidentType('reportable')}
-        >
-          <CardHeader className="text-center">
-            <FileText className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <CardTitle className="text-red-700">Reportable Incident</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 text-center">
-              Report actual incidents involving injury, illness, or property damage.
-            </p>
-            <ul className="mt-4 text-sm text-gray-500 space-y-1">
-              <li>• Workplace injuries</li>
-              <li>• Occupational illnesses</li>
-              <li>• Property damage incidents</li>
-            </ul>
-          </CardContent>
-        </Card>
+  if (error || !facilityData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Access Error</h2>
+          <p className="text-gray-600 mb-4">{error || 'Facility not found'}</p>
+          <Button onClick={() => navigate('/')}>Return Home</Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  const renderView = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return (
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {isSetupMode ? (
+          <SetupFailureDialog
+            isOpen={true}
+            onClose={() => setIsSetupMode(false)}
+            facilityData={facilityData}
+            subscriptionInfo={subscriptionInfo}
+          />
+        ) : (
           <FacilityDashboard
             facilityData={facilityData}
             subscriptionInfo={subscriptionInfo}
             onQuickAction={handleQuickAction}
             onUpgrade={handleUpgrade}
-            onChatWithSarah={handleChatWithSarah}
           />
-        );
-      case 'sds-search':
-        return (
-          <FeatureAccessWrapper
-            feature="sds_search"
-            facilityId={facilityData.id}
-            onUpgrade={handleUpgrade}
-          >
-            <SDSSearch facilityData={facilityData} />
-          </FeatureAccessWrapper>
-        );
-      case 'incidents':
-        return (
-          <FeatureAccessWrapper
-            feature="incident_reporting"
-            facilityId={facilityData.id}
-            onUpgrade={handleUpgrade}
-          >
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold text-gray-900">Incident Management</h2>
-              </div>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-fit grid-cols-2">
-                  <TabsTrigger value="list">Incident List</TabsTrigger>
-                  <TabsTrigger value="report">Report Incident</TabsTrigger>
-                </TabsList>
-                <TabsContent value="list" className="space-y-4">
-                  <IncidentsList />
-                </TabsContent>
-                <TabsContent value="report" className="space-y-4">
-                  {selectedIncidentType ? (
-                    <IncidentReportForm 
-                      incidentType={selectedIncidentType}
-                      onSuccess={handleIncidentSuccess}
-                      onCancel={handleIncidentCancel}
-                    />
-                  ) : (
-                    renderIncidentTypeSelection()
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
-          </FeatureAccessWrapper>
-        );
-      case 'access-tools':
-        return (
-          <FeatureAccessWrapper
-            feature="access_tools"
-            facilityId={facilityData.id}
-            onUpgrade={handleUpgrade}
-          >
-            <AccessTools facilityData={facilityData} />
-          </FeatureAccessWrapper>
-        );
-      case 'label-printer':
-        return (
-          <FeatureAccessWrapper
-            feature="label_printing"
-            facilityId={facilityData.id}
-            onUpgrade={handleUpgrade}
-          >
-            <LabelPrinter />
-          </FeatureAccessWrapper>
-        );
-      case 'settings':
-        return (
-          <FacilitySettings 
-            facilityData={facilityData} 
-            onFacilityUpdate={handleFacilityUpdate}
-          />
-        );
-      default:
-        return (
-          <FacilityDashboard 
-            facilityData={facilityData} 
-            subscriptionInfo={subscriptionInfo}
-            onQuickAction={handleQuickAction}
-            onUpgrade={handleUpgrade}
-            onChatWithSarah={handleChatWithSarah}
-          />
-        );
-    }
-  };
+        )}
 
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case 'search':
-        setCurrentView('sds-search');
-        break;
-      case 'incidents':
-        setCurrentView('incidents');
-        setSelectedIncidentType(null); // Reset incident type when navigating to incidents
-        setActiveTab('list'); // Start on list tab
-        break;
-      case 'access-tools':
-        setCurrentView('access-tools');
-        break;
-      case 'labels':
-        setCurrentView('label-printer');
-        break;
-      case 'settings':
-        setCurrentView('settings');
-        break;
-      default:
-        setCurrentView('dashboard');
-    }
-  };
+        {/* Subscription Plans Modal */}
+        <SubscriptionPlansModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          facilitySlug={facilityData.slug}
+        />
 
-  return (
-    <div className="container mx-auto py-8">
-      {/* Only show subscription status warning on dashboard view */}
-      {currentView === 'dashboard' && (
-        <SubscriptionStatusHeader 
-          facilityId={facilityData.id} 
+        {/* AI Assistant Popup */}
+        <AIAssistantPopup
+          isOpen={showAIAssistant}
+          onClose={() => setShowAIAssistant(false)}
+          facilityData={facilityData}
+          selectedDocument={selectedDocument}
+          onGenerateLabel={(doc) => {
+            setSelectedDocument(doc);
+            setShowLabelPrinter(true);
+            setShowAIAssistant(false);
+          }}
+        />
+
+        {/* Label Printer Popup */}
+        <LabelPrinterPopup
+          isOpen={showLabelPrinter}
+          onClose={() => setShowLabelPrinter(false)}
+          facilityData={facilityData}
+          selectedDocument={selectedDocument}
+        />
+
+        {/* QR Code Popup */}
+        <QRCodePopup
+          isOpen={showQRCode}
+          onClose={() => setShowQRCode(false)}
+          facilityData={facilityData}
+        />
+
+        {/* SDS Viewer Popup */}
+        <SDSViewerPopup
+          isOpen={showSDSViewer}
+          onClose={() => setShowSDSViewer(false)}
+          document={selectedDocument}
+        />
+
+        {/* SDS Selection Dialog */}
+        <SDSSelectionDialog
+          isOpen={showSDSSelection}
+          onClose={() => setShowSDSSelection(false)}
+          searchResults={sdsSearchResults}
+          onDocumentSelect={handleDocumentSelect}
+          facilityData={facilityData}
+        />
+      </div>
+      {facilityData && (
+        <FacilityDashboard
+          facilityData={facilityData}
+          subscriptionInfo={subscriptionInfo}
+          onQuickAction={handleQuickAction}
           onUpgrade={handleUpgrade}
         />
       )}
-      
-      {/* Header with navigation - only show back button when not on dashboard */}
-      {currentView !== 'dashboard' && (
-        <div className="flex items-center space-x-4 mb-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentView('dashboard')}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
-          </Button>
-          <h1 className="text-2xl font-bold">{facilityData.facility_name} Dashboard</h1>
-        </div>
-      )}
-
-      {renderView()}
-
-      {/* AI Assistant Popup */}
-      <AIAssistantPopup
-        isOpen={showAIAssistantPopup}
-        onClose={() => setShowAIAssistantPopup(false)}
-        facilityData={facilityData}
-      />
-
-      {/* Subscription Plans Modal */}
-      <SubscriptionPlansModal
-        isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        facilityId={facilityData.id}
-        currentPlan={subscriptionInfo?.subscription_status}
-        facilitySlug={facilitySlug}
-      />
-
-      {/* Feedback Popup */}
-      <FeedbackPopup 
-        facilityId={facilityData.id}
-        facilityName={facilityData.facility_name || 'Your Facility'}
-      />
     </div>
   );
 };
