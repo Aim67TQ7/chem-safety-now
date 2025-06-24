@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award, Zap } from "lucide-react";
 import SafetyStanAvatar from "@/components/SafetyStanAvatar";
+import GlobalSafetyStanWidget from "@/components/GlobalSafetyStanWidget";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -22,6 +23,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+      {/* GlobalSafetyStanWidget - Floating Stanley */}
+      <GlobalSafetyStanWidget 
+        companyName="ChemLabel-GPT"
+        industry="Chemical Safety"
+        customInstructions="You are Safety Stan, helping users understand how ChemLabel-GPT can save their facility hours of paperwork and improve safety compliance. Be enthusiastic about the benefits of digital safety management over paper systems."
+      />
+
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
