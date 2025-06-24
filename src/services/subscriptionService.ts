@@ -22,6 +22,32 @@ export interface FacilitySubscription {
 export class SubscriptionService {
   static async checkFeatureAccess(facilityId: string, featureName: string): Promise<boolean> {
     try {
+      // Get facility subscription info first to handle trial users properly
+      const subscription = await this.getFacilitySubscription(facilityId);
+      
+      if (subscription) {
+        // Enhanced logic for trial users - they get full access to basic features during trial
+        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
+        const isBasicFeature = basicFeatures.includes(featureName);
+        const isActiveTrial = subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0;
+        
+        // Active trial users get full access to basic features
+        if (isActiveTrial && isBasicFeature) {
+          return true;
+        }
+        
+        // Premium users get everything
+        if (subscription.subscription_status === 'premium') {
+          return true;
+        }
+        
+        // Basic users get basic features
+        if (subscription.subscription_status === 'basic' && isBasicFeature) {
+          return true;
+        }
+      }
+
+      // Fallback to server-side check for complex cases
       const { data, error } = await supabase.rpc('check_feature_access', {
         p_facility_id: facilityId,
         p_feature_name: featureName
@@ -117,15 +143,15 @@ export class SubscriptionService {
            (subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0);
   }
 
-  // New method to check if a feature is available for trial users
+  // Enhanced method to check if a feature is available for trial users
   static isFeatureAvailableForTrial(featureName: string): boolean {
-    const trialFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+    const trialFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
     return trialFeatures.includes(featureName);
   }
 
-  // New method to get feature tier
+  // Enhanced method to get feature tier
   static getFeatureTier(featureName: string): 'basic' | 'premium' {
-    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
     return basicFeatures.includes(featureName) ? 'basic' : 'premium';
   }
 }

@@ -33,9 +33,9 @@ const FeatureAccessWrapper = ({
         SubscriptionService.getFacilitySubscription(facilityId)
       ]);
       
-      // Improved logic: give users the most permissive access
+      // Enhanced logic: give trial users full access to basic features during their 7-day trial
       if (sub) {
-        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting'];
+        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
         const isBasicFeature = basicFeatures.includes(feature);
         const isActiveTrial = sub.subscription_status === 'trial' && sub.trial_days_remaining > 0;
         
@@ -43,15 +43,13 @@ const FeatureAccessWrapper = ({
         if (sub.subscription_status === 'premium') {
           setHasAccess(true);
         }
-        // Basic users get basic features, trial users get ALL basic features during trial
-        else if (sub.subscription_status === 'basic' || isActiveTrial) {
-          // Trial users get full access to all basic features during their 7-day trial
-          if (isActiveTrial) {
-            setHasAccess(isBasicFeature);
-          } else {
-            // Basic subscribers get basic features based on server access check
-            setHasAccess(isBasicFeature && access);
-          }
+        // Active trial users get full access to all basic features during their trial
+        else if (isActiveTrial) {
+          setHasAccess(isBasicFeature);
+        }
+        // Basic users get basic features based on server access check
+        else if (sub.subscription_status === 'basic') {
+          setHasAccess(isBasicFeature && access);
         }
         // Otherwise use the server-side access check
         else {
@@ -140,6 +138,7 @@ const FeatureAccessWrapper = ({
   const getFeatureInfo = () => {
     switch (feature) {
       case 'incident_reporting':
+      case 'incidents':
         return {
           icon: <AlertTriangle className="w-8 h-8 text-red-500" />,
           title: "Incident Reporting & Management",

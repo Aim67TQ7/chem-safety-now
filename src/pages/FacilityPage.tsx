@@ -49,14 +49,59 @@ const FacilityPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleQuickAction = (action: string) => {
+  const handleQuickAction = async (action: string) => {
+    console.log('Quick action triggered:', action);
+    
     switch (action) {
       case 'settings':
         navigate(`/facility/${facilitySlug}/settings`);
         break;
       case 'sds_search':
-      case 'search':
-        setShowAIAssistant(true);
+        // Directly search SDS documents using Google CSE
+        console.log('Starting SDS search...');
+        try {
+          // Show loading state
+          toast({
+            title: "Searching SDS Documents",
+            description: "Searching for safety data sheets...",
+          });
+
+          // Call the SDS search function directly
+          const { data: searchResult, error: searchError } = await supabase.functions.invoke('sds-search', {
+            body: {
+              product_name: 'search_placeholder', // This will need to be replaced with actual search term
+              max_results: 10
+            }
+          });
+
+          if (searchError) {
+            console.error('SDS search error:', searchError);
+            toast({
+              title: "Search Error",
+              description: "Failed to search SDS documents. Please try again.",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          if (searchResult?.results && searchResult.results.length > 0) {
+            setSdsSearchResults(searchResult.results);
+            setShowSDSSelection(true);
+          } else {
+            // Open AI assistant for search guidance
+            setShowAIAssistant(true);
+          }
+        } catch (error) {
+          console.error('SDS search failed:', error);
+          toast({
+            title: "Search Failed",
+            description: "Unable to search SDS documents. Opening AI assistant for help.",
+          });
+          setShowAIAssistant(true);
+        }
+        break;
+      case 'incidents':
+        navigate(`/facility/${facilitySlug}/incidents`);
         break;
       case 'label_printing':
         if (selectedDocument) {
@@ -114,30 +159,16 @@ const FacilityPage = () => {
 
         setFacilityData(facility);
 
-        // Fetch subscription info from subscriptions table
-        const { data: subscription, error: subscriptionError } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('facility_id', facility.id)
-          .single();
+        // Calculate subscription info from facility data
+        const trialEndDate = new Date(facility.trial_end_date);
+        const now = new Date();
+        const timeDiff = trialEndDate.getTime() - now.getTime();
+        const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
 
-        if (subscriptionError) {
-          console.error('Error fetching subscription:', subscriptionError);
-          // Do not block loading for subscription errors, just log it
-        }
-
-        if (subscription) {
-          // Map subscription table fields to expected format
-          const trialEndDate = new Date(facility.trial_end_date);
-          const now = new Date();
-          const timeDiff = trialEndDate.getTime() - now.getTime();
-          const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
-
-          setSubscriptionInfo({
-            subscription_status: facility.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
-            trial_days_remaining: daysRemaining
-          });
-        }
+        setSubscriptionInfo({
+          subscription_status: facility.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
+          trial_days_remaining: daysRemaining
+        });
 
         // Check if setup is required
         if (!facility.contact_name || !facility.address) {

@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import FacilityActivityCard from "@/components/FacilityActivityCard";
 import SafetyGameCard from "@/components/SafetyGameCard";
+import SubscriptionStatusHeader from "@/components/SubscriptionStatusHeader";
 
 interface FacilityData {
   id: string;
@@ -50,19 +52,19 @@ const FacilityDashboard = ({
   onQuickAction,
   onUpgrade
 }: FacilityDashboardProps) => {
-  // Helper function to check feature access with improved logic
+  // Helper function to check feature access with improved logic for trial users
   const hasFeatureAccess = (featureName: string): boolean => {
     if (!subscriptionInfo) return true; // Default to true if no subscription info
     
     // Define feature tiers
-    const basicFeatures = ['sds_search', 'access_tools', 'ai_assistant'];
+    const basicFeatures = ['sds_search', 'access_tools', 'ai_assistant', 'incidents'];
     const premiumFeatures = ['label_printing'];
     
     const isBasicFeature = basicFeatures.includes(featureName);
     
-    // Trial users (with remaining days) get access to basic features regardless of their plan
+    // Trial users (with remaining days) get access to basic features during trial
     const isActiveTrial = subscriptionInfo.subscription_status === 'trial' && 
-                         subscriptionInfo.trial_days_remaining > 0;
+                         (subscriptionInfo.trial_days_remaining || 0) > 0;
     
     // Premium users get access to everything
     if (subscriptionInfo.subscription_status === 'premium') {
@@ -74,24 +76,25 @@ const FacilityDashboard = ({
       return isBasicFeature;
     }
     
-    // Active trial users get access to basic features
+    // Active trial users get full access to basic features
     if (isActiveTrial) {
       return isBasicFeature;
     }
     
-    // Expired users only get access to basic features (free tier)
-    return isBasicFeature && !premiumFeatures.includes(featureName);
+    // Expired users get limited access
+    return false;
   };
 
   const quickActions = [
     {
-      id: 'search',
+      id: 'sds_search',
       title: 'SDS Search',
       description: 'Find chemical safety data sheets',
       icon: Search,
       color: 'bg-blue-600',
       hoverColor: 'hover:bg-blue-700',
-      featured: true
+      featured: true,
+      requiresFeature: 'sds_search'
     },
     {
       id: 'incidents',
@@ -100,7 +103,7 @@ const FacilityDashboard = ({
       icon: AlertTriangle,
       color: 'bg-red-600',
       hoverColor: 'hover:bg-red-700',
-      requiresFeature: 'incident_reporting'
+      requiresFeature: 'incidents'
     },
     {
       id: 'access-tools',
@@ -175,6 +178,14 @@ const FacilityDashboard = ({
 
   return (
     <div className="space-y-8">
+      {/* Subscription Status Warning Header */}
+      {subscriptionInfo && (
+        <SubscriptionStatusHeader 
+          facilityId={facilityData.id} 
+          onUpgrade={onUpgrade || (() => {})} 
+        />
+      )}
+
       {/* Facility Header Card with Subscription Status and Settings Button */}
       <Card className="bg-gradient-to-r from-blue-50 to-red-50">
         <CardHeader>

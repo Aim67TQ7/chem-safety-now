@@ -1,64 +1,52 @@
-
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Index from "./pages/Index";
+import FacilityPage from "./pages/FacilityPage";
+import FacilitySettingsPage from "./pages/FacilitySettingsPage";
 import SDSDocumentsPage from "./pages/SDSDocumentsPage";
 import IncidentsPage from "./pages/IncidentsPage";
+import QRCodePrintPage from "./pages/QRCodePrintPage";
 import AdminPage from "./pages/AdminPage";
-import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
-import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
-import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
-import TermsPage from "./pages/TermsPage";
+import NotFound from "./pages/NotFound";
 import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
 import SalesPartnerPage from "./pages/SalesPartnerPage";
 import SalesPartnerTermsPage from "./pages/SalesPartnerTermsPage";
-import GlobalSafetyStanWidget from "./components/GlobalSafetyStanWidget";
+import SignupPage from "./pages/SignupPage";
+import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
+import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
+import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
 
 const queryClient = new QueryClient();
-
-const AppContent = () => {
-  const location = useLocation();
-  const isSignupPage = location.pathname === '/signup';
-  
-  return (
-    <>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/sds-documents" element={<SDSDocumentsPage />} />
-        <Route path="/incidents" element={<IncidentsPage />} />
-        <Route path="/secret-admin-dashboard" element={<AdminPage />} />
-        <Route path="/subscribe/:facilitySlug?" element={<SubscriptionRequiredPage />} />
-        <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
-        <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/sales-partner" element={<SalesPartnerPage />} />
-        <Route path="/sales-partner-terms" element={<SalesPartnerTermsPage />} />
-        {navItems.map(({ to, page }) => (
-          <Route key={to} path={to} element={page} />
-        ))}
-      </Routes>
-      
-      {/* Global Safety Stan Widget - appears on all pages */}
-      <GlobalSafetyStanWidget 
-        initialPosition={{ x: window.innerWidth - 100, y: window.innerHeight - 100 }}
-        companyName="ChemLabel-GPT"
-        industry="Chemical Safety Management"
-        customInstructions="You are Safety Stan, an expert in chemical safety, OSHA compliance, and workplace safety. Help users with safety questions, SDS information, and compliance guidance."
-      />
-    </>
-  );
-};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
+      <Sonner />
       <BrowserRouter>
-        <AppContent />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/facility/:facilitySlug" element={<FacilityPage />} />
+          <Route path="/facility/:facilitySlug/settings" element={<FacilitySettingsPage />} />
+          <Route path="/facility/:facilitySlug/sds-documents" element={<SDSDocumentsPage />} />
+          <Route path="/facility/:facilitySlug/incidents" element={<IncidentsPage />} />
+          <Route path="/qr-print" element={<QRCodePrintPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/sales-partner" element={<SalesPartnerPage />} />
+          <Route path="/sales-partner-terms" element={<SalesPartnerTermsPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+          <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
+          <Route path="/subscription-required" element={<SubscriptionRequiredPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
