@@ -148,6 +148,7 @@ const QRCodePrintPage = () => {
   }
 
   const facilityDisplayName = facilityData.facility_name || 'Facility';
+  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilitySlug}`;
 
   const PosterContent = () => (
     <div className="poster-content w-full h-full flex flex-col justify-between">

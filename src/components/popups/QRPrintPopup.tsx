@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Download, Printer } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import QRCodeLib from 'qrcode';
 
 interface QRPrintPopupProps {
@@ -21,12 +21,18 @@ interface QRPrintPopupProps {
 
 const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPopupProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const facilityDisplayName = facilityData.facility_name || 'Facility';
 
+  // Ensure we're using the correct domain
+  const correctedFacilityUrl = facilityUrl.includes('chemlabel-gpt.com') 
+    ? facilityUrl 
+    : `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+
   useEffect(() => {
-    if (isOpen && canvasRef.current) {
-      // Generate QR code with higher resolution for printing
-      QRCodeLib.toCanvas(canvasRef.current, facilityUrl, {
+    if (isOpen) {
+      // Generate QR code as data URL for reliable display in print
+      QRCodeLib.toDataURL(correctedFacilityUrl, {
         width: 400,
         margin: 3,
         color: {
@@ -34,31 +40,32 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
           light: '#ffffff'
         },
         errorCorrectionLevel: 'M'
-      }, (error) => {
+      }, (error, url) => {
         if (error) {
           console.error('QR Code generation failed:', error);
         } else {
           console.log('QR Code generated successfully for print');
+          setQrCodeDataUrl(url);
         }
       });
     }
-  }, [isOpen, facilityUrl]);
+  }, [isOpen, correctedFacilityUrl]);
 
   const handlePrint = () => {
     window.print();
   };
 
   const downloadQRCode = () => {
-    if (canvasRef.current) {
+    if (qrCodeDataUrl) {
       const link = document.createElement('a');
       link.download = `${facilityDisplayName}-QR-Code.png`;
-      link.href = canvasRef.current.toDataURL();
+      link.href = qrCodeDataUrl;
       link.click();
     }
   };
 
   const downloadFullPoster = () => {
-    if (canvasRef.current) {
+    if (qrCodeDataUrl) {
       // Create a high-resolution poster for download
       const posterCanvas = document.createElement('canvas');
       const ctx = posterCanvas.getContext('2d');
@@ -89,55 +96,59 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
       ctx.font = 'bold 90px Arial';
       ctx.fillText(facilityDisplayName, posterWidth / 2, 450);
 
-      // QR Code
-      const qrSize = 1000;
-      const qrX = (posterWidth - qrSize) / 2;
-      const qrY = 600;
+      // Load and draw QR code from data URL
+      const qrImage = new Image();
+      qrImage.onload = () => {
+        const qrSize = 1000;
+        const qrX = (posterWidth - qrSize) / 2;
+        const qrY = 600;
 
-      // Draw white background for QR code
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(qrX - 40, qrY - 40, qrSize + 80, qrSize + 80);
-      ctx.strokeStyle = '#cccccc';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(qrX - 40, qrY - 40, qrSize + 80, qrSize + 80);
+        // Draw white background for QR code
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - 40, qrY - 40, qrSize + 80, qrSize + 80);
+        ctx.strokeStyle = '#cccccc';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(qrX - 40, qrY - 40, qrSize + 80, qrSize + 80);
 
-      // Draw QR code from canvas
-      ctx.drawImage(canvasRef.current, qrX, qrY, qrSize, qrSize);
+        // Draw QR code
+        ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
 
-      // Instructions
-      ctx.font = 'bold 70px Arial';
-      ctx.fillStyle = '#000000';
-      ctx.fillText('Scan for Instant Safety Access', posterWidth / 2, 1800);
+        // Instructions
+        ctx.font = 'bold 70px Arial';
+        ctx.fillStyle = '#000000';
+        ctx.fillText('Scan for Instant Safety Access', posterWidth / 2, 1800);
 
-      const instructions = [
-        '1. Open your phone\'s camera app',
-        '2. Point camera at QR code above',
-        '3. Tap the notification to access safety data',
-        '4. No app download required'
-      ];
+        const instructions = [
+          '1. Open your phone\'s camera app',
+          '2. Point camera at QR code above',
+          '3. Tap the notification to access safety data',
+          '4. No app download required'
+        ];
 
-      ctx.font = '60px Arial';
-      instructions.forEach((instruction, index) => {
-        ctx.fillText(instruction, posterWidth / 2, 1950 + (index * 100));
-      });
+        ctx.font = '60px Arial';
+        instructions.forEach((instruction, index) => {
+          ctx.fillText(instruction, posterWidth / 2, 1950 + (index * 100));
+        });
 
-      // URL
-      ctx.font = '45px Arial';
-      ctx.fillStyle = '#666666';
-      ctx.fillText('Direct URL:', posterWidth / 2, 2450);
-      ctx.font = '40px monospace';
-      ctx.fillText(facilityUrl, posterWidth / 2, 2520);
+        // URL
+        ctx.font = '45px Arial';
+        ctx.fillStyle = '#666666';
+        ctx.fillText('Direct URL:', posterWidth / 2, 2450);
+        ctx.font = '40px monospace';
+        ctx.fillText(correctedFacilityUrl, posterWidth / 2, 2520);
 
-      // Footer
-      ctx.font = '50px Arial';
-      ctx.fillStyle = '#000000';
-      ctx.fillText('Scan with Phone Camera for Instant Access', posterWidth / 2, 2750);
+        // Footer
+        ctx.font = '50px Arial';
+        ctx.fillStyle = '#000000';
+        ctx.fillText('Scan with Phone Camera for Instant Access', posterWidth / 2, 2750);
 
-      // Download the poster
-      const link = document.createElement('a');
-      link.download = `${facilityDisplayName}-Safety-Poster.png`;
-      link.href = posterCanvas.toDataURL('image/png', 1.0);
-      link.click();
+        // Download the poster
+        const link = document.createElement('a');
+        link.download = `${facilityDisplayName}-Safety-Poster.png`;
+        link.href = posterCanvas.toDataURL('image/png', 1.0);
+        link.click();
+      };
+      qrImage.src = qrCodeDataUrl;
     }
   };
 
@@ -162,19 +173,28 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
             <div className="text-center space-y-6">
               <div className="bg-white border-2 border-gray-200 rounded-lg p-8 inline-block print:border-gray-800">
                 <div className="relative inline-block">
-                  <canvas 
-                    ref={canvasRef} 
-                    className="mx-auto border border-gray-200 rounded print:border-gray-800"
-                    style={{ display: 'block' }}
-                  />
-                  {/* Company logo overlay */}
-                  {facilityData.logo_url && (
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-lg shadow-lg border-2 border-gray-800">
+                  {qrCodeDataUrl ? (
+                    <div className="relative">
                       <img 
-                        src={facilityData.logo_url} 
-                        alt={`${facilityDisplayName} Logo`}
-                        className="w-16 h-16 object-contain"
+                        src={qrCodeDataUrl} 
+                        alt="Facility QR Code"
+                        className="mx-auto border border-gray-200 rounded print:border-gray-800 w-80 h-80"
+                        style={{ display: 'block' }}
                       />
+                      {/* Company logo overlay */}
+                      {facilityData.logo_url && (
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-lg shadow-lg border-2 border-gray-800">
+                          <img 
+                            src={facilityData.logo_url} 
+                            alt={`${facilityDisplayName} Logo`}
+                            className="w-16 h-16 object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-80 h-80 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                      <span className="text-gray-500">Generating QR Code...</span>
                     </div>
                   )}
                 </div>
@@ -203,7 +223,7 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 print:bg-white print:border-gray-800">
                 <p className="text-xs text-gray-600 mb-1">Direct URL:</p>
                 <code className="text-xs bg-white border border-gray-200 rounded px-2 py-1 block break-all print:border-gray-800">
-                  {facilityUrl}
+                  {correctedFacilityUrl}
                 </code>
               </div>
             </div>

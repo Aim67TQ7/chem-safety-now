@@ -30,9 +30,14 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
 
   const facilityDisplayName = facilityData.facility_name || 'Facility';
 
+  // Ensure we're using the correct domain
+  const correctedFacilityUrl = facilityUrl.includes('chemlabel-gpt.com') 
+    ? facilityUrl 
+    : `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+
   useEffect(() => {
     if (canvasRef.current) {
-      QRCodeLib.toCanvas(canvasRef.current, facilityUrl, {
+      QRCodeLib.toCanvas(canvasRef.current, correctedFacilityUrl, {
         width: 256,
         margin: 2,
         color: {
@@ -43,7 +48,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
         if (error) console.error('QR Code generation failed:', error);
       });
     }
-  }, [facilityUrl]);
+  }, [correctedFacilityUrl]);
 
   const downloadQRCode = async () => {
     if (canvasRef.current) {
@@ -77,13 +82,13 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
   };
 
   const copyUrl = async () => {
-    navigator.clipboard.writeText(facilityUrl);
+    navigator.clipboard.writeText(correctedFacilityUrl);
 
     // Log URL copy
     await interactionLogger.logQRCodeInteraction({
       actionType: 'copy_url',
       metadata: {
-        facilityUrl: facilityUrl,
+        facilityUrl: correctedFacilityUrl,
         facilityName: facilityDisplayName
       }
     });
@@ -91,7 +96,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
     await interactionLogger.logFacilityUsage({
       eventType: 'facility_url_copied',
       eventDetail: {
-        facilityUrl: facilityUrl
+        facilityUrl: correctedFacilityUrl
       }
     });
 
@@ -190,7 +195,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <p className="text-sm text-gray-600 mb-2">Facility URL:</p>
             <code className="text-sm bg-white border border-gray-200 rounded px-3 py-2 block break-all">
-              {facilityUrl}
+              {correctedFacilityUrl}
             </code>
           </div>
         </div>
@@ -255,7 +260,7 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
         isOpen={showPrintPopup}
         onClose={() => setShowPrintPopup(false)}
         facilityData={facilityData}
-        facilityUrl={facilityUrl}
+        facilityUrl={correctedFacilityUrl}
       />
     </div>
   );
