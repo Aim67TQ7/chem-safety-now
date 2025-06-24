@@ -27,14 +27,24 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
     setIsSearching(true);
     onSearchStart();
 
+    // Create a timeout promise that rejects after 15 seconds
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Search timed out after 15 seconds'));
+      }, 15000);
+    });
+
+    // Create the search promise
+    const searchPromise = supabase.functions.invoke('sds-search', {
+      body: {
+        product_name: searchQuery.trim(),
+        max_results: 3
+      }
+    });
+
     try {
-      // Call the enhanced SDS search function directly - limit to 3 results for user selection
-      const { data, error } = await supabase.functions.invoke('sds-search', {
-        body: {
-          product_name: searchQuery.trim(),
-          max_results: 3
-        }
-      });
+      // Race the search against the timeout
+      const { data, error } = await Promise.race([searchPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('❌ SDS search error:', error);
@@ -54,7 +64,12 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
     } catch (error: any) {
       console.error('❌ SDS search failed:', error);
       onSearchResults([]);
-      toast.error(`Search failed: ${error.message || 'Unknown error occurred'}`);
+      
+      if (error.message === 'Search timed out after 15 seconds') {
+        toast.error('Search timed out after 15 seconds. Please try a more specific search term.');
+      } else {
+        toast.error(`Search failed: ${error.message || 'Unknown error occurred'}`);
+      }
     } finally {
       setIsSearching(false);
     }
@@ -68,56 +83,48 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="w-5 h-5" />
           Search Safety Data Sheets
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="text-sm text-gray-600">
-            Enter a product name, material name, or manufacturer to search for Safety Data Sheets (SDS) documents:
-          </div>
-          
-          <div className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="e.g., Acetone, 3M Scotch-Weld, Loctite 242..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isSearching}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSearch}
-              disabled={isSearching || !searchQuery.trim()}
-              className="px-6"
-            >
-              {isSearching ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Searching...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4 mr-2" />
-                  Search
-                </>
-              )}
-            </Button>
-          </div>
+      <CardContent className="space-y-3">
+        <div className="text-sm text-gray-600">
+          Enter a product name, material name, or manufacturer to search for Safety Data Sheets:
+        </div>
+        
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="e.g., Acetone, 3M Scotch-Weld, Loctite 242..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isSearching}
+            className="flex-1"
+          />
+          <Button 
+            onClick={handleSearch}
+            disabled={isSearching || !searchQuery.trim()}
+            className="px-6"
+          >
+            {isSearching ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4 mr-2" />
+                Search
+              </>
+            )}
+          </Button>
+        </div>
 
-          <div className="text-xs text-gray-500">
-            <strong>Search Tips:</strong>
-            <ul className="mt-1 space-y-1">
-              <li>• Use specific product names for best results</li>
-              <li>• Include manufacturer name if known (e.g., "3M Adhesive")</li>
-              <li>• Try common chemical names (e.g., "Isopropyl Alcohol")</li>
-              <li>• CAS numbers work great if available</li>
-            </ul>
-          </div>
+        <div className="text-xs text-gray-500">
+          <strong>Tips:</strong> Use specific product names, include manufacturer if known, or try chemical names/CAS numbers. Search times out after 15 seconds.
         </div>
       </CardContent>
     </Card>
