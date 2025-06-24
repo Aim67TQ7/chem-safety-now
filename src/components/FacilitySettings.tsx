@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings, Upload, Save, Building2 } from "lucide-react";
+import { Settings, Upload, Save, Building2, Calendar } from "lucide-react";
 
 interface FacilityData {
   id: string;
@@ -20,6 +19,7 @@ interface FacilityData {
   user_id?: string;
   created_at: string;
   updated_at: string;
+  last_incident_date?: string | null;
 }
 
 interface FacilitySettingsProps {
@@ -36,7 +36,8 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
     contact_name: facilityData.contact_name || "",
     email: facilityData.email || "",
     address: facilityData.address || "",
-    logo_url: facilityData.logo_url || ""
+    logo_url: facilityData.logo_url || "",
+    last_incident_date: facilityData.last_incident_date || ""
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -171,6 +172,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
         email: formData.email,
         address: formData.address,
         logo_url: formData.logo_url,
+        last_incident_date: formData.last_incident_date || null,
         updated_at: new Date().toISOString()
       };
 
@@ -205,7 +207,8 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
     formData.contact_name !== (facilityData.contact_name || "") ||
     formData.email !== (facilityData.email || "") ||
     formData.address !== (facilityData.address || "") ||
-    formData.logo_url !== (facilityData.logo_url || "");
+    formData.logo_url !== (facilityData.logo_url || "") ||
+    formData.last_incident_date !== (facilityData.last_incident_date || "");
 
   return (
     <div className="space-y-6">
@@ -313,6 +316,23 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 placeholder="Enter facility address"
                 disabled={isLoading}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="last_incident_date" className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4" />
+                <span>Last Incident Date</span>
+              </Label>
+              <Input
+                id="last_incident_date"
+                type="date"
+                value={formData.last_incident_date}
+                onChange={(e) => handleInputChange('last_incident_date', e.target.value)}
+                disabled={isLoading}
+              />
+              <p className="text-xs text-gray-500">
+                Leave blank if no incidents have occurred
+              </p>
             </div>
           </div>
 

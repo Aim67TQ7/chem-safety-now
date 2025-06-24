@@ -126,6 +126,7 @@ export type Database = {
           facility_name: string | null
           feature_access_level: string | null
           id: string
+          last_incident_date: string | null
           logo_url: string | null
           slug: string
           stripe_customer_id: string | null
@@ -144,6 +145,7 @@ export type Database = {
           facility_name?: string | null
           feature_access_level?: string | null
           id?: string
+          last_incident_date?: string | null
           logo_url?: string | null
           slug: string
           stripe_customer_id?: string | null
@@ -162,6 +164,7 @@ export type Database = {
           facility_name?: string | null
           feature_access_level?: string | null
           id?: string
+          last_incident_date?: string | null
           logo_url?: string | null
           slug?: string
           stripe_customer_id?: string | null

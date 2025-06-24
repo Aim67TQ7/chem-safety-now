@@ -26,6 +26,24 @@ const FacilityActivityCard = ({ facilityId }: FacilityActivityCardProps) => {
   useEffect(() => {
     const fetchRecentActivity = async () => {
       try {
+        // Get facility data to check last_incident_date
+        const { data: facilityData } = await supabase
+          .from('facilities')
+          .select('last_incident_date')
+          .eq('id', facilityId)
+          .single();
+
+        // Calculate days since last incident using the facility's last_incident_date
+        if (facilityData?.last_incident_date) {
+          const lastIncidentDate = new Date(facilityData.last_incident_date);
+          const today = new Date();
+          const diffTime = Math.abs(today.getTime() - lastIncidentDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          setDaysSinceIncident(diffDays);
+        } else {
+          setDaysSinceIncident(365); // Default to 1 year if no incidents recorded
+        }
+
         // Get recent SDS interactions
         const { data: sdsData } = await supabase
           .from('sds_interactions')
@@ -41,25 +59,6 @@ const FacilityActivityCard = ({ facilityId }: FacilityActivityCardProps) => {
           .eq('facility_id', facilityId)
           .order('created_at', { ascending: false })
           .limit(3);
-
-        // Get recent incidents to calculate days since last incident
-        const { data: incidentData } = await supabase
-          .from('incidents')
-          .select('incident_date')
-          .eq('facility_id', facilityId)
-          .order('incident_date', { ascending: false })
-          .limit(1);
-
-        // Calculate days since last incident
-        if (incidentData && incidentData.length > 0) {
-          const lastIncidentDate = new Date(incidentData[0].incident_date);
-          const today = new Date();
-          const diffTime = Math.abs(today.getTime() - lastIncidentDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          setDaysSinceIncident(diffDays);
-        } else {
-          setDaysSinceIncident(365); // Default to 1 year if no incidents
-        }
 
         // Combine and format activities
         const combinedActivities: ActivityItem[] = [];
@@ -162,7 +161,7 @@ const FacilityActivityCard = ({ facilityId }: FacilityActivityCardProps) => {
           </div>
         </div>
       </CardContent>
-    </Card>
+    </div>
   );
 };
 

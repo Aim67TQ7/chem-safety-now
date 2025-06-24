@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ interface FacilityData {
   user_id?: string;
   created_at: string;
   updated_at: string;
+  last_incident_date?: string | null;
 }
 
 const FacilitySettingsPage = () => {
