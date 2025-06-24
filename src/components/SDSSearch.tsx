@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SDSSearchInput from './SDSSearchInput';
+import SDSResultCard from './SDSResultCard';
 import SDSSelectionDialog from './SDSSelectionDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface SDSSearchProps {
   facilityId: string;
@@ -40,30 +42,51 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
     console.log('🔍 Search results received:', results.length);
     setSearchResults(results);
     setIsSearching(false);
-
-    if (results.length === 1) {
-      // Auto-select if only one result
-      handleDocumentSelect(results[0]);
-    } else if (results.length > 1) {
-      // Show selection dialog for multiple results
-      setShowSelectionDialog(true);
-    }
   };
 
   const handleSearchStart = () => {
     setIsSearching(true);
     setSearchResults([]);
     setShowSelectionDialog(false);
+    setSelectedDocument(null);
   };
 
   const handleDocumentSelect = (document: any) => {
     console.log('📋 Document selected:', document.product_name);
     setSelectedDocument(document);
-    setShowSelectionDialog(false);
     
     if (onDocumentSelect) {
       onDocumentSelect(document);
     }
+  };
+
+  const handleView = (document: any) => {
+    console.log('👁️ Viewing document:', document.product_name);
+    handleDocumentSelect(document);
+    toast.success(`Viewing SDS for ${document.product_name}`);
+  };
+
+  const handleDownload = (document: any) => {
+    console.log('📥 Downloading document:', document.product_name);
+    if (document.source_url) {
+      window.open(document.source_url, '_blank');
+      toast.success(`Opening download for ${document.product_name}`);
+    } else {
+      toast.error('Download URL not available');
+    }
+  };
+
+  const handleParse = (document: any) => {
+    console.log('🔍 Parsing document:', document.product_name);
+    // Trigger text extraction/parsing
+    handleDocumentSelect(document);
+    toast.success(`Parsing SDS data for ${document.product_name}`);
+  };
+
+  const handleAskAI = (document: any) => {
+    console.log('🤖 Ask AI about document:', document.product_name);
+    handleDocumentSelect(document);
+    toast.success(`AI assistant ready for questions about ${document.product_name}`);
   };
 
   return (
@@ -87,6 +110,27 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
         </Card>
       )}
 
+      {/* Search Results as Cards */}
+      {!isSearching && searchResults.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Found {searchResults.length} SDS Document{searchResults.length > 1 ? 's' : ''}
+          </h3>
+          <div className="grid gap-4">
+            {searchResults.slice(0, 3).map((document, index) => (
+              <SDSResultCard
+                key={document.id || index}
+                document={document}
+                onView={handleView}
+                onDownload={handleDownload}
+                onParse={handleParse}
+                onAskAI={handleAskAI}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* No Results Message */}
       {!isSearching && searchResults.length === 0 && searchResults !== null && (
         <Card className="border-gray-200">
@@ -104,7 +148,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
         </Card>
       )}
 
-      {/* Selection Dialog for Multiple Results - Fixed prop name */}
+      {/* Selection Dialog for Multiple Results - if needed for other flows */}
       <SDSSelectionDialog
         isOpen={showSelectionDialog}
         onClose={() => setShowSelectionDialog(false)}
