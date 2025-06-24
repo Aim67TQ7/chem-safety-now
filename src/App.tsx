@@ -1,3 +1,5 @@
+
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,33 +25,35 @@ import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/facility/:facilitySlug" element={<FacilityPage />} />
-          <Route path="/facility/:facilitySlug/settings" element={<FacilitySettingsPage />} />
-          <Route path="/facility/:facilitySlug/sds-documents" element={<SDSDocumentsPage />} />
-          <Route path="/facility/:facilitySlug/incidents" element={<IncidentsPage />} />
-          <Route path="/qr-print" element={<QRCodePrintPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/sales-partner" element={<SalesPartnerPage />} />
-          <Route path="/sales-partner-terms" element={<SalesPartnerTermsPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
-          <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
-          <Route path="/subscription-required" element={<SubscriptionRequiredPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/facility/:facilitySlug" element={<FacilityPage />} />
+            <Route path="/facility/:facilitySlug/settings" element={<FacilitySettingsPage />} />
+            <Route path="/facility/:facilitySlug/sds-documents" element={<SDSDocumentsPage />} />
+            <Route path="/facility/:facilitySlug/incidents" element={<IncidentsPage />} />
+            <Route path="/qr-print" element={<QRCodePrintPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/sales-partner" element={<SalesPartnerPage />} />
+            <Route path="/sales-partner-terms" element={<SalesPartnerTermsPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+            <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
+            <Route path="/subscription-required" element={<SubscriptionRequiredPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
