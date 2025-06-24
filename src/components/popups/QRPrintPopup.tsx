@@ -21,133 +21,28 @@ interface QRPrintPopupProps {
 
 const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPopupProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const posterCanvasRef = useRef<HTMLCanvasElement>(null);
   const facilityDisplayName = facilityData.facility_name || 'Facility';
 
   useEffect(() => {
-    if (isOpen && canvasRef.current && posterCanvasRef.current) {
-      // Generate QR code
+    if (isOpen && canvasRef.current) {
+      // Generate QR code with higher resolution for printing
       QRCodeLib.toCanvas(canvasRef.current, facilityUrl, {
-        width: 300,
-        margin: 2,
+        width: 400,
+        margin: 3,
         color: {
           dark: '#000000',
           light: '#ffffff'
-        }
+        },
+        errorCorrectionLevel: 'M'
       }, (error) => {
         if (error) {
           console.error('QR Code generation failed:', error);
-          return;
+        } else {
+          console.log('QR Code generated successfully for print');
         }
-        
-        // Generate full poster canvas
-        generatePosterCanvas();
       });
     }
-  }, [isOpen, facilityUrl, facilityDisplayName]);
-
-  const generatePosterCanvas = () => {
-    const posterCanvas = posterCanvasRef.current;
-    const qrCanvas = canvasRef.current;
-    
-    if (!posterCanvas || !qrCanvas) return;
-    
-    const ctx = posterCanvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Set poster dimensions (8.5" x 11" at 300 DPI = 2550 x 3300 pixels)
-    const posterWidth = 850;
-    const posterHeight = 1100;
-    posterCanvas.width = posterWidth;
-    posterCanvas.height = posterHeight;
-    
-    // Fill background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, posterWidth, posterHeight);
-    
-    // Add border
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(20, 20, posterWidth - 40, posterHeight - 40);
-    
-    // Title
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Chemical Safety Portal', posterWidth / 2, 100);
-    
-    // Facility name
-    ctx.font = 'bold 36px Arial';
-    ctx.fillText(facilityDisplayName, posterWidth / 2, 160);
-    
-    // QR Code (center it)
-    const qrSize = 400;
-    const qrX = (posterWidth - qrSize) / 2;
-    const qrY = 220;
-    
-    // Draw white background for QR code
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
-    ctx.strokeStyle = '#cccccc';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
-    
-    // Draw QR code
-    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-    
-    // Logo overlay (if available)
-    if (facilityData.logo_url) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const logoSize = 80;
-        const logoX = (posterWidth - logoSize) / 2;
-        const logoY = qrY + (qrSize - logoSize) / 2;
-        
-        // White circle background
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        // Draw logo
-        ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
-      };
-      img.src = facilityData.logo_url;
-    }
-    
-    // Instructions
-    ctx.font = 'bold 28px Arial';
-    ctx.fillStyle = '#000000';
-    ctx.fillText('How to Access Safety Data:', posterWidth / 2, 720);
-    
-    const instructions = [
-      '1. Open your phone\'s camera app',
-      '2. Point camera at QR code above',
-      '3. Tap the notification to access safety data',
-      '4. No app download required'
-    ];
-    
-    ctx.font = '24px Arial';
-    instructions.forEach((instruction, index) => {
-      ctx.fillText(instruction, posterWidth / 2, 770 + (index * 40));
-    });
-    
-    // URL
-    ctx.font = '18px Arial';
-    ctx.fillStyle = '#666666';
-    ctx.fillText('Direct URL:', posterWidth / 2, 950);
-    ctx.font = '16px monospace';
-    ctx.fillText(facilityUrl, posterWidth / 2, 980);
-    
-    // Footer
-    ctx.font = '20px Arial';
-    ctx.fillStyle = '#000000';
-    ctx.fillText('Scan with Phone Camera for Instant Access', posterWidth / 2, 1050);
-  };
+  }, [isOpen, facilityUrl]);
 
   const handlePrint = () => {
     window.print();
@@ -163,10 +58,85 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
   };
 
   const downloadFullPoster = () => {
-    if (posterCanvasRef.current) {
+    if (canvasRef.current) {
+      // Create a high-resolution poster for download
+      const posterCanvas = document.createElement('canvas');
+      const ctx = posterCanvas.getContext('2d');
+      if (!ctx) return;
+
+      // Set high resolution poster dimensions (8.5" x 11" at 300 DPI)
+      const posterWidth = 2550;
+      const posterHeight = 3300;
+      posterCanvas.width = posterWidth;
+      posterCanvas.height = posterHeight;
+
+      // Fill background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, posterWidth, posterHeight);
+
+      // Add border
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(40, 40, posterWidth - 80, posterHeight - 80);
+
+      // Title
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 120px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Chemical Safety Portal', posterWidth / 2, 300);
+
+      // Facility name
+      ctx.font = 'bold 90px Arial';
+      ctx.fillText(facilityDisplayName, posterWidth / 2, 450);
+
+      // QR Code
+      const qrSize = 1000;
+      const qrX = (posterWidth - qrSize) / 2;
+      const qrY = 600;
+
+      // Draw white background for QR code
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(qrX - 40, qrY - 40, qrSize + 80, qrSize + 80);
+      ctx.strokeStyle = '#cccccc';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(qrX - 40, qrY - 40, qrSize + 80, qrSize + 80);
+
+      // Draw QR code from canvas
+      ctx.drawImage(canvasRef.current, qrX, qrY, qrSize, qrSize);
+
+      // Instructions
+      ctx.font = 'bold 70px Arial';
+      ctx.fillStyle = '#000000';
+      ctx.fillText('Scan for Instant Safety Access', posterWidth / 2, 1800);
+
+      const instructions = [
+        '1. Open your phone\'s camera app',
+        '2. Point camera at QR code above',
+        '3. Tap the notification to access safety data',
+        '4. No app download required'
+      ];
+
+      ctx.font = '60px Arial';
+      instructions.forEach((instruction, index) => {
+        ctx.fillText(instruction, posterWidth / 2, 1950 + (index * 100));
+      });
+
+      // URL
+      ctx.font = '45px Arial';
+      ctx.fillStyle = '#666666';
+      ctx.fillText('Direct URL:', posterWidth / 2, 2450);
+      ctx.font = '40px monospace';
+      ctx.fillText(facilityUrl, posterWidth / 2, 2520);
+
+      // Footer
+      ctx.font = '50px Arial';
+      ctx.fillStyle = '#000000';
+      ctx.fillText('Scan with Phone Camera for Instant Access', posterWidth / 2, 2750);
+
+      // Download the poster
       const link = document.createElement('a');
       link.download = `${facilityDisplayName}-Safety-Poster.png`;
-      link.href = posterCanvasRef.current.toDataURL('image/png', 1.0);
+      link.href = posterCanvas.toDataURL('image/png', 1.0);
       link.click();
     }
   };
@@ -195,6 +165,7 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
                   <canvas 
                     ref={canvasRef} 
                     className="mx-auto border border-gray-200 rounded print:border-gray-800"
+                    style={{ display: 'block' }}
                   />
                   {/* Company logo overlay */}
                   {facilityData.logo_url && (
@@ -237,12 +208,6 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
               </div>
             </div>
           </Card>
-
-          {/* Hidden poster canvas for full poster generation */}
-          <canvas 
-            ref={posterCanvasRef} 
-            className="hidden"
-          />
 
           {/* Action Buttons - Hidden when printing */}
           <div className="flex gap-4 justify-center print:hidden">
