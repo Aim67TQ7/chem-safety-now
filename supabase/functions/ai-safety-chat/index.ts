@@ -16,7 +16,25 @@ interface ChatRequest {
 }
 
 function buildSafetyManagerPrompt(sdsDocument?: any, facilityData?: any): string {
-  let systemPrompt = `You are Stan, an experienced Chemical Safety Expert with 15 years in industrial safety. You're knowledgeable, approachable, and always prioritize worker safety. You speak conversationally but professionally, like a trusted colleague who genuinely cares about keeping people safe.
+  let systemPrompt = `You are Stan, an experienced Chemical Safety Expert with 15 years in industrial safety. You're knowledgeable, approachable, and always prioritize worker safety.`;
+
+  // Check if this is a signup assistance scenario
+  if (facilityData?.custom_instructions?.includes('helping with facility setup')) {
+    systemPrompt = `You are Stan, a friendly setup assistant helping users complete their facility registration form. 
+
+SIGNUP ASSISTANT RULES:
+- Be EXTREMELY concise - maximum 2 sentences
+- Always provide clear A-B choices when possible
+- Ask only ONE question at a time
+- Focus on missing form fields first
+- Use this format: "Got [info]. [Next question]?" 
+- Offer binary choices like "A) Submit now B) Review first?"
+- If user goes off-topic, redirect: "Let's finish setup first. [Next question]?"
+- Keep responses under 50 words when possible
+
+PERSONALITY: Efficient, helpful, direct - like a smart assistant who values the user's time.`;
+  } else {
+    systemPrompt += ` You speak conversationally but professionally, like a trusted colleague who genuinely cares about keeping people safe.
 
 PERSONALITY TRAITS:
 - Warm but professional - you're the safety expert people actually want to talk to
@@ -43,9 +61,14 @@ CONVERSATION STYLE:
 - Ask follow-up questions to better help
 - Provide context for recommendations
 - Share brief relevant experiences when helpful`;
+  }
 
   if (facilityData?.facility_name) {
     systemPrompt += `\n\nFACILITY CONTEXT: You're currently helping someone at ${facilityData.facility_name}.`;
+  }
+
+  if (facilityData?.custom_instructions) {
+    systemPrompt += `\n\nCUSTOM INSTRUCTIONS: ${facilityData.custom_instructions}`;
   }
 
   if (sdsDocument) {
@@ -96,7 +119,7 @@ You have complete SDS data for: ${sdsDocument.product_name}`;
     }
     
     systemPrompt += `\n\nUse this SDS data to provide specific, accurate guidance for ${sdsDocument.product_name}. Always cite the SDS when referencing this information.`;
-  } else {
+  } else if (!facilityData?.custom_instructions?.includes('helping with facility setup')) {
     systemPrompt += `\n\nNo specific chemical selected. Provide general safety guidance and encourage the user to search for specific chemicals when discussing particular substances.`;
   }
 
@@ -114,7 +137,8 @@ serve(async (req) => {
     console.log('🤖 Safety Stan Chat request:', { 
       message: message.substring(0, 100), 
       hasSDSData: !!sds_document,
-      facilityName: facility_data?.facility_name 
+      facilityName: facility_data?.facility_name,
+      isSignupAssistant: facility_data?.custom_instructions?.includes('helping with facility setup')
     });
 
     if (!openAIApiKey) {
@@ -136,6 +160,9 @@ serve(async (req) => {
 
     console.log('🔄 Calling OpenAI API...');
     
+    // Use different parameters for signup vs regular chat
+    const isSignupAssistant = facility_data?.custom_instructions?.includes('helping with facility setup');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -145,8 +172,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: messages,
-        temperature: 0.7,
-        max_tokens: 1000,
+        temperature: isSignupAssistant ? 0.3 : 0.7, // Lower temperature for more consistent signup responses
+        max_tokens: isSignupAssistant ? 200 : 1000, // Shorter responses for signup
         presence_penalty: 0.1,
         frequency_penalty: 0.1
       }),

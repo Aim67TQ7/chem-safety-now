@@ -32,7 +32,7 @@ interface Message {
 }
 
 export default function GlobalSafetyStanWidget({
-  initialPosition = { x: 400, y: 50 }, // Updated starting position
+  initialPosition = { x: 400, y: 50 },
   companyName = 'ChemLabel-GPT',
   customInstructions = '',
   industry = 'Chemical Safety',
@@ -88,7 +88,7 @@ export default function GlobalSafetyStanWidget({
       setMessages([{
         id: '1',
         role: 'assistant',
-        content: `Hi! I'm Stan, and I'm here to help you set up your facility quickly and easily.\n\nI can help you fill out the form by asking you a few questions, or you can close this chat and fill it out manually. What would you prefer?`,
+        content: `Hi! I'm Stan. I can help you fill out this form quickly.\n\n**A)** Let me guide you step-by-step\n**B)** I'll fill it out myself\n\nWhich would you prefer?`,
         timestamp: new Date()
       }]);
     } else {
@@ -269,6 +269,27 @@ export default function GlobalSafetyStanWidget({
     return extractedData;
   };
 
+  const getNextMissingField = () => {
+    if (!formData?.facilityName) return 'facilityName';
+    if (!formData?.contactName) return 'contactName';
+    if (!formData?.address) return 'address';
+    return null;
+  };
+
+  const getNextQuestion = () => {
+    const missing = getNextMissingField();
+    switch (missing) {
+      case 'facilityName':
+        return 'What\'s your facility name?';
+      case 'contactName':
+        return 'What\'s your full name?';
+      case 'address':
+        return 'What\'s your facility address?';
+      default:
+        return 'Perfect! All set. **A)** Submit now **B)** Review details first?';
+    }
+  };
+
   const isFormComplete = () => {
     return formData?.facilityName && formData?.contactName && formData?.address && formData?.email;
   };
@@ -298,7 +319,7 @@ export default function GlobalSafetyStanWidget({
         const extractedData = extractFormDataFromResponse(userMessage) || [];
         
         // Check if user is asking questions not related to signup
-        const signupRelatedKeywords = ['facility', 'company', 'name', 'address', 'contact', 'setup', 'form'];
+        const signupRelatedKeywords = ['facility', 'company', 'name', 'address', 'contact', 'setup', 'form', 'a)', 'b)', 'guide', 'step'];
         const isSignupRelated = signupRelatedKeywords.some(keyword => 
           userMessage.toLowerCase().includes(keyword)
         );
@@ -308,7 +329,7 @@ export default function GlobalSafetyStanWidget({
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: `I'd be happy to help with that! I have those answers easily available once we get you inside. Let's finish setting up your facility first - I just need a few more details from you. What's your facility name?`,
+            content: `I'd be happy to help with that! Let's finish your setup first. ${getNextQuestion()}`,
             timestamp: new Date()
           };
           setMessages(prev => [...prev, assistantMessage]);
@@ -317,51 +338,23 @@ export default function GlobalSafetyStanWidget({
           return;
         }
 
-        // If we extracted data, acknowledge it before getting AI response
+        // If we extracted data, acknowledge it and ask next question
         if (extractedData.length > 0) {
-          // Add a brief acknowledgment with what was captured
-          const acknowledgment = `Perfect! I've added ${extractedData.join(' and ')} to your form. `;
+          const nextQuestion = getNextQuestion();
+          const acknowledgment = `Got it! ✓ ${extractedData.join(' and ')}\n\n${nextQuestion}`;
           
-          // Build context about current form state
-          let formContext = '';
-          if (formData) {
-            formContext = `Current form data:
-- Facility Name: ${formData.facilityName || 'Not filled'}
-- Contact Name: ${formData.contactName || 'Not filled'}
-- Address: ${formData.address || 'Not filled'}
-- Email: ${formData.email || 'Not filled'}`;
-          }
-
-          const conversationHistory = messages.slice(1).map(msg => ({
-            role: msg.role === 'user' ? 'user' : 'assistant',
-            content: msg.content
-          }));
-
-          const { data, error } = await supabase.functions.invoke('ai-safety-chat', {
-            body: {
-              message: userMessage,
-              conversation_history: conversationHistory,
-              sds_document: null,
-              facility_data: {
-                facility_name: companyName,
-                industry: industry,
-                custom_instructions: `You are Stan, helping with facility setup. Start your response with: "${acknowledgment}" then continue being direct and helpful. Ask one question at a time to gather missing information. Always prioritize completing the signup form first before answering other questions. If users ask about other topics, redirect them back to completing the signup. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
-              }
-            }
-          });
-
-          if (error) throw new Error(error.message || 'Failed to get AI response');
-
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: data.response,
+            content: acknowledgment,
             timestamp: new Date()
           };
 
           setMessages(prev => [...prev, assistantMessage]);
+          setIsLoading(false);
+          setIsThinking(false);
+          return;
         } else {
-          // Regular AI response without extracted data
           // Build context about current form state
           let formContext = '';
           if (formData) {
@@ -385,7 +378,7 @@ export default function GlobalSafetyStanWidget({
               facility_data: {
                 facility_name: companyName,
                 industry: industry,
-                custom_instructions: `You are Stan, helping with facility setup. Be direct and helpful. Ask one question at a time to gather missing information. Always prioritize completing the signup form first before answering other questions. If users ask about other topics, redirect them back to completing the signup. ${formContext}\n\nYour goal is to help complete the facility setup form. Ask about missing fields or clarify information.`
+                custom_instructions: `You are Stan, helping with facility setup. Be VERY concise - 1-2 sentences max. Always offer clear A-B choices when possible. Ask one question at a time. Focus on completing signup form first. ${formContext}\n\nNext missing field: ${getNextMissingField() || 'Complete!'}\nUse this pattern: "Got [info]. [Next question]?" or offer A-B choices like "A) Submit now B) Review first?"`
               }
             }
           });
@@ -471,7 +464,7 @@ export default function GlobalSafetyStanWidget({
   const sendQuickAction = async (action: string) => {
     if (isSignupPage) {
       if (action === 'start_setup') {
-        await sendMessage("I'd like your help filling out the form step by step.");
+        await sendMessage("A) Guide me step-by-step");
       } else if (action === 'manual_form') {
         setIsOpen(false);
         toast({
@@ -625,8 +618,34 @@ export default function GlobalSafetyStanWidget({
 
           {!isMinimized && (
             <>
+              {/* Quick Actions - Only show on signup page with A-B choices */}
+              {isSignupPage && (
+                <div className="p-3 bg-gray-50/80 border-b backdrop-blur-sm">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => sendQuickAction('start_setup')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      A) Guide Me
+                    </Button>
+                    <Button
+                      onClick={() => sendQuickAction('manual_form')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      B) Manual Fill
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Quick Actions - Only show on non-homepage */}
-              {!isHomepage && (
+              {!isHomepage && !isSignupPage && (
                 <div className="p-3 bg-gray-50/80 border-b backdrop-blur-sm">
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -664,7 +683,7 @@ export default function GlobalSafetyStanWidget({
               <div 
                 className="flex-1 overflow-y-auto p-4 space-y-3" 
                 style={{ 
-                  height: isHomepage ? `${chatSize.height - 200}px` : `${chatSize.height - 260}px`,
+                  height: isHomepage ? `${chatSize.height - 200}px` : isSignupPage ? `${chatSize.height - 260}px` : `${chatSize.height - 260}px`,
                   maxHeight: `${chatSize.height - 160}px`
                 }}
               >
