@@ -243,7 +243,7 @@ const FacilityPage = () => {
         <SDSViewerPopup
           isOpen={showSDSViewer}
           onClose={() => setShowSDSViewer(false)}
-          document={selectedDocument}
+          sdsDocument={selectedDocument}
         />
 
         {/* SDS Selection Dialog */}
