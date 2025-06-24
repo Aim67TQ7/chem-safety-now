@@ -104,13 +104,12 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
         </Card>
       )}
 
-      {/* Selection Dialog for Multiple Results */}
+      {/* Selection Dialog for Multiple Results - Fixed prop name */}
       <SDSSelectionDialog
         isOpen={showSelectionDialog}
         onClose={() => setShowSelectionDialog(false)}
-        documents={searchResults}
-        onDocumentSelect={handleDocumentSelect}
-        facilityId={facilityId}
+        sdsDocuments={searchResults}
+        onSaveSelected={handleDocumentSelect}
       />
 
       {/* Selected Document Display */}

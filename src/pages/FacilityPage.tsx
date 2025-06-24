@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import QRCodePopup from "@/components/popups/QRCodePopup";
 import SDSViewerPopup from "@/components/popups/SDSViewerPopup";
 import SDSSelectionDialog from "@/components/SDSSelectionDialog";
+import SDSSearch from "@/components/SDSSearch";
 import { SetupFailureDialog } from "@/components/SetupFailureDialog";
 
 interface FacilityData {
@@ -42,6 +42,7 @@ const FacilityPage = () => {
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [showSDSViewer, setShowSDSViewer] = useState(false);
+  const [showSDSSearch, setShowSDSSearch] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [sdsSearchResults, setSdsSearchResults] = useState<any[]>([]);
   const [showSDSSelection, setShowSDSSelection] = useState(false);
@@ -57,48 +58,8 @@ const FacilityPage = () => {
         navigate(`/facility/${facilitySlug}/settings`);
         break;
       case 'sds_search':
-        // Directly search SDS documents using Google CSE
-        console.log('Starting SDS search...');
-        try {
-          // Show loading state
-          toast({
-            title: "Searching SDS Documents",
-            description: "Searching for safety data sheets...",
-          });
-
-          // Call the SDS search function directly
-          const { data: searchResult, error: searchError } = await supabase.functions.invoke('sds-search', {
-            body: {
-              product_name: 'search_placeholder', // This will need to be replaced with actual search term
-              max_results: 10
-            }
-          });
-
-          if (searchError) {
-            console.error('SDS search error:', searchError);
-            toast({
-              title: "Search Error",
-              description: "Failed to search SDS documents. Please try again.",
-              variant: "destructive"
-            });
-            return;
-          }
-
-          if (searchResult?.results && searchResult.results.length > 0) {
-            setSdsSearchResults(searchResult.results);
-            setShowSDSSelection(true);
-          } else {
-            // Open AI assistant for search guidance
-            setShowAIAssistant(true);
-          }
-        } catch (error) {
-          console.error('SDS search failed:', error);
-          toast({
-            title: "Search Failed",
-            description: "Unable to search SDS documents. Opening AI assistant for help.",
-          });
-          setShowAIAssistant(true);
-        }
+        // Show the SDS search interface directly
+        setShowSDSSearch(true);
         break;
       case 'incidents':
         navigate(`/facility/${facilitySlug}/incidents`);
@@ -190,6 +151,7 @@ const FacilityPage = () => {
     setSelectedDocument(document);
     setShowSDSSelection(false);
     setShowSDSViewer(true);
+    setShowSDSSearch(false);
   };
 
   if (isLoading) {
@@ -238,8 +200,8 @@ const FacilityPage = () => {
         <SubscriptionPlansModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
-          facilityId={facilityData.id}
-          facilitySlug={facilityData.slug}
+          facilityId={facilityData?.id || ''}
+          facilitySlug={facilityData?.slug || ''}
         />
 
         {/* AI Assistant Popup */}
@@ -267,8 +229,28 @@ const FacilityPage = () => {
           isOpen={showQRCode}
           onClose={() => setShowQRCode(false)}
           facilityData={facilityData}
-          facilityUrl={`${window.location.origin}/facility/${facilityData.slug}`}
+          facilityUrl={`${window.location.origin}/facility/${facilityData?.slug}`}
         />
+
+        {/* SDS Search Dialog */}
+        {showSDSSearch && facilityData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold">Search Safety Data Sheets</h2>
+                  <Button variant="ghost" onClick={() => setShowSDSSearch(false)}>
+                    ✕
+                  </Button>
+                </div>
+                <SDSSearch
+                  facilityId={facilityData.id}
+                  onDocumentSelect={handleDocumentSelect}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SDS Viewer Popup */}
         <SDSViewerPopup
