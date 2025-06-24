@@ -28,11 +28,11 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
     onSearchStart();
 
     try {
-      // Call the enhanced SDS search function directly
+      // Call the enhanced SDS search function directly - limit to 3 results for user selection
       const { data, error } = await supabase.functions.invoke('sds-search', {
         body: {
           product_name: searchQuery.trim(),
-          max_results: 10
+          max_results: 3
         }
       });
 
@@ -115,7 +115,7 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
               <li>• Use specific product names for best results</li>
               <li>• Include manufacturer name if known (e.g., "3M Adhesive")</li>
               <li>• Try common chemical names (e.g., "Isopropyl Alcohol")</li>
-              <li>• Use CAS numbers if available</li>
+              <li>• CAS numbers work great if available</li>
             </ul>
           </div>
         </div>
