@@ -1,877 +1,143 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, Bot, Printer, Download, FileText, ExternalLink, AlertCircle, CheckCircle, RefreshCw, Save, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
-import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
-import SDSViewerPopup from "@/components/popups/SDSViewerPopup";
-import SDSSelectionDialog from "@/components/SDSSelectionDialog";
-import { interactionLogger } from "@/services/interactionLogger";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import SDSSearchInput from './SDSSearchInput';
+import SDSSelectionDialog from './SDSSelectionDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent } from '@/components/ui/card';
+import { FileText, AlertCircle } from 'lucide-react';
 
 interface SDSSearchProps {
-  facilityData: any;
-  onSearchStart?: () => void;
+  facilityId: string;
+  onDocumentSelect?: (document: any) => void;
 }
 
-interface MatchResult {
-  score: number;
-  reasons: string[];
-  autoSelect: boolean;
-}
-
-interface SDSDocument {
-  id: string;
-  job_id?: string;
-  document_type: 'safety_data_sheet' | 'regulatory_sheet' | 'regulatory_sheet_article' | 'unknown_document';
-  product_name: string;
-  manufacturer?: string;
-  preparation_date?: string;
-  revision_date?: string;
-  source_url: string;
-  bucket_url?: string;
-  file_name: string;
-  file_size?: number;
-  file_type?: string;
-  full_text?: string;
-  hmis_codes?: {
-    health?: number;
-    flammability?: number;
-    physical?: number;
-    ppe?: string;
-  };
-  h_codes?: Array<{
-    code: string;
-    description: string;
-  }>;
-  pictograms?: Array<{
-    ghs_code: string;
-    name: string;
-    description?: string;
-  }>;
-  nfpa_codes?: {
-    health?: number;
-    flammability?: number;
-    instability?: number;
-    special?: string;
-  };
-  signal_word?: string;
-  hazard_statements?: string[];
-  precautionary_statements?: string[];
-  physical_hazards?: string[];
-  health_hazards?: string[];
-  environmental_hazards?: string[];
-  first_aid?: {
-    inhalation?: string;
-    skin_contact?: string;
-    eye_contact?: string;
-    ingestion?: string;
-  };
-  cas_number?: string;
-  regulatory_notes?: string[];
-  created_at: string;
-  confidence?: MatchResult;
-  extraction_status?: 'pending' | 'processing' | 'complete';
-  extraction_message?: string;
-}
-
-const API_BASE_URL = 'https://cheerful-fascination.railway.app';
-
-const SDSSearch = ({ facilityData, onSearchStart }: SDSSearchProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SDSDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("Searching...");
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
-  const [showLabelPrinter, setShowLabelPrinter] = useState(false);
-  const [showSDSViewer, setShowSDSViewer] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
-  const [backendHealth, setBackendHealth] = useState<'checking' | 'healthy' | 'unhealthy'>('checking');
-  const [connectionError, setConnectionError] = useState<string>('');
+const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) => {
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
-  const [multipleResults, setMultipleResults] = useState<SDSDocument[]>([]);
-  const { toast } = useToast();
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Health check on component mount
-  useEffect(() => {
-    checkBackendHealth();
-  }, []);
-
-  const checkBackendHealth = async () => {
-    setBackendHealth('checking');
-    setConnectionError('');
-    
-    try {
-      console.log('🔍 Checking Supabase Edge Functions health');
+  // Query for existing SDS documents in the library
+  const { data: existingDocuments } = useQuery({
+    queryKey: ['sds-documents-library'],
+    queryFn: async () => {
+      console.log('📚 Fetching SDS documents library...');
+      const response = await supabase.functions.invoke('sds-documents');
       
-      // Test the Supabase connection by calling the documents endpoint
-      const { data, error } = await supabase.functions.invoke('sds-documents', {
-        method: 'GET',
-      });
-
-      if (error) {
-        console.error('❌ Supabase function error:', error);
-        setBackendHealth('unhealthy');
-        setConnectionError(`Supabase function error: ${error.message}`);
-      } else {
-        console.log('✅ Supabase Edge Functions connected successfully');
-        setBackendHealth('healthy');
-        setConnectionError('');
-      }
-    } catch (error) {
-      console.error('❌ Health check error:', error);
-      setBackendHealth('unhealthy');
-      
-      if (error instanceof Error) {
-        setConnectionError(error.message);
-      } else {
-        setConnectionError('Unknown connection error');
-      }
-    }
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-
-    // Call onSearchStart callback if provided
-    if (onSearchStart) {
-      onSearchStart();
-    }
-
-    setIsLoading(true);
-    setLoadingMessage("Searching for documents...");
-    
-    await interactionLogger.logFacilityUsage({
-      eventType: 'sds_search_initiated',
-      eventDetail: {
-        searchQuery: searchQuery.trim(),
-        facilityName: facilityData.facilityName
-      }
-    });
-
-    try {
-      console.log('🔍 Starting search with query:', searchQuery.trim());
-      
-      const { data, error } = await supabase.functions.invoke('sds-search', {
-        body: {
-          product_name: searchQuery.trim(),
-          max_results: 10
-        }
-      });
-
-      if (error) {
-        throw new Error(`Search failed: ${error.message}`);
-      }
-
-      console.log('📊 Search response data:', data);
-      
-      // Handle immediate results
-      if (data.results) {
-        const results = Array.isArray(data.results) ? data.results : [data.results];
-        console.log('✅ Setting search results:', results);
-        
-        // Handle auto-selected results
-        if (data.auto_selected && results.length === 1) {
-          const autoSelectedDoc = results[0];
-          setSearchResults(results);
-          
-          let statusMessage = `Auto-selected "${autoSelectedDoc.product_name}" with ${(data.confidence_score * 100).toFixed(1)}% confidence. Matched on: ${data.match_reasons?.join(', ') || 'multiple criteria'}.`;
-          
-          if (data.source === 'enhanced_google_cse_search_with_downloads') {
-            statusMessage += ' All PDFs have been saved to storage.';
-          }
-          
-          if (autoSelectedDoc.extraction_status === 'processing') {
-            statusMessage += ' Extracting hazard data in background...';
-          }
-          
-          toast({
-            title: "Perfect Match Found!",
-            description: statusMessage,
-            variant: "default"
-          });
-        } else if (results.length > 1) {
-          // Multiple results found - show with confidence indicators
-          setMultipleResults(results);
-          setShowSelectionDialog(true);
-          
-          const topScore = results[0]?.confidence?.score || 0;
-          let toastMessage = `Found ${results.length} potential matches. Top match: ${(topScore * 100).toFixed(1)}% confidence.`;
-          
-          if (data.source === 'enhanced_google_cse_search_with_downloads') {
-            toastMessage += ' All PDFs have been downloaded and saved to storage.';
-          }
-          
-          toast({
-            title: "Multiple Matches Found",
-            description: toastMessage + ' Please select the correct one.',
-            variant: "default"
-          });
-        } else {
-          setSearchResults(results);
-        }
-      } else if (data.job_id) {
-        // Job-based processing - poll for results with enhanced messaging
-        console.log('⏳ Polling for job results:', data.job_id);
-        setLoadingMessage("Downloading and processing PDF documents...");
-        await pollJobResults(data.job_id);
-      } else {
-        // Fallback to documents list
-        console.log('📋 No direct results, falling back to document list');
-        setLoadingMessage("Loading existing documents...");
-        await fetchAllDocuments();
+      if (response.error) {
+        console.error('❌ Error fetching documents library:', response.error);
+        return [];
       }
       
-      await interactionLogger.logFacilityUsage({
-        eventType: 'sds_search_completed',
-        eventDetail: {
-          searchQuery: searchQuery.trim(),
-          resultsCount: searchResults.length,
-          autoSelected: data.auto_selected || false,
-          confidenceScore: data.confidence_score || 0,
-          allPDFsDownloaded: data.source?.includes('downloads') || false
-        }
-      });
+      console.log('✅ Fetched documents library:', response.data?.documents?.length || 0);
+      return response.data?.documents || [];
+    },
+    enabled: true
+  });
 
-    } catch (error) {
-      console.error('❌ Search error:', error);
-      
-      // Fallback to searching existing documents
-      try {
-        console.log('🔄 Attempting fallback to document list');
-        setLoadingMessage("Loading existing documents...");
-        await fetchAllDocuments();
-        toast({
-          title: "Search Notice",
-          description: "Showing existing documents. New document processing may be unavailable.",
-          variant: "default"
-        });
-      } catch (fallbackError) {
-        console.error('❌ Fallback search error:', fallbackError);
-        toast({
-          title: "Search Error",
-          description: "Unable to search SDS documents. Please check your connection and try again.",
-          variant: "destructive"
-        });
-      }
-    } finally {
-      setIsLoading(false);
-      setLoadingMessage("Searching...");
+  const handleSearchResults = (results: any[]) => {
+    console.log('🔍 Search results received:', results.length);
+    setSearchResults(results);
+    setIsSearching(false);
+
+    if (results.length === 1) {
+      // Auto-select if only one result
+      handleDocumentSelect(results[0]);
+    } else if (results.length > 1) {
+      // Show selection dialog for multiple results
+      setShowSelectionDialog(true);
     }
   };
 
-  const fetchAllDocuments = async () => {
-    console.log('📋 Fetching all documents from Supabase');
+  const handleSearchStart = () => {
+    setIsSearching(true);
+    setSearchResults([]);
+    setShowSelectionDialog(false);
+  };
+
+  const handleDocumentSelect = (document: any) => {
+    console.log('📋 Document selected:', document.product_name);
+    setSelectedDocument(document);
+    setShowSelectionDialog(false);
     
-    const { data, error } = await supabase.functions.invoke('sds-documents', {
-      method: 'GET',
-    });
-    
-    if (error) {
-      throw new Error(`Failed to fetch documents: ${error.message}`);
-    }
-    
-    console.log('📊 Documents response data:', data);
-    
-    // Handle the correct API response structure
-    let documents: SDSDocument[] = [];
-    if (data.documents && Array.isArray(data.documents)) {
-      documents = data.documents;
-    } else if (Array.isArray(data)) {
-      documents = data;
-    } else {
-      console.warn('⚠️ Unexpected documents response structure:', data);
-      documents = [];
-    }
-    
-    // Filter documents by search query if provided
-    const filteredDocuments = searchQuery.trim() 
-      ? documents.filter((doc: SDSDocument) => 
-          doc.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (doc.manufacturer && doc.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (doc.cas_number && doc.cas_number.includes(searchQuery))
-        )
-      : documents;
-    
-    console.log('✅ Setting filtered documents:', filteredDocuments);
-    setSearchResults(filteredDocuments);
-  };
-
-  const pollJobResults = async (jobId: string) => {
-    const maxAttempts = 30; // 30 seconds max
-    let attempts = 0;
-
-    const poll = async (): Promise<void> => {
-      try {
-        console.log(`⏳ Polling job ${jobId}, attempt ${attempts + 1}`);
-        
-        const { data: jobStatus, error } = await supabase.functions.invoke('sds-job-status', {
-          method: 'GET',
-        });
-        
-        if (error) throw new Error('Job status check failed');
-        
-        console.log('📊 Job status:', jobStatus);
-        
-        if (jobStatus.status === 'completed' && jobStatus.results) {
-          const results = Array.isArray(jobStatus.results) ? jobStatus.results : [jobStatus.results];
-          setSearchResults(results);
-          return;
-        }
-        
-        if (jobStatus.status === 'failed') {
-          throw new Error(jobStatus.error || 'Job failed');
-        }
-        
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 1000); // Poll every second
-        } else {
-          throw new Error('Job timeout');
-        }
-      } catch (error) {
-        console.error('❌ Job polling error:', error);
-        // Fallback to document list
-        await fetchAllDocuments();
-      }
-    };
-
-    await poll();
-  };
-
-  const handleSaveSelectedSDS = async (selectedDoc: SDSDocument) => {
-    console.log('💾 Saving selected SDS:', selectedDoc);
-    
-    // Add the selected document to the main results
-    setSearchResults([selectedDoc]);
-    setMultipleResults([]);
-    
-    await interactionLogger.logSDSInteraction({
-      sdsDocumentId: selectedDoc.id,
-      actionType: 'view',
-      searchQuery: searchQuery,
-      metadata: { 
-        action: 'document_selected',
-        confidenceScore: selectedDoc.confidence?.score || 0,
-        matchReasons: selectedDoc.confidence?.reasons || []
-      }
-    });
-
-    const confidenceText = selectedDoc.confidence?.score 
-      ? ` (${(selectedDoc.confidence.score * 100).toFixed(1)}% confidence)` 
-      : '';
-    
-    toast({
-      title: "SDS Document Selected",
-      description: `${selectedDoc.product_name}${confidenceText} has been selected.`,
-      variant: "default"
-    });
-  };
-
-  const handleViewSDS = async (sdsDocument: SDSDocument) => {
-    console.log('👁️ Opening SDS viewer for:', sdsDocument.product_name);
-    setSelectedDocument(sdsDocument);
-    setShowSDSViewer(true);
-    
-    await interactionLogger.logSDSInteraction({
-      sdsDocumentId: sdsDocument.id,
-      actionType: 'view_sds',
-      searchQuery: searchQuery
-    });
-  };
-
-  const handleViewDocument = async (sdsDocument: SDSDocument) => {
-    await interactionLogger.logSDSInteraction({
-      sdsDocumentId: sdsDocument.id,
-      actionType: 'view',
-      searchQuery: searchQuery
-    });
-
-    if (sdsDocument.bucket_url) {
-      window.open(sdsDocument.bucket_url, '_blank');
-    } else if (sdsDocument.source_url) {
-      window.open(sdsDocument.source_url, '_blank');
-    } else {
-      toast({
-        title: "Document Unavailable",
-        description: "PDF document is not available for viewing.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDownloadDocument = async (sdsDocument: SDSDocument) => {
-    await interactionLogger.logSDSInteraction({
-      sdsDocumentId: sdsDocument.id,
-      actionType: 'download',
-      searchQuery: searchQuery
-    });
-
-    if (sdsDocument.bucket_url) {
-      try {
-        const response = await fetch(sdsDocument.bucket_url);
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = globalThis.document.createElement('a');
-          a.href = url;
-          a.download = sdsDocument.file_name || `${sdsDocument.product_name}_SDS.pdf`;
-          globalThis.document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          globalThis.document.body.removeChild(a);
-          
-          toast({
-            title: "Download Started",
-            description: `Downloading ${sdsDocument.product_name} SDS document.`
-          });
-        } else {
-          throw new Error('Download failed');
-        }
-      } catch (error) {
-        console.error('Download error:', error);
-        toast({
-          title: "Download Error",
-          description: "Unable to download the document. Please try again.",
-          variant: "destructive"
-        });
-      }
-    } else {
-      toast({
-        title: "Download Unavailable",
-        description: "PDF download is not available for this document.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleGenerateLabel = async (sdsDocument: SDSDocument) => {
-    console.log('🏷️ Opening label printer for:', sdsDocument.product_name);
-    setSelectedDocument(sdsDocument);
-    setShowLabelPrinter(true);
-    
-    await interactionLogger.logSDSInteraction({
-      sdsDocumentId: sdsDocument.id,
-      actionType: 'generate_label',
-      searchQuery: searchQuery
-    });
-  };
-
-  const handleAskAI = async (sdsDocument: SDSDocument) => {
-    console.log('🤖 Opening AI assistant for:', sdsDocument.product_name);
-    setSelectedDocument(sdsDocument);
-    setShowAIAssistant(true);
-    
-    await interactionLogger.logSDSInteraction({
-      sdsDocumentId: sdsDocument.id,
-      actionType: 'ask_ai',
-      searchQuery: searchQuery
-    });
-  };
-
-  const handleGenerateLabelFromAI = async (sdsDocument: SDSDocument) => {
-    console.log('🏷️ Opening label printer from AI for:', sdsDocument.product_name);
-    setShowAIAssistant(false);
-    setSelectedDocument(sdsDocument);
-    setShowLabelPrinter(true);
-    
-    await interactionLogger.logSDSInteraction({
-      sdsDocumentId: sdsDocument.id,
-      actionType: 'generate_label_from_ai',
-      searchQuery: searchQuery
-    });
-  };
-
-  const handleGenerateLabelFromViewer = async (sdsDocument: SDSDocument) => {
-    console.log('🏷️ Opening label printer from viewer for:', sdsDocument.product_name);
-    setShowSDSViewer(false);
-    setSelectedDocument(sdsDocument);
-    setShowLabelPrinter(true);
-  };
-
-  const handleAskAIFromViewer = async (sdsDocument: SDSDocument) => {
-    console.log('🤖 Opening AI assistant from viewer for:', sdsDocument.product_name);
-    setShowSDSViewer(false);
-    setSelectedDocument(sdsDocument);
-    setShowAIAssistant(true);
-  };
-
-  const getSignalWordVariant = (signalWord?: string) => {
-    if (!signalWord) return 'secondary';
-    return signalWord.toLowerCase() === 'danger' ? 'destructive' : 'secondary';
-  };
-
-  const getConfidenceBadgeVariant = (score?: number) => {
-    if (!score) return 'secondary';
-    if (score >= 0.9) return 'default'; // Green
-    if (score >= 0.7) return 'secondary'; // Yellow
-    return 'destructive'; // Red
-  };
-
-  const getConfidenceColor = (score?: number) => {
-    if (!score) return 'text-gray-500';
-    if (score >= 0.9) return 'text-green-600';
-    if (score >= 0.7) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getExtractionStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'processing':
-        return <Badge variant="secondary" className="text-xs animate-pulse">Extracting...</Badge>;
-      case 'complete':
-        return <Badge variant="default" className="text-xs">Data Complete</Badge>;
-      case 'pending':
-        return <Badge variant="outline" className="text-xs">Pending Extract</Badge>;
-      default:
-        return null;
+    if (onDocumentSelect) {
+      onDocumentSelect(document);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Backend Health Status - Only show errors */}
-      {backendHealth === 'unhealthy' && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between w-full">
-            <div>
-              Supabase connection failed: {connectionError || 'Unknown error'}
+      {/* Main Search Input */}
+      <SDSSearchInput
+        facilityId={facilityId}
+        onSearchResults={handleSearchResults}
+        onSearchStart={handleSearchStart}
+      />
+
+      {/* Search Status */}
+      {isSearching && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 text-blue-700">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span>Searching SDS documents database...</span>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={checkBackendHealth}
-              className="ml-4 flex items-center space-x-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span>Retry</span>
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {backendHealth === 'checking' && (
-        <Alert>
-          <Search className="h-4 w-4 animate-spin" />
-          <AlertDescription>
-            Checking Supabase connection...
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Search Header */}
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
-              Safety Data Sheet Search
-            </h2>
-            <p className="text-sm text-gray-600">
-              Search for chemical safety information. All found PDFs are automatically saved for future reference.
-            </p>
-          </div>
-
-          <div className="flex space-x-3">
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder="Enter chemical name, CAS number, or product name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="text-sm"
-              />
-            </div>
-            <Button 
-              onClick={handleSearch}
-              disabled={!searchQuery.trim() || isLoading || backendHealth === 'unhealthy'}
-              className="bg-gray-800 hover:bg-gray-900 text-white px-6"
-            >
-              <Search className="w-4 h-4 mr-2" />
-              {isLoading ? loadingMessage : 'Search'}
-            </Button>
-          </div>
-          
-          {isLoading && (
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-              <span>{loadingMessage}</span>
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Search Results */}
-      {searchResults.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Search Results ({searchResults.length})
-            </h3>
-            {searchResults.length === 1 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setMultipleResults([searchResults[0]]);
-                  setShowSelectionDialog(true);
-                }}
-                className="flex items-center space-x-2"
-              >
-                <Save className="w-4 h-4" />
-                <span>Add Identifiers</span>
-              </Button>
-            )}
-          </div>
-          
-          {searchResults.map((sdsDocument) => (
-            <Card key={sdsDocument.id} className="p-4">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {sdsDocument.product_name}
-                    </h4>
-                    
-                    {/* Storage Status Indicator */}
-                    {sdsDocument.bucket_url && (
-                      <Badge variant="default" className="text-xs bg-green-100 text-green-700">
-                        PDF Saved
-                      </Badge>
-                    )}
-                    
-                    {/* Confidence Score Badge */}
-                    {sdsDocument.confidence?.score && (
-                      <Badge 
-                        variant={getConfidenceBadgeVariant(sdsDocument.confidence.score)}
-                        className="text-xs"
-                      >
-                        {(sdsDocument.confidence.score * 100).toFixed(1)}% match
-                      </Badge>
-                    )}
-                    
-                    {/* Extraction Status Badge */}
-                    {getExtractionStatusBadge(sdsDocument.extraction_status)}
-                    
-                    {sdsDocument.signal_word && (
-                      <Badge 
-                        variant={getSignalWordVariant(sdsDocument.signal_word)}
-                        className="text-xs"
-                      >
-                        {sdsDocument.signal_word}
-                      </Badge>
-                    )}
-                    {sdsDocument.document_type && sdsDocument.document_type !== 'safety_data_sheet' && (
-                      <Badge variant="outline" className="text-xs">
-                        {sdsDocument.document_type.replace(/_/g, ' ')}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Match Reasons */}
-                  {sdsDocument.confidence?.reasons && sdsDocument.confidence.reasons.length > 0 && (
-                    <div className="mb-2">
-                      <span className={`text-xs font-medium ${getConfidenceColor(sdsDocument.confidence.score)}`}>
-                        Matched on: {sdsDocument.confidence.reasons.join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Extraction Message */}
-                  {sdsDocument.extraction_message && (
-                    <div className="mb-2">
-                      <span className="text-xs text-blue-600 italic">
-                        {sdsDocument.extraction_message}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                      {sdsDocument.manufacturer && (
-                        <p><strong>Manufacturer:</strong> {sdsDocument.manufacturer}</p>
-                      )}
-                      {sdsDocument.cas_number && (
-                        <p><strong>CAS Number:</strong> {sdsDocument.cas_number}</p>
-                      )}
-                      {sdsDocument.file_size && (
-                        <p><strong>File Size:</strong> {Math.round(sdsDocument.file_size / 1024)} KB</p>
-                      )}
-                    </div>
-                    <div>
-                      {sdsDocument.h_codes && sdsDocument.h_codes.length > 0 && (
-                        <div>
-                          <strong>Hazard Codes:</strong>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {sdsDocument.h_codes.slice(0, 5).map((hCode) => (
-                              <Badge key={hCode.code} variant="outline" className="text-xs" title={hCode.description}>
-                                {hCode.code}
-                              </Badge>
-                            ))}
-                            {sdsDocument.h_codes.length > 5 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{sdsDocument.h_codes.length - 5} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {sdsDocument.pictograms && sdsDocument.pictograms.length > 0 && (
-                        <div className="mt-2">
-                          <strong>Pictograms:</strong>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {sdsDocument.pictograms.map((pictogram) => (
-                              <Badge key={pictogram.ghs_code} variant="secondary" className="text-xs">
-                                {pictogram.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Enhanced Action Buttons - Prominent Label Generation */}
-                <div className="flex flex-col space-y-2 ml-4 min-w-[140px]">
-                  {/* Prominent Generate Label Button */}
-                  <Button
-                    size="sm"
-                    onClick={() => handleGenerateLabel(sdsDocument)}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
-                    title={`Generate GHS compliant label for ${sdsDocument.product_name}`}
-                  >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Generate Label
-                  </Button>
-                  
-                  {/* Ask Stanley Button */}
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={() => handleAskAI(sdsDocument)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    title={`Chat with Stanley about ${sdsDocument.product_name} safety`}
-                  >
-                    <Bot className="w-4 h-4 mr-2" />
-                    Ask Stanley
-                  </Button>
-                  
-                  {/* Secondary Actions */}
-                  <div className="flex space-x-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewSDS(sdsDocument)}
-                      className="flex-1"
-                      title="View SDS details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewDocument(sdsDocument)}
-                      className="flex-1"
-                      title="View PDF document"
-                    >
-                      <FileText className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDownloadDocument(sdsDocument)}
-                      className="flex-1"
-                      disabled={!sdsDocument.bucket_url}
-                      title="Download PDF"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* No Results Message */}
-      {searchResults.length === 0 && searchQuery && !isLoading && (
-        <Card className="p-6 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Results Found</h3>
-          <p className="text-gray-600 mb-4">
-            No SDS documents found for "{searchQuery}". The system will search online and automatically save any found PDFs for future reference.
-          </p>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setSearchQuery("");
-              setSearchResults([]);
-            }}
-          >
-            Clear Search
-          </Button>
+          </CardContent>
         </Card>
       )}
 
-      {/* Popups */}
-      {showAIAssistant && selectedDocument && (
-        <AIAssistantPopup
-          isOpen={showAIAssistant}
-          onClose={() => {
-            console.log('🔒 Closing AI assistant popup');
-            setShowAIAssistant(false);
-            setSelectedDocument(null);
-          }}
-          facilityData={facilityData}
-          selectedDocument={selectedDocument}
-          onGenerateLabel={handleGenerateLabelFromAI}
-        />
+      {/* No Results Message */}
+      {!isSearching && searchResults.length === 0 && searchResults !== null && (
+        <Card className="border-gray-200">
+          <CardContent className="p-6 text-center">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">
+              Enter a product name, material, or manufacturer above to search for Safety Data Sheets.
+            </p>
+            {existingDocuments && existingDocuments.length > 0 && (
+              <p className="text-sm text-gray-500 mt-2">
+                {existingDocuments.length} documents available in library
+              </p>
+            )}
+          </CardContent>
+        </Card>
       )}
 
-      {showLabelPrinter && selectedDocument && (
-        <LabelPrinterPopup
-          isOpen={showLabelPrinter}
-          onClose={() => {
-            console.log('🔒 Closing label printer popup');
-            setShowLabelPrinter(false);
-            setSelectedDocument(null);
-          }}
-          initialProductName={selectedDocument?.product_name}
-          initialManufacturer={selectedDocument?.manufacturer}
-          selectedDocument={selectedDocument}
-        />
-      )}
-
-      {showSDSViewer && selectedDocument && (
-        <SDSViewerPopup
-          isOpen={showSDSViewer}
-          onClose={() => {
-            console.log('🔒 Closing SDS viewer popup');
-            setShowSDSViewer(false);
-            setSelectedDocument(null);
-          }}
-          sdsDocument={selectedDocument}
-          onGenerateLabel={handleGenerateLabelFromViewer}
-          onAskAI={handleAskAIFromViewer}
-          onDownload={() => handleDownloadDocument(selectedDocument)}
-        />
-      )}
-
+      {/* Selection Dialog for Multiple Results */}
       <SDSSelectionDialog
         isOpen={showSelectionDialog}
-        onClose={() => {
-          setShowSelectionDialog(false);
-          setMultipleResults([]);
-        }}
-        sdsDocuments={multipleResults}
-        onSaveSelected={handleSaveSelectedSDS}
+        onClose={() => setShowSelectionDialog(false)}
+        documents={searchResults}
+        onDocumentSelect={handleDocumentSelect}
+        facilityId={facilityId}
       />
+
+      {/* Selected Document Display */}
+      {selectedDocument && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <FileText className="h-5 w-5 text-green-600 mt-1" />
+              <div className="flex-1">
+                <h4 className="font-medium text-green-900">
+                  Selected: {selectedDocument.product_name}
+                </h4>
+                {selectedDocument.manufacturer && (
+                  <p className="text-sm text-green-700">
+                    Manufacturer: {selectedDocument.manufacturer}
+                  </p>
+                )}
+                {selectedDocument.extraction_status === 'processing' && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    ⏳ Extracting additional hazard data from PDF...
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

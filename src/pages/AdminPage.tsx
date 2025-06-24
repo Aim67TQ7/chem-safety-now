@@ -1,15 +1,15 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import AdminFeedbackPanel from "@/components/AdminFeedbackPanel";
-import AdminActionButtons from "@/components/AdminActionButtons";
+import AdminTrialTabs from "@/components/AdminTrialTabs";
 
 const AdminPage = () => {
   const [facilities, setFacilities] = useState<any[]>([]);
@@ -121,114 +121,27 @@ const AdminPage = () => {
           <AdminFeedbackPanel />
         </div>
 
-        {/* Facility Overview - Right Columns */}
+        {/* Facility Overview with Tabs - Right Columns */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" /> Facility Overview & Subscription Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
+          {loading ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Loading...</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-2">
                   {[...Array(5)].map((_, index) => (
                     <Skeleton key={index} className="h-12 w-full" />
                   ))}
                 </div>
-              ) : facilities.length === 0 ? (
-                <p className="text-center py-10 text-muted-foreground">No facilities found</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Facility</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Stripe IDs</TableHead>
-                        <TableHead>Actions</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {facilities.map((facility) => (
-                        <TableRow key={facility.id}>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="font-medium">
-                                {facility.facility_name || "Unnamed Facility"}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {facility.email || "—"}
-                              </div>
-                              {facility.facility_url && (
-                                <a 
-                                  href={facility.facility_url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-blue-500 hover:underline"
-                                >
-                                  View Site
-                                </a>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div>{facility.contact_name || "—"}</div>
-                              {facility.address && (
-                                <div className="text-xs text-gray-500">{facility.address}</div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Badge 
-                                variant={
-                                  facility.subscription_status === "premium" ? "default" :
-                                  facility.subscription_status === "basic" ? "secondary" : 
-                                  "outline"
-                                }
-                              >
-                                {facility.subscription_status || "trial"}
-                              </Badge>
-                              {facility.trial_days_remaining !== null && (
-                                <div className="text-xs text-gray-500">
-                                  {facility.trial_days_remaining} days left
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-xs space-y-1">
-                              <div>Customer: {facility.stripe_customer_id ? 
-                                facility.stripe_customer_id.substring(0, 12) + "..." : "—"}</div>
-                              <div>Sub: {facility.stripe_subscription_id ? 
-                                facility.stripe_subscription_id.substring(0, 12) + "..." : "—"}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <AdminActionButtons
-                              facilityId={facility.id}
-                              facilityName={facility.facility_name || "Unnamed Facility"}
-                              currentStatus={facility.subscription_status || "trial"}
-                              onStatusUpdate={fetchFacilityData}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {facility.created_at && new Date(facility.created_at).toLocaleDateString()}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <AdminTrialTabs 
+              facilities={facilities} 
+              onStatusUpdate={fetchFacilityData}
+            />
+          )}
         </div>
       </div>
     </div>

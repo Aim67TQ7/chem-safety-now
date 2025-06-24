@@ -21,10 +21,12 @@ interface QRPrintPopupProps {
 
 const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPopupProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const posterCanvasRef = useRef<HTMLCanvasElement>(null);
   const facilityDisplayName = facilityData.facility_name || 'Facility';
 
   useEffect(() => {
-    if (isOpen && canvasRef.current) {
+    if (isOpen && canvasRef.current && posterCanvasRef.current) {
+      // Generate QR code
       QRCodeLib.toCanvas(canvasRef.current, facilityUrl, {
         width: 300,
         margin: 2,
@@ -33,10 +35,119 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
           light: '#ffffff'
         }
       }, (error) => {
-        if (error) console.error('QR Code generation failed:', error);
+        if (error) {
+          console.error('QR Code generation failed:', error);
+          return;
+        }
+        
+        // Generate full poster canvas
+        generatePosterCanvas();
       });
     }
-  }, [isOpen, facilityUrl]);
+  }, [isOpen, facilityUrl, facilityDisplayName]);
+
+  const generatePosterCanvas = () => {
+    const posterCanvas = posterCanvasRef.current;
+    const qrCanvas = canvasRef.current;
+    
+    if (!posterCanvas || !qrCanvas) return;
+    
+    const ctx = posterCanvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Set poster dimensions (8.5" x 11" at 300 DPI = 2550 x 3300 pixels)
+    const posterWidth = 850;
+    const posterHeight = 1100;
+    posterCanvas.width = posterWidth;
+    posterCanvas.height = posterHeight;
+    
+    // Fill background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, posterWidth, posterHeight);
+    
+    // Add border
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(20, 20, posterWidth - 40, posterHeight - 40);
+    
+    // Title
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Chemical Safety Portal', posterWidth / 2, 100);
+    
+    // Facility name
+    ctx.font = 'bold 36px Arial';
+    ctx.fillText(facilityDisplayName, posterWidth / 2, 160);
+    
+    // QR Code (center it)
+    const qrSize = 400;
+    const qrX = (posterWidth - qrSize) / 2;
+    const qrY = 220;
+    
+    // Draw white background for QR code
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+    
+    // Draw QR code
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+    
+    // Logo overlay (if available)
+    if (facilityData.logo_url) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const logoSize = 80;
+        const logoX = (posterWidth - logoSize) / 2;
+        const logoY = qrY + (qrSize - logoSize) / 2;
+        
+        // White circle background
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw logo
+        ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
+      };
+      img.src = facilityData.logo_url;
+    }
+    
+    // Instructions
+    ctx.font = 'bold 28px Arial';
+    ctx.fillStyle = '#000000';
+    ctx.fillText('How to Access Safety Data:', posterWidth / 2, 720);
+    
+    const instructions = [
+      '1. Open your phone\'s camera app',
+      '2. Point camera at QR code above',
+      '3. Tap the notification to access safety data',
+      '4. No app download required'
+    ];
+    
+    ctx.font = '24px Arial';
+    instructions.forEach((instruction, index) => {
+      ctx.fillText(instruction, posterWidth / 2, 770 + (index * 40));
+    });
+    
+    // URL
+    ctx.font = '18px Arial';
+    ctx.fillStyle = '#666666';
+    ctx.fillText('Direct URL:', posterWidth / 2, 950);
+    ctx.font = '16px monospace';
+    ctx.fillText(facilityUrl, posterWidth / 2, 980);
+    
+    // Footer
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#000000';
+    ctx.fillText('Scan with Phone Camera for Instant Access', posterWidth / 2, 1050);
+  };
 
   const handlePrint = () => {
     window.print();
@@ -45,18 +156,27 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
   const downloadQRCode = () => {
     if (canvasRef.current) {
       const link = document.createElement('a');
-      link.download = `${facilityDisplayName}-QR-Poster.png`;
+      link.download = `${facilityDisplayName}-QR-Code.png`;
       link.href = canvasRef.current.toDataURL();
+      link.click();
+    }
+  };
+
+  const downloadFullPoster = () => {
+    if (posterCanvasRef.current) {
+      const link = document.createElement('a');
+      link.download = `${facilityDisplayName}-Safety-Poster.png`;
+      link.href = posterCanvasRef.current.toDataURL('image/png', 1.0);
       link.click();
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto print:shadow-none print:border-none">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print:shadow-none print:border-none">
         <DialogHeader className="print:hidden">
           <DialogTitle className="text-xl font-bold">
-            Print Professional Poster
+            Print Professional Safety Poster
           </DialogTitle>
         </DialogHeader>
         
@@ -118,6 +238,12 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
             </div>
           </Card>
 
+          {/* Hidden poster canvas for full poster generation */}
+          <canvas 
+            ref={posterCanvasRef} 
+            className="hidden"
+          />
+
           {/* Action Buttons - Hidden when printing */}
           <div className="flex gap-4 justify-center print:hidden">
             <Button 
@@ -128,12 +254,19 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
               Print Poster
             </Button>
             <Button 
+              onClick={downloadFullPoster}
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download Full Poster
+            </Button>
+            <Button 
               onClick={downloadQRCode}
               variant="outline"
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              Download QR Code
+              Download QR Code Only
             </Button>
           </div>
         </div>
