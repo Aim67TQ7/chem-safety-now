@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import FacilitySettings from '@/components/FacilitySettings';
+import FacilityNavbar from '@/components/FacilityNavbar';
 
 interface FacilityData {
   id: string;
@@ -102,12 +102,18 @@ const FacilitySettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <FacilitySettings 
-          facilityData={facilityData}
-          onFacilityUpdate={handleFacilityUpdate}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+      <FacilityNavbar 
+        facilityName={facilityData.facility_name || undefined}
+        facilityLogo={facilityData.logo_url}
+      />
+      <div className="p-6">
+        <div className="max-w-4xl mx-auto">
+          <FacilitySettings 
+            facilityData={facilityData}
+            onFacilityUpdate={handleFacilityUpdate}
+          />
+        </div>
       </div>
     </div>
   );
