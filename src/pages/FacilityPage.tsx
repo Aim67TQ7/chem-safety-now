@@ -11,7 +11,7 @@ import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import QRCodePopup from "@/components/popups/QRCodePopup";
 import SDSViewerPopup from "@/components/popups/SDSViewerPopup";
 import SDSSelectionDialog from "@/components/SDSSelectionDialog";
-import SetupFailureDialog from "@/components/SetupFailureDialog";
+import { SetupFailureDialog } from "@/components/SetupFailureDialog";
 
 interface FacilityData {
   id: string;
@@ -127,9 +127,15 @@ const FacilityPage = () => {
         }
 
         if (subscription) {
+          // Map subscription table fields to expected format
+          const trialEndDate = new Date(facility.trial_end_date);
+          const now = new Date();
+          const timeDiff = trialEndDate.getTime() - now.getTime();
+          const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+
           setSubscriptionInfo({
-            subscription_status: subscription.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
-            trial_days_remaining: subscription.trial_days_remaining
+            subscription_status: facility.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
+            trial_days_remaining: daysRemaining
           });
         }
 
@@ -185,8 +191,8 @@ const FacilityPage = () => {
           <SetupFailureDialog
             isOpen={true}
             onClose={() => setIsSetupMode(false)}
-            facilityData={facilityData}
-            subscriptionInfo={subscriptionInfo}
+            onRetry={() => navigate(`/facility/${facilitySlug}/settings`)}
+            error="Facility setup is incomplete. Please complete your facility information."
           />
         ) : (
           <FacilityDashboard
@@ -201,6 +207,7 @@ const FacilityPage = () => {
         <SubscriptionPlansModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
+          facilityId={facilityData.id}
           facilitySlug={facilityData.slug}
         />
 
@@ -228,6 +235,7 @@ const FacilityPage = () => {
         <QRCodePopup
           isOpen={showQRCode}
           onClose={() => setShowQRCode(false)}
+          facilityData={facilityData}
           facilityUrl={`${window.location.origin}/facility/${facilityData.slug}`}
         />
 
@@ -235,16 +243,15 @@ const FacilityPage = () => {
         <SDSViewerPopup
           isOpen={showSDSViewer}
           onClose={() => setShowSDSViewer(false)}
-          documentId={selectedDocument?.id || ''}
+          document={selectedDocument}
         />
 
         {/* SDS Selection Dialog */}
         <SDSSelectionDialog
           isOpen={showSDSSelection}
           onClose={() => setShowSDSSelection(false)}
-          searchResults={sdsSearchResults}
-          onDocumentSelect={handleDocumentSelect}
-          facilityData={facilityData}
+          sdsDocuments={sdsSearchResults}
+          onSaveSelected={handleDocumentSelect}
         />
       </div>
     </div>
