@@ -1,14 +1,14 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { X, Minimize2 } from "lucide-react";
+import { X, Minimize2, Maximize2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { interactionLogger } from "@/services/interactionLogger";
 import { useNavigate, useLocation } from "react-router-dom";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface GlobalSafetyStanWidgetProps {
   initialPosition?: { x: number; y: number };
@@ -32,7 +32,7 @@ interface Message {
 }
 
 export default function GlobalSafetyStanWidget({
-  initialPosition = { x: 100, y: 150 }, // More visible starting position
+  initialPosition = { x: 400, y: 50 }, // Updated starting position
   companyName = 'ChemLabel-GPT',
   customInstructions = '',
   industry = 'Chemical Safety',
@@ -44,6 +44,10 @@ export default function GlobalSafetyStanWidget({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [chatSize, setChatSize] = useState({ width: 360, height: 520 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +58,7 @@ export default function GlobalSafetyStanWidget({
   const avatarRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const resizeHandleRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,28 +112,50 @@ export default function GlobalSafetyStanWidget({
     });
   };
 
+  // Handle resize functionality
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: chatSize.width,
+      height: chatSize.height
+    });
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
-      
-      // Keep Stanley within screen bounds
-      const maxX = window.innerWidth - 240; // Stanley width
-      const maxY = window.innerHeight - 346; // Stanley height (20% taller: 288 * 1.2 = 346)
-      
-      setPosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY))
-      });
+      if (isDragging && !isResizing) {
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
+        
+        // Keep Stanley within screen bounds
+        const maxX = window.innerWidth - 240; // Stanley width
+        const maxY = window.innerHeight - 346; // Stanley height (20% taller: 288 * 1.2 = 346)
+        
+        setPosition({
+          x: Math.max(0, Math.min(newX, maxX)),
+          y: Math.max(0, Math.min(newY, maxY))
+        });
+      } else if (isResizing) {
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+        
+        const newWidth = Math.max(300, Math.min(800, resizeStart.width + deltaX));
+        const newHeight = Math.max(400, Math.min(700, resizeStart.height + deltaY));
+        
+        setChatSize({ width: newWidth, height: newHeight });
+      }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setIsResizing(false);
     };
 
-    if (isDragging) {
+    if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -137,7 +164,7 @@ export default function GlobalSafetyStanWidget({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, isResizing, dragOffset, resizeStart]);
 
   const handleEmailSubmit = () => {
     if (emailInput.trim() && emailInput.includes('@')) {
@@ -467,8 +494,6 @@ export default function GlobalSafetyStanWidget({
 
   // Calculate chat position to stay beside Stanley
   const getChatPosition = () => {
-    const chatWidth = 360;
-    const chatHeight = isMinimized ? 100 : 520; // Increased height for promotion
     const stanleyWidth = 240;
     
     // Always position chat to the right of Stanley first
@@ -476,14 +501,14 @@ export default function GlobalSafetyStanWidget({
     let chatY = position.y;
 
     // If chat would go off the right edge, position it to the left of Stanley
-    if (chatX + chatWidth > window.innerWidth) {
-      chatX = position.x - chatWidth - 20;
+    if (chatX + chatSize.width > window.innerWidth) {
+      chatX = position.x - chatSize.width - 20;
     }
 
     // If still off-screen, position above or below Stanley
     if (chatX < 0) {
       chatX = position.x;
-      chatY = position.y - chatHeight - 20;
+      chatY = position.y - chatSize.height - 20;
       
       // If above goes off-screen, position below
       if (chatY < 0) {
@@ -492,8 +517,8 @@ export default function GlobalSafetyStanWidget({
     }
 
     // Final bounds check
-    chatX = Math.max(20, Math.min(chatX, window.innerWidth - chatWidth - 20));
-    chatY = Math.max(20, Math.min(chatY, window.innerHeight - chatHeight - 20));
+    chatX = Math.max(20, Math.min(chatX, window.innerWidth - chatSize.width - 20));
+    chatY = Math.max(20, Math.min(chatY, window.innerHeight - chatSize.height - 20));
 
     return { x: chatX, y: chatY };
   };
@@ -536,16 +561,16 @@ export default function GlobalSafetyStanWidget({
         </div>
       </div>
 
-      {/* Chat Interface - Above Stanley but transparent */}
+      {/* Chat Interface - Above Stanley but transparent with resizable functionality */}
       {isOpen && (
         <div
           ref={chatRef}
-          className="fixed z-[10000] bg-white/80 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-200"
+          className="fixed z-[10000] bg-white/80 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-200 resize-none"
           style={{
             left: `${chatPosition.x}px`,
             top: `${chatPosition.y}px`,
-            width: '360px',
-            height: isMinimized ? 'auto' : '520px'
+            width: `${chatSize.width}px`,
+            height: isMinimized ? 'auto' : `${chatSize.height}px`
           }}
         >
           {/* Header */}
@@ -570,6 +595,14 @@ export default function GlobalSafetyStanWidget({
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-white hover:bg-white/20 h-6 w-6 p-0"
+                >
+                  <Maximize2 className="w-3 h-3" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -628,7 +661,13 @@ export default function GlobalSafetyStanWidget({
               )}
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: isHomepage ? '240px' : '260px' }}>
+              <div 
+                className="flex-1 overflow-y-auto p-4 space-y-3" 
+                style={{ 
+                  height: isHomepage ? `${chatSize.height - 200}px` : `${chatSize.height - 260}px`,
+                  maxHeight: `${chatSize.height - 160}px`
+                }}
+              >
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -759,6 +798,16 @@ export default function GlobalSafetyStanWidget({
                   </p>
                 </div>
               </div>
+
+              {/* Resize Handle */}
+              <div
+                ref={resizeHandleRef}
+                className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-gray-400/50 hover:bg-gray-600/70 transition-colors"
+                onMouseDown={handleResizeMouseDown}
+                style={{
+                  background: 'linear-gradient(-45deg, transparent 0%, transparent 30%, currentColor 30%, currentColor 40%, transparent 40%, transparent 60%, currentColor 60%, currentColor 70%, transparent 70%)'
+                }}
+              />
             </>
           )}
         </div>

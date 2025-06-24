@@ -1,16 +1,17 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import FacilityDashboard from "@/components/FacilityDashboard";
-import SubscriptionPlansModal from "@/components/modals/SubscriptionPlansModal";
+import SubscriptionPlansModal from "@/components/SubscriptionPlansModal";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import QRCodePopup from "@/components/popups/QRCodePopup";
 import SDSViewerPopup from "@/components/popups/SDSViewerPopup";
-import SDSSelectionDialog from "@/components/dialogs/SDSSelectionDialog";
-import SetupFailureDialog from "@/components/dialogs/SetupFailureDialog";
+import SDSSelectionDialog from "@/components/SDSSelectionDialog";
+import SetupFailureDialog from "@/components/SetupFailureDialog";
 
 interface FacilityData {
   id: string;
@@ -113,9 +114,9 @@ const FacilityPage = () => {
 
         setFacilityData(facility);
 
-        // Fetch subscription info
+        // Fetch subscription info from subscriptions table
         const { data: subscription, error: subscriptionError } = await supabase
-          .from('facility_subscriptions')
+          .from('subscriptions')
           .select('*')
           .eq('facility_id', facility.id)
           .single();
@@ -125,7 +126,12 @@ const FacilityPage = () => {
           // Do not block loading for subscription errors, just log it
         }
 
-        setSubscriptionInfo(subscription || null);
+        if (subscription) {
+          setSubscriptionInfo({
+            subscription_status: subscription.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
+            trial_days_remaining: subscription.trial_days_remaining
+          });
+        }
 
         // Check if setup is required
         if (!facility.contact_name || !facility.address) {
@@ -215,7 +221,6 @@ const FacilityPage = () => {
         <LabelPrinterPopup
           isOpen={showLabelPrinter}
           onClose={() => setShowLabelPrinter(false)}
-          facilityData={facilityData}
           selectedDocument={selectedDocument}
         />
 
@@ -223,14 +228,14 @@ const FacilityPage = () => {
         <QRCodePopup
           isOpen={showQRCode}
           onClose={() => setShowQRCode(false)}
-          facilityData={facilityData}
+          facilityUrl={`${window.location.origin}/facility/${facilityData.slug}`}
         />
 
         {/* SDS Viewer Popup */}
         <SDSViewerPopup
           isOpen={showSDSViewer}
           onClose={() => setShowSDSViewer(false)}
-          document={selectedDocument}
+          documentId={selectedDocument?.id || ''}
         />
 
         {/* SDS Selection Dialog */}
@@ -242,14 +247,6 @@ const FacilityPage = () => {
           facilityData={facilityData}
         />
       </div>
-      {facilityData && (
-        <FacilityDashboard
-          facilityData={facilityData}
-          subscriptionInfo={subscriptionInfo}
-          onQuickAction={handleQuickAction}
-          onUpgrade={handleUpgrade}
-        />
-      )}
     </div>
   );
 };
