@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, CheckCircle, FileText, Download, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import FacilityNavbar from '@/components/FacilityNavbar';
 
 interface SDSDocument {
   id: string;
@@ -26,6 +27,8 @@ interface SDSDocument {
 }
 
 const SDSDocumentsPage = () => {
+  const { facilitySlug } = useParams<{ facilitySlug: string }>();
+  
   const { data: documents, isLoading, error } = useQuery({
     queryKey: ['sds-documents'],
     queryFn: async () => {
@@ -40,6 +43,28 @@ const SDSDocumentsPage = () => {
       console.log('✅ Fetched documents:', response.data?.documents?.length || 0);
       return response.data?.documents || [];
     }
+  });
+
+  // Fetch facility data for navbar
+  const { data: facilityData } = useQuery({
+    queryKey: ['facility', facilitySlug],
+    queryFn: async () => {
+      if (!facilitySlug) return null;
+      
+      const { data: facility, error } = await supabase
+        .from('facilities')
+        .select('facility_name, logo_url')
+        .eq('slug', facilitySlug)
+        .single();
+
+      if (error) {
+        console.error('Error fetching facility:', error);
+        return null;
+      }
+
+      return facility;
+    },
+    enabled: !!facilitySlug
   });
 
   const getQualityLabel = (score?: number) => {
@@ -73,11 +98,17 @@ const SDSDocumentsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">Loading SDS documents...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+        <FacilityNavbar 
+          facilityName={facilityData?.facility_name || undefined}
+          facilityLogo={facilityData?.logo_url}
+        />
+        <div className="container mx-auto p-4">
+          <div className="flex items-center justify-center h-32">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <p className="text-sm text-gray-600">Loading SDS documents...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -86,15 +117,21 @@ const SDSDocumentsPage = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto p-4">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2 text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">Error loading documents: {error.message}</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+        <FacilityNavbar 
+          facilityName={facilityData?.facility_name || undefined}
+          facilityLogo={facilityData?.logo_url}
+        />
+        <div className="container mx-auto p-4">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2 text-red-700">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">Error loading documents: {error.message}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -202,145 +239,151 @@ const SDSDocumentsPage = () => {
   );
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">SDS Document Library</h1>
-        <p className="text-sm text-gray-600">
-          Manage and browse your Safety Data Sheet documents with quality scores and readability analysis.
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+      <FacilityNavbar 
+        facilityName={facilityData?.facility_name || undefined}
+        facilityLogo={facilityData?.logo_url}
+      />
+      <div className="container mx-auto p-4">
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">SDS Document Library</h1>
+          <p className="text-sm text-gray-600">
+            Manage and browse your Safety Data Sheet documents with quality scores and readability analysis.
+          </p>
+        </div>
+
+        {/* Compact Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Total</p>
+                  <p className="text-lg font-bold text-gray-900">{documents?.length || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <div>
+                  <p className="text-xs font-medium text-gray-600">High Quality</p>
+                  <p className="text-lg font-bold text-gray-900">{highQualityDocs.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Readable</p>
+                  <p className="text-lg font-bold text-gray-900">{readableDocs.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Low Quality</p>
+                  <p className="text-lg font-bold text-gray-900">{lowQualityDocs.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Compact Documents Tabs */}
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 h-8">
+            <TabsTrigger value="all" className="text-xs">All ({documents?.length || 0})</TabsTrigger>
+            <TabsTrigger value="high-quality" className="text-xs">High Quality ({highQualityDocs.length})</TabsTrigger>
+            <TabsTrigger value="readable" className="text-xs">Readable ({readableDocs.length})</TabsTrigger>
+            <TabsTrigger value="needs-review" className="text-xs">Review ({lowQualityDocs.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="mt-3">
+            <div className="space-y-2">
+              {documents && documents.length > 0 ? (
+                documents.map((doc: SDSDocument) => (
+                  <DocumentCard key={doc.id} doc={doc} />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                    <p className="text-sm text-gray-600">No SDS documents found.</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Search for products to start building your document library.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="high-quality" className="mt-3">
+            <div className="space-y-2">
+              {highQualityDocs.length > 0 ? (
+                highQualityDocs.map((doc: SDSDocument) => (
+                  <DocumentCard key={doc.id} doc={doc} />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                    <p className="text-sm text-gray-600">No high-quality documents found.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="readable" className="mt-3">
+            <div className="space-y-2">
+              {readableDocs.length > 0 ? (
+                readableDocs.map((doc: SDSDocument) => (
+                  <DocumentCard key={doc.id} doc={doc} />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                    <p className="text-sm text-gray-600">No readable documents found.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="needs-review" className="mt-3">
+            <div className="space-y-2">
+              {lowQualityDocs.length > 0 ? (
+                lowQualityDocs.map((doc: SDSDocument) => (
+                  <DocumentCard key={doc.id} doc={doc} />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                    <p className="text-sm text-gray-600">All documents have good quality scores!</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Compact Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center space-x-2">
-              <FileText className="h-4 w-4 text-blue-600" />
-              <div>
-                <p className="text-xs font-medium text-gray-600">Total</p>
-                <p className="text-lg font-bold text-gray-900">{documents?.length || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <div>
-                <p className="text-xs font-medium text-gray-600">High Quality</p>
-                <p className="text-lg font-bold text-gray-900">{highQualityDocs.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-blue-600" />
-              <div>
-                <p className="text-xs font-medium text-gray-600">Readable</p>
-                <p className="text-lg font-bold text-gray-900">{readableDocs.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-orange-600" />
-              <div>
-                <p className="text-xs font-medium text-gray-600">Low Quality</p>
-                <p className="text-lg font-bold text-gray-900">{lowQualityDocs.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Compact Documents Tabs */}
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-8">
-          <TabsTrigger value="all" className="text-xs">All ({documents?.length || 0})</TabsTrigger>
-          <TabsTrigger value="high-quality" className="text-xs">High Quality ({highQualityDocs.length})</TabsTrigger>
-          <TabsTrigger value="readable" className="text-xs">Readable ({readableDocs.length})</TabsTrigger>
-          <TabsTrigger value="needs-review" className="text-xs">Review ({lowQualityDocs.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="mt-3">
-          <div className="space-y-2">
-            {documents && documents.length > 0 ? (
-              documents.map((doc: SDSDocument) => (
-                <DocumentCard key={doc.id} doc={doc} />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <FileText className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">No SDS documents found.</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Search for products to start building your document library.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="high-quality" className="mt-3">
-          <div className="space-y-2">
-            {highQualityDocs.length > 0 ? (
-              highQualityDocs.map((doc: SDSDocument) => (
-                <DocumentCard key={doc.id} doc={doc} />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">No high-quality documents found.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="readable" className="mt-3">
-          <div className="space-y-2">
-            {readableDocs.length > 0 ? (
-              readableDocs.map((doc: SDSDocument) => (
-                <DocumentCard key={doc.id} doc={doc} />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">No readable documents found.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="needs-review" className="mt-3">
-          <div className="space-y-2">
-            {lowQualityDocs.length > 0 ? (
-              lowQualityDocs.map((doc: SDSDocument) => (
-                <DocumentCard key={doc.id} doc={doc} />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">All documents have good quality scores!</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
