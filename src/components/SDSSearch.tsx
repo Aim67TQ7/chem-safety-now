@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SDSSearchInput from './SDSSearchInput';
 import SDSResultCard from './SDSResultCard';
 import SDSSelectionDialog from './SDSSelectionDialog';
+import SDSViewerPopup from './popups/SDSViewerPopup';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, AlertCircle } from 'lucide-react';
@@ -19,6 +19,8 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [showViewerPopup, setShowViewerPopup] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<any>(null);
 
   // Query for existing SDS documents in the library
   const { data: existingDocuments } = useQuery({
@@ -62,8 +64,9 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
 
   const handleView = (document: any) => {
     console.log('👁️ Viewing document:', document.product_name);
-    handleDocumentSelect(document);
-    toast.success(`Viewing SDS for ${document.product_name}`);
+    setViewingDocument(document);
+    setShowViewerPopup(true);
+    toast.success(`Opening SDS viewer for ${document.product_name}`);
   };
 
   const handleDownload = (document: any) => {
@@ -190,6 +193,17 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
           </CardContent>
         </Card>
       )}
+
+      {/* PDF Viewer Popup */}
+      <SDSViewerPopup
+        isOpen={showViewerPopup}
+        onClose={() => {
+          setShowViewerPopup(false);
+          setViewingDocument(null);
+        }}
+        sdsDocument={viewingDocument}
+        onDownload={handleDownload}
+      />
     </div>
   );
 };
