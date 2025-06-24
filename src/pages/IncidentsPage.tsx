@@ -1,15 +1,38 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, FileText, Plus } from 'lucide-react';
 import { IncidentReportForm } from '@/components/incidents/IncidentReportForm';
 import { IncidentsList } from '@/components/incidents/IncidentsList';
+import FacilityNavbar from '@/components/FacilityNavbar';
+import { supabase } from '@/integrations/supabase/client';
 
 const IncidentsPage = () => {
+  const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const [activeTab, setActiveTab] = useState('list');
   const [incidentType, setIncidentType] = useState<'near_miss' | 'reportable'>('near_miss');
+  const [facilityData, setFacilityData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchFacilityData = async () => {
+      if (!facilitySlug) return;
+
+      const { data: facility } = await supabase
+        .from('facilities')
+        .select('facility_name, logo_url')
+        .eq('slug', facilitySlug)
+        .single();
+
+      if (facility) {
+        setFacilityData(facility);
+      }
+    };
+
+    fetchFacilityData();
+  }, [facilitySlug]);
 
   const handleNewIncident = (type: 'near_miss' | 'reportable') => {
     setIncidentType(type);
@@ -18,6 +41,11 @@ const IncidentsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <FacilityNavbar 
+        facilityName={facilityData?.facility_name || undefined}
+        facilityLogo={facilityData?.logo_url}
+      />
+      
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">

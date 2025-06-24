@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import FacilityDashboard from "@/components/FacilityDashboard";
+import FacilityNavbar from "@/components/FacilityNavbar";
 import SubscriptionPlansModal from "@/components/SubscriptionPlansModal";
 import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
@@ -178,94 +179,101 @@ const FacilityPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {isSetupMode ? (
-          <SetupFailureDialog
-            isOpen={true}
-            onClose={() => setIsSetupMode(false)}
-            onRetry={() => navigate(`/facility/${facilitySlug}/settings`)}
-            error="Facility setup is incomplete. Please complete your facility information."
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+      <FacilityNavbar 
+        facilityName={facilityData.facility_name || undefined}
+        facilityLogo={facilityData.logo_url}
+      />
+      
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
+          {isSetupMode ? (
+            <SetupFailureDialog
+              isOpen={true}
+              onClose={() => setIsSetupMode(false)}
+              onRetry={() => navigate(`/facility/${facilitySlug}/settings`)}
+              error="Facility setup is incomplete. Please complete your facility information."
+            />
+          ) : (
+            <FacilityDashboard
+              facilityData={facilityData}
+              subscriptionInfo={subscriptionInfo}
+              onQuickAction={handleQuickAction}
+              onUpgrade={handleUpgrade}
+            />
+          )}
+
+          {/* Subscription Plans Modal */}
+          <SubscriptionPlansModal
+            isOpen={showUpgradeModal}
+            onClose={() => setShowUpgradeModal(false)}
+            facilityId={facilityData?.id || ''}
+            facilitySlug={facilityData?.slug || ''}
           />
-        ) : (
-          <FacilityDashboard
+
+          {/* AI Assistant Popup */}
+          <AIAssistantPopup
+            isOpen={showAIAssistant}
+            onClose={() => setShowAIAssistant(false)}
             facilityData={facilityData}
-            subscriptionInfo={subscriptionInfo}
-            onQuickAction={handleQuickAction}
-            onUpgrade={handleUpgrade}
+            selectedDocument={selectedDocument}
+            onGenerateLabel={(doc) => {
+              setSelectedDocument(doc);
+              setShowLabelPrinter(true);
+              setShowAIAssistant(false);
+            }}
           />
-        )}
 
-        {/* Subscription Plans Modal */}
-        <SubscriptionPlansModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          facilityId={facilityData?.id || ''}
-          facilitySlug={facilityData?.slug || ''}
-        />
+          {/* Label Printer Popup */}
+          <LabelPrinterPopup
+            isOpen={showLabelPrinter}
+            onClose={() => setShowLabelPrinter(false)}
+            selectedDocument={selectedDocument}
+          />
 
-        {/* AI Assistant Popup */}
-        <AIAssistantPopup
-          isOpen={showAIAssistant}
-          onClose={() => setShowAIAssistant(false)}
-          facilityData={facilityData}
-          selectedDocument={selectedDocument}
-          onGenerateLabel={(doc) => {
-            setSelectedDocument(doc);
-            setShowLabelPrinter(true);
-            setShowAIAssistant(false);
-          }}
-        />
+          {/* QR Code Popup */}
+          <QRCodePopup
+            isOpen={showQRCode}
+            onClose={() => setShowQRCode(false)}
+            facilityData={facilityData}
+            facilityUrl={`${window.location.origin}/facility/${facilityData?.slug}`}
+          />
 
-        {/* Label Printer Popup */}
-        <LabelPrinterPopup
-          isOpen={showLabelPrinter}
-          onClose={() => setShowLabelPrinter(false)}
-          selectedDocument={selectedDocument}
-        />
-
-        {/* QR Code Popup */}
-        <QRCodePopup
-          isOpen={showQRCode}
-          onClose={() => setShowQRCode(false)}
-          facilityData={facilityData}
-          facilityUrl={`${window.location.origin}/facility/${facilityData?.slug}`}
-        />
-
-        {/* SDS Search Dialog - Removed duplicate close button */}
-        {showSDSSearch && facilityData && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold">Search Safety Data Sheets</h2>
-                  <Button variant="ghost" onClick={() => setShowSDSSearch(false)}>
-                    ✕
-                  </Button>
+          {/* SDS Search Dialog - Removed duplicate close button */}
+          {showSDSSearch && facilityData && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Search Safety Data Sheets</h2>
+                    <Button variant="ghost" onClick={() => setShowSDSSearch(false)}>
+                      ✕
+                    </Button>
+                  </div>
+                  <SDSSearch
+                    facilityId={facilityData.id}
+                    onDocumentSelect={handleDocumentSelect}
+                  />
                 </div>
-                <SDSSearch
-                  facilityId={facilityData.id}
-                  onDocumentSelect={handleDocumentSelect}
-                />
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* SDS Viewer Popup */}
-        <SDSViewerPopup
-          isOpen={showSDSViewer}
-          onClose={() => setShowSDSViewer(false)}
-          sdsDocument={selectedDocument}
-        />
+          {/* SDS Viewer Popup */}
+          <SDSViewerPopup
+            isOpen={showSDSViewer}
+            onClose={() => setShowSDSViewer(false)}
+            sdsDocument={selectedDocument}
+          />
 
-        {/* SDS Selection Dialog */}
-        <SDSSelectionDialog
-          isOpen={showSDSSelection}
-          onClose={() => setShowSDSSelection(false)}
-          sdsDocuments={sdsSearchResults}
-          onSaveSelected={handleDocumentSelect}
-        />
+          {/* SDS Selection Dialog */}
+          <SDSSelectionDialog
+            isOpen={showSDSSelection}
+            onClose={() => setShowSDSSelection(false)}
+            sdsDocuments={sdsSearchResults}
+            onSaveSelected={handleDocumentSelect}
+          />
+        </div>
       </div>
     </div>
   );
