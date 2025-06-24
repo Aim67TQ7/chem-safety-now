@@ -161,7 +161,7 @@ const FacilityActivityCard = ({ facilityId }: FacilityActivityCardProps) => {
           </div>
         </div>
       </CardContent>
-    </div>
+    </Card>
   );
 };
 
