@@ -117,7 +117,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
             Found {searchResults.length} SDS Document{searchResults.length > 1 ? 's' : ''}
           </h3>
           <div className="grid gap-4">
-            {searchResults.slice(0, 3).map((document, index) => (
+            {searchResults.map((document, index) => (
               <SDSResultCard
                 key={document.id || index}
                 document={document}
@@ -128,6 +128,15 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
               />
             ))}
           </div>
+          
+          {/* Show confidence scores if available */}
+          {searchResults.length > 1 && (
+            <div className="mt-2 p-3 bg-gray-50 rounded-md">
+              <p className="text-sm text-gray-600">
+                <strong>Tip:</strong> Results are sorted by relevance. The top result is likely the best match.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

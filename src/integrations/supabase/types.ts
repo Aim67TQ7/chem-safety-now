@@ -745,6 +745,7 @@ export type Database = {
           revision_date: string | null
           signal_word: string | null
           source_url: string
+          updated_at: string | null
         }
         Insert: {
           bucket_url?: string | null
@@ -776,6 +777,7 @@ export type Database = {
           revision_date?: string | null
           signal_word?: string | null
           source_url: string
+          updated_at?: string | null
         }
         Update: {
           bucket_url?: string | null
@@ -807,6 +809,7 @@ export type Database = {
           revision_date?: string | null
           signal_word?: string | null
           source_url?: string
+          updated_at?: string | null
         }
         Relationships: [
           {

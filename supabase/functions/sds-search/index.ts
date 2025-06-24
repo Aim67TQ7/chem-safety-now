@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import ConfidenceScorer from '../_shared/confidence-scorer.ts'
@@ -203,51 +204,6 @@ async function searchGoogleCSEWithVariations(productName: string, maxResults: nu
   return { results: [], usedQuery: searchVariations[0]?.query || productName };
 }
 
-async function searchGoogleCSE(productName: string, maxResults: number = 10): Promise<GoogleSearchResult[]> {
-  const apiKey = Deno.env.get('GOOGLE_API_KEY');
-  const cseId = Deno.env.get('GOOGLE_CSE_ID');
-  
-  if (!apiKey || !cseId) {
-    console.error('❌ Missing Google API credentials');
-    throw new Error('Google API credentials not configured');
-  }
-
-  // Enhanced search query specifically for PDF SDS documents
-  const searchQuery = `"${productName}" "safety data sheet" filetype:pdf OR "${productName}" "SDS" filetype:pdf OR "${productName}" "MSDS" filetype:pdf`;
-  const encodedQuery = encodeURIComponent(searchQuery);
-  
-  const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodedQuery}&num=${Math.min(maxResults, 10)}`;
-  
-  console.log('🔍 Searching Google CSE for PDF SDS documents:', productName);
-  
-  try {
-    const response = await fetch(searchUrl);
-    if (!response.ok) {
-      throw new Error(`Google CSE API error: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    if (!data.items) {
-      console.log('📄 No search results found');
-      return [];
-    }
-    
-    console.log(`📄 Found ${data.items.length} Google CSE results`);
-    
-    return data.items.map((item: any): GoogleSearchResult => ({
-      title: item.title,
-      link: item.link,
-      snippet: item.snippet,
-      fileFormat: item.fileFormat
-    }));
-    
-  } catch (error) {
-    console.error('❌ Google CSE search error:', error);
-    throw error;
-  }
-}
-
 function isPDFDocument(url: string, title: string, fileFormat?: string): boolean {
   // Check if it's explicitly marked as PDF
   if (fileFormat === 'PDF') return true;
@@ -435,11 +391,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { product_name, max_results = 10 }: SearchRequest = await req.json();
+    const { product_name, max_results = 3 }: SearchRequest = await req.json();
     
     console.log('🔍 Enhanced SDS document search request:', { product_name, max_results });
 
-    // Step 1: Search existing documents in database (NO QUALITY FILTERS)
+    // Step 1: Search existing documents in database
     const { data: existingDocs, error: searchError } = await supabase
       .from('sds_documents')
       .select('*')
@@ -453,37 +409,37 @@ Deno.serve(async (req) => {
 
     console.log('📊 Found existing documents:', existingDocs?.length || 0);
 
-    // Step 2: If we have existing documents, rank them by confidence only
+    // Step 2: If we have existing documents, rank them by confidence
     if (existingDocs && existingDocs.length > 0) {
       console.log('🎯 Calculating confidence scores for existing documents...');
       
       const rankedDocs = confidenceScorer.rankDocuments(product_name, existingDocs);
       
       // Limit to top 3 results
-      const topThreeResults = rankedDocs.slice(0, 3);
+      const topResults = rankedDocs.slice(0, 3);
       
       // Log confidence scores for debugging
-      topThreeResults.forEach((doc, index) => {
+      topResults.forEach((doc, index) => {
         console.log(`📋 Document ${index + 1}: ${doc.product_name} - Confidence: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
       });
       
-      const topMatch = topThreeResults[0];
+      // Return top results if we have good matches (≥50% confidence)
+      const goodMatches = topResults.filter(doc => doc.confidence.score >= 0.5);
       
-      // Auto-select based on confidence only (≥70%)
-      if (topMatch.confidence.score >= 0.7) {
-        console.log('✅ Auto-selecting top existing match with good confidence:', topMatch.confidence.score);
+      if (goodMatches.length > 0) {
+        console.log(`✅ Found ${goodMatches.length} good existing matches`);
         
-        // Enhance document with extraction if needed
-        const enhancedDocument = await enhanceDocumentWithExtraction(topMatch);
+        // Enhance documents with extraction if needed
+        const enhancedResults = await Promise.all(
+          goodMatches.map(doc => enhanceDocumentWithExtraction(doc))
+        );
         
         return new Response(
           JSON.stringify({ 
-            results: [enhancedDocument],
+            results: enhancedResults,
             source: 'database',
-            auto_selected: true,
-            confidence_score: topMatch.confidence.score,
-            match_reasons: topMatch.confidence.reasons,
-            message: `Auto-selected best match (${(topMatch.confidence.score * 100).toFixed(1)}% confidence)${enhancedDocument.extraction_status === 'processing' ? ' - Extracting additional hazard data...' : ''}`
+            auto_selected: false,
+            message: `Found ${enhancedResults.length} existing SDS document${enhancedResults.length > 1 ? 's' : ''} in library`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -491,8 +447,7 @@ Deno.serve(async (req) => {
         );
       }
       
-      // If confidence is below 70%, go directly to CSE instead of returning low-confidence existing docs
-      console.log(`⚠️ Top existing document confidence ${(topMatch.confidence.score * 100).toFixed(1)}% is below 70%, proceeding to enhanced CSE search`);
+      console.log(`⚠️ No good existing document matches found, proceeding to enhanced CSE search`);
     }
 
     // Step 3: No suitable existing documents found, create job and search CSE
@@ -598,54 +553,28 @@ Deno.serve(async (req) => {
         const rankedDocs = confidenceScorer.rankDocuments(product_name, docsWithBucketUrls);
         
         // Limit to top 3 results
-        const topThreeResults = rankedDocs.slice(0, 3);
+        const topResults = rankedDocs.slice(0, 3);
         
         // Log confidence scores for debugging
-        topThreeResults.forEach((doc, index) => {
+        topResults.forEach((doc, index) => {
           console.log(`📋 Downloaded Document ${index + 1}: ${doc.product_name} - Confidence: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
         });
-        
-        const topMatch = topThreeResults[0];
         
         // Step 11: Update job status to completed
         await supabase
           .from('sds_jobs')
           .update({
             status: 'completed',
-            message: `Successfully downloaded and processed ${topThreeResults.length} PDF SDS documents`,
+            message: `Successfully downloaded and processed ${topResults.length} PDF SDS documents`,
             progress: 100
           })
           .eq('id', jobData.id);
 
         console.log('✅ Enhanced search and download job completed successfully');
 
-        // Auto-select documents based on confidence only (≥70%)
-        if (topMatch && topMatch.confidence.score >= 0.7) {
-          console.log('✅ Auto-selecting top downloaded match with good confidence:', topMatch.confidence.score);
-          
-          // Enhance document with extraction if needed
-          const enhancedDocument = await enhanceDocumentWithExtraction(topMatch);
-          
-          return new Response(
-            JSON.stringify({ 
-              job_id: jobData.id,
-              status: 'completed',
-              results: [enhancedDocument],
-              source: 'enhanced_google_cse_search_with_downloads',
-              auto_selected: true,
-              confidence_score: topMatch.confidence.score,
-              match_reasons: topMatch.confidence.reasons,
-              message: `Auto-selected best match (${(topMatch.confidence.score * 100).toFixed(1)}% confidence) - All PDFs saved to storage${enhancedDocument.extraction_status === 'processing' ? ' - Extracting additional hazard data...' : ''}`
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          );
-        }
-
-        // Return top 3 results for multiple matches (all with bucket URLs)
+        // Return all results instead of auto-selecting
         const enhancedResults = await Promise.all(
-          topThreeResults.map(doc => enhanceDocumentWithExtraction(doc))
+          topResults.map(doc => enhanceDocumentWithExtraction(doc))
         );
 
         return new Response(
@@ -655,7 +584,7 @@ Deno.serve(async (req) => {
             results: enhancedResults,
             source: 'enhanced_google_cse_search_with_downloads',
             auto_selected: false,
-            message: `Downloaded and processed ${topThreeResults.length} PDF SDS documents - All saved to storage. Please select the best one.`
+            message: `Downloaded and processed ${topResults.length} PDF SDS documents - All saved to storage. Please select the best one.`
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
