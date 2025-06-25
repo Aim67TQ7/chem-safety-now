@@ -12,9 +12,10 @@ import { toast } from 'sonner';
 interface SDSSearchProps {
   facilityId: string;
   onDocumentSelect?: (document: any) => void;
+  onAskAI?: (document: any) => void;
 }
 
-const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) => {
+const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onAskAI }) => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
@@ -87,9 +88,15 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
   };
 
   const handleAskAI = (document: any) => {
-    console.log('🤖 Ask AI about document:', document.product_name);
-    handleDocumentSelect(document);
-    toast.success(`AI assistant ready for questions about ${document.product_name}`);
+    console.log('🤖 Ask Stanley about document:', document.product_name);
+    
+    if (onAskAI) {
+      onAskAI(document);
+    } else {
+      handleDocumentSelect(document);
+    }
+    
+    toast.success(`Stanley is ready to answer questions about ${document.product_name}`);
   };
 
   return (
@@ -203,6 +210,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect }) =
         }}
         sdsDocument={viewingDocument}
         onDownload={handleDownload}
+        onAskAI={handleAskAI}
       />
     </div>
   );

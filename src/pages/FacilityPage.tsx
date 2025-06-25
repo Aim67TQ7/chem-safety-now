@@ -6,13 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import FacilityDashboard from "@/components/FacilityDashboard";
 import FacilityNavbar from "@/components/FacilityNavbar";
 import SubscriptionPlansModal from "@/components/SubscriptionPlansModal";
-import AIAssistantPopup from "@/components/popups/AIAssistantPopup";
 import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 import QRCodePopup from "@/components/popups/QRCodePopup";
 import SDSViewerPopup from "@/components/popups/SDSViewerPopup";
 import SDSSelectionDialog from "@/components/SDSSelectionDialog";
 import SDSSearch from "@/components/SDSSearch";
 import { SetupFailureDialog } from "@/components/SetupFailureDialog";
+import GlobalSafetyStanWidget from "@/components/GlobalSafetyStanWidget";
 
 interface FacilityData {
   id: string;
@@ -39,7 +39,6 @@ const FacilityPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [showSDSViewer, setShowSDSViewer] = useState(false);
@@ -48,6 +47,7 @@ const FacilityPage = () => {
   const [sdsSearchResults, setSdsSearchResults] = useState<any[]>([]);
   const [showSDSSelection, setShowSDSSelection] = useState(false);
   const [isSetupMode, setIsSetupMode] = useState(false);
+  const [showStanleyWithDocument, setShowStanleyWithDocument] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -180,6 +180,16 @@ const FacilityPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+      {/* Stanley Widget - Show when document is selected for AI chat */}
+      {(showStanleyWithDocument || selectedDocument) && (
+        <GlobalSafetyStanWidget
+          companyName={facilityData?.facility_name || 'Your Facility'}
+          industry="Chemical Safety"
+          customInstructions={`You are Safety Stan, helping with chemical safety questions at ${facilityData?.facility_name || 'this facility'}. You have access to SDS information and can help with safety procedures, compliance, and chemical handling questions. Be practical and safety-focused in your responses.`}
+          initialPosition={{ x: 100, y: 100 }}
+        />
+      )}
+
       <FacilityNavbar 
         facilityName={facilityData.facility_name || undefined}
         facilityLogo={facilityData.logo_url}
@@ -211,19 +221,6 @@ const FacilityPage = () => {
             facilitySlug={facilityData?.slug || ''}
           />
 
-          {/* AI Assistant Popup */}
-          <AIAssistantPopup
-            isOpen={showAIAssistant}
-            onClose={() => setShowAIAssistant(false)}
-            facilityData={facilityData}
-            selectedDocument={selectedDocument}
-            onGenerateLabel={(doc) => {
-              setSelectedDocument(doc);
-              setShowLabelPrinter(true);
-              setShowAIAssistant(false);
-            }}
-          />
-
           {/* Label Printer Popup */}
           <LabelPrinterPopup
             isOpen={showLabelPrinter}
@@ -239,7 +236,7 @@ const FacilityPage = () => {
             facilityUrl={`${window.location.origin}/facility/${facilityData?.slug}`}
           />
 
-          {/* SDS Search Dialog - Removed duplicate close button */}
+          {/* SDS Search Dialog */}
           {showSDSSearch && facilityData && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -264,6 +261,15 @@ const FacilityPage = () => {
             isOpen={showSDSViewer}
             onClose={() => setShowSDSViewer(false)}
             sdsDocument={selectedDocument}
+            onAskAI={(document) => {
+              setSelectedDocument(document);
+              setShowStanleyWithDocument(true);
+              setShowSDSViewer(false);
+              toast({
+                title: "Stanley is ready!",
+                description: `Ask me anything about ${document.product_name}`,
+              });
+            }}
           />
 
           {/* SDS Selection Dialog */}

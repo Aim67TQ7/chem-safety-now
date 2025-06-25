@@ -87,13 +87,13 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
           </Button>
           
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={() => onAskAI(document)}
-            className="flex items-center space-x-1"
+            className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Bot className="h-4 w-4" />
-            <span>Ask AI</span>
+            <span>Ask Stanley</span>
           </Button>
         </div>
       </CardContent>

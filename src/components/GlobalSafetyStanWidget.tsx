@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { X, Minimize2, Maximize2 } from "lucide-react";
+import { X, Minimize2, Maximize2, ExternalLink, FileText } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,7 @@ interface GlobalSafetyStanWidgetProps {
   companyName?: string;
   customInstructions?: string;
   industry?: string;
+  selectedDocument?: any;
   onFormDataUpdate?: (field: string, value: string) => void;
   formData?: {
     facilityName?: string;
@@ -36,6 +37,7 @@ export default function GlobalSafetyStanWidget({
   companyName = 'ChemLabel-GPT',
   customInstructions = '',
   industry = 'Chemical Safety',
+  selectedDocument,
   onFormDataUpdate,
   formData
 }: GlobalSafetyStanWidgetProps) {
@@ -75,9 +77,17 @@ export default function GlobalSafetyStanWidget({
     scrollToBottom();
   }, [messages]);
 
-  // Update initial message based on page
+  // Update initial message based on page and document context
   useEffect(() => {
-    if (isHomepage) {
+    if (selectedDocument) {
+      setMessages([{
+        id: '1',
+        role: 'assistant',
+        content: `Hi! I'm Stan, your Safety Expert. I see you want to know about **${selectedDocument.product_name}**${selectedDocument.manufacturer ? ` from ${selectedDocument.manufacturer}` : ''}.\n\nI have all the safety data for this chemical. What would you like to know? I can help with:\n\n• Hazard information\n• First aid procedures\n• PPE requirements\n• Storage requirements\n• Emergency procedures`,
+        timestamp: new Date()
+      }]);
+      setIsOpen(true); // Auto-open when document is provided
+    } else if (isHomepage) {
       setMessages([{
         id: '1',
         role: 'assistant',
@@ -99,7 +109,7 @@ export default function GlobalSafetyStanWidget({
         timestamp: new Date()
       }]);
     }
-  }, [isHomepage, isSignupPage]);
+  }, [isHomepage, isSignupPage, selectedDocument]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!avatarRef.current) return;
@@ -374,11 +384,13 @@ export default function GlobalSafetyStanWidget({
             body: {
               message: userMessage,
               conversation_history: conversationHistory,
-              sds_document: null,
+              sds_document: selectedDocument,
               facility_data: {
                 facility_name: companyName,
                 industry: industry,
-                custom_instructions: `You are Stan, helping with facility setup. Be VERY concise - 1-2 sentences max. Always offer clear A-B choices when possible. Ask one question at a time. Focus on completing signup form first. ${formContext}\n\nNext missing field: ${getNextMissingField() || 'Complete!'}\nUse this pattern: "Got [info]. [Next question]?" or offer A-B choices like "A) Submit now B) Review first?"`
+                custom_instructions: selectedDocument 
+                  ? `${customInstructions}\n\nYou are currently helping with questions about ${selectedDocument.product_name}. Use the SDS data provided to give specific, accurate safety guidance.`
+                  : customInstructions
               }
             }
           });
@@ -405,7 +417,7 @@ export default function GlobalSafetyStanWidget({
           body: {
             message: userMessage,
             conversation_history: conversationHistory,
-            sds_document: null,
+            sds_document: selectedDocument,
             facility_data: {
               facility_name: companyName,
               industry: industry,
@@ -518,6 +530,14 @@ export default function GlobalSafetyStanWidget({
 
   const chatPosition = getChatPosition();
 
+  const handleViewPDF = () => {
+    if (selectedDocument?.bucket_url) {
+      window.open(selectedDocument.bucket_url, '_blank');
+    } else if (selectedDocument?.source_url) {
+      window.open(selectedDocument.source_url, '_blank');
+    }
+  };
+
   return (
     <>
       {/* Floating Stanley Avatar - 20% taller - In front of entire site */}
@@ -548,7 +568,7 @@ export default function GlobalSafetyStanWidget({
             />
           </div>
           <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-            Safety Expert Stan
+            {selectedDocument ? `Ask about ${selectedDocument.product_name}` : 'Safety Expert Stan'}
           </div>
           <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
         </div>
@@ -583,11 +603,22 @@ export default function GlobalSafetyStanWidget({
                 <div>
                   <h3 className="font-semibold text-sm">Safety Stan</h3>
                   <p className="text-xs opacity-90">
-                    {isThinking ? "Thinking..." : isSignupPage ? "Setup Assistant" : "Safety Expert"}
+                    {isThinking ? "Thinking..." : selectedDocument ? `Expert on ${selectedDocument.product_name}` : isSignupPage ? "Setup Assistant" : "Safety Expert"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                {selectedDocument && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleViewPDF}
+                    className="text-white hover:bg-white/20 h-6 px-2 text-xs"
+                  >
+                    <FileText className="w-3 h-3 mr-1" />
+                    View PDF
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -614,76 +645,69 @@ export default function GlobalSafetyStanWidget({
                 </Button>
               </div>
             </div>
+
+            {/* Document Context Banner */}
+            {selectedDocument && !isMinimized && (
+              <div className="mt-3 p-2 bg-white/20 rounded text-xs">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4" />
+                  <div>
+                    <div className="font-medium">{selectedDocument.product_name}</div>
+                    {selectedDocument.manufacturer && (
+                      <div className="opacity-80">{selectedDocument.manufacturer}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {!isMinimized && (
             <>
-              {/* Quick Actions - Only show on signup page with A-B choices */}
-              {isSignupPage && (
+              {/* Quick Actions - Show document-specific actions when document is selected */}
+              {selectedDocument ? (
                 <div className="p-3 bg-gray-50/80 border-b backdrop-blur-sm">
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      onClick={() => sendQuickAction('start_setup')}
+                      onClick={() => sendMessage('What are the main hazards of this chemical?')}
                       disabled={isLoading}
                       variant="outline"
                       size="sm"
                       className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
                     >
-                      A) Guide Me
+                      Main Hazards
                     </Button>
                     <Button
-                      onClick={() => sendQuickAction('manual_form')}
+                      onClick={() => sendMessage('What PPE is required for this chemical?')}
                       disabled={isLoading}
                       variant="outline"
                       size="sm"
                       className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
                     >
-                      B) Manual Fill
+                      PPE Required
+                    </Button>
+                    <Button
+                      onClick={() => sendMessage('What first aid is needed for exposure?')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      First Aid
                     </Button>
                   </div>
                 </div>
-              )}
-
-              {/* Quick Actions - Only show on non-homepage */}
-              {!isHomepage && !isSignupPage && (
-                <div className="p-3 bg-gray-50/80 border-b backdrop-blur-sm">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      onClick={() => sendQuickAction('OSHA Compliance Check')}
-                      disabled={isLoading}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
-                    >
-                      OSHA Check
-                    </Button>
-                    <Button
-                      onClick={() => sendQuickAction('Chemical Safety Review')}
-                      disabled={isLoading}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
-                    >
-                      Chemical Safety
-                    </Button>
-                    <Button
-                      onClick={() => sendQuickAction('PPE Requirements')}
-                      disabled={isLoading}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
-                    >
-                      PPE Guide
-                    </Button>
-                  </div>
-                </div>
+              ) : isSignupPage ? (
+                // ... keep existing code (signup quick actions)
+              ) : !isHomepage && (
+                // ... keep existing code (general quick actions)
               )}
 
               {/* Messages */}
               <div 
                 className="flex-1 overflow-y-auto p-4 space-y-3" 
                 style={{ 
-                  height: isHomepage ? `${chatSize.height - 200}px` : isSignupPage ? `${chatSize.height - 260}px` : `${chatSize.height - 260}px`,
+                  height: isHomepage ? `${chatSize.height - 200}px` : isSignupPage ? `${chatSize.height - 260}px` : selectedDocument ? `${chatSize.height - 320}px` : `${chatSize.height - 260}px`,
                   maxHeight: `${chatSize.height - 160}px`
                 }}
               >
