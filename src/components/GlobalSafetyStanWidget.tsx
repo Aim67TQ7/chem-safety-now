@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,6 +24,7 @@ interface GlobalSafetyStanWidgetProps {
     address?: string;
     email?: string;
   };
+  onClose?: () => void;
 }
 
 interface Message {
@@ -39,7 +41,8 @@ export default function GlobalSafetyStanWidget({
   industry = 'Chemical Safety',
   selectedDocument,
   onFormDataUpdate,
-  formData
+  formData,
+  onClose
 }: GlobalSafetyStanWidgetProps) {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
@@ -56,6 +59,7 @@ export default function GlobalSafetyStanWidget({
   const [isThinking, setIsThinking] = useState(false);
   const [emailInput, setEmailInput] = useState('');
   const [hasAskedSetupQuestion, setHasAskedSetupQuestion] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   const avatarRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -110,6 +114,13 @@ export default function GlobalSafetyStanWidget({
       }]);
     }
   }, [isHomepage, isSignupPage, selectedDocument]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    if (onClose) {
+      onClose();
+    }
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!avatarRef.current) return;
@@ -538,9 +549,23 @@ export default function GlobalSafetyStanWidget({
     }
   };
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <>
-      {/* Floating Stanley Avatar - 20% taller - In front of entire site */}
+      {/* Full background with higher transparency */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-[9998]"
+        style={{
+          backgroundImage: 'url(/lovable-uploads/54ad4b94-8ebd-4158-aaf2-03ef75373444.png)',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backgroundBlendMode: 'overlay'
+        }}
+      />
+
+      {/* Floating Stanley Avatar - 20% taller - In front of background */}
       <div
         ref={avatarRef}
         data-stanley-avatar
@@ -555,6 +580,19 @@ export default function GlobalSafetyStanWidget({
         onClick={() => !isDragging && setIsOpen(true)}
       >
         <div className="relative group">
+          {/* X button to hide Stanley */}
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
+            variant="ghost"
+            size="sm"
+            className="absolute -top-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+          >
+            <X className="w-3 h-3" />
+          </Button>
+
           {/* Stanley's full body - 20% taller (288 * 1.2 = 346) */}
           <div className="w-60 h-[346px] flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
             <img
@@ -698,9 +736,60 @@ export default function GlobalSafetyStanWidget({
                   </div>
                 </div>
               ) : isSignupPage ? (
-                // ... keep existing code (signup quick actions)
+                <div className="p-3 bg-gray-50/80 border-b backdrop-blur-sm">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => sendQuickAction('start_setup')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      Guide Me
+                    </Button>
+                    <Button
+                      onClick={() => sendQuickAction('manual_form')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      Fill Manually
+                    </Button>
+                  </div>
+                </div>
               ) : !isHomepage && (
-                // ... keep existing code (general quick actions)
+                <div className="p-3 bg-gray-50/80 border-b backdrop-blur-sm">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => sendMessage('Help me with chemical safety procedures')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      Safety Help
+                    </Button>
+                    <Button
+                      onClick={() => sendMessage('What PPE do I need?')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      PPE Guide
+                    </Button>
+                    <Button
+                      onClick={() => sendMessage('Help me understand hazard labels')}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs text-gray-800 border-gray-300 hover:bg-gray-100/80"
+                    >
+                      Label Help
+                    </Button>
+                  </div>
+                </div>
               )}
 
               {/* Messages */}
