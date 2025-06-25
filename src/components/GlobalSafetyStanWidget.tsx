@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -555,21 +554,22 @@ export default function GlobalSafetyStanWidget({
 
   return (
     <>
-      {/* Full background with higher transparency */}
+      {/* Background image - positioned behind content with lower z-index */}
       <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-[9998]"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
         style={{
           backgroundImage: 'url(/lovable-uploads/54ad4b94-8ebd-4158-aaf2-03ef75373444.png)',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          backgroundBlendMode: 'overlay'
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundBlendMode: 'overlay',
+          zIndex: -1
         }}
       />
 
-      {/* Floating Stanley Avatar - 20% taller - In front of background */}
+      {/* Floating Stanley Avatar - 20% taller - Above background but below content */}
       <div
         ref={avatarRef}
         data-stanley-avatar
-        className="fixed z-[9999] cursor-move select-none"
+        className="fixed z-[999] cursor-move select-none"
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
@@ -616,7 +616,7 @@ export default function GlobalSafetyStanWidget({
       {isOpen && (
         <div
           ref={chatRef}
-          className="fixed z-[10000] bg-white/80 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-200 resize-none"
+          className="fixed z-[1000] bg-white/90 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-200 resize-none"
           style={{
             left: `${chatPosition.x}px`,
             top: `${chatPosition.y}px`,
