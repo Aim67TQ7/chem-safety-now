@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+    <div className="min-h-screen bg-transparent">
       {/* GlobalSafetyStanWidget - Floating Stanley */}
       <GlobalSafetyStanWidget 
         companyName="ChemLabel-GPT"
@@ -31,7 +30,7 @@ const Index = () => {
       />
 
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
@@ -99,7 +98,7 @@ const Index = () => {
       </section>
 
       {/* OSHA Warning Section */}
-      <section className="bg-white py-20">
+      <section className="bg-white/80 backdrop-blur-sm py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Alert className="max-w-4xl mx-auto bg-red-50 border-red-200 mb-8">
@@ -179,7 +178,7 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
             From Hours of Filing to Seconds of Access
@@ -220,7 +219,7 @@ const Index = () => {
       </section>
 
       {/* Paper vs Digital Comparison Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
             The Real Cost of Paper Systems
@@ -289,7 +288,7 @@ const Index = () => {
       </section>
 
       {/* Updated CTA Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-lg p-8 text-white mb-8">
             <h3 className="text-2xl font-bold mb-4">
@@ -328,7 +327,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900/90 backdrop-blur-sm text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
