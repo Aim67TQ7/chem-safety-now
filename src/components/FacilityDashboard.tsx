@@ -9,6 +9,7 @@ import FacilityActivityCard from "./FacilityActivityCard";
 import AccessTools from "./AccessTools";
 import FeatureAccessWrapper from "./FeatureAccessWrapper";
 import AuditTrail from "./AuditTrail";
+import SDSSearch from "./SDSSearch";
 
 interface FacilityProps {
   id: string;
@@ -66,6 +67,15 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Hero Section - SDS Search */}
+        <div className="mb-8">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Safety Data Sheet Access</h2>
+            <p className="text-lg text-gray-600">Scan to search for chemical safety information instantly</p>
+          </div>
+          <SDSSearch facilityId={facility.id} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Facility Info & QR Code */}
           <div className="lg:col-span-1 space-y-4">
