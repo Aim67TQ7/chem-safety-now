@@ -264,7 +264,7 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 3): 
       return [];
     }
     
-    // Step 3: Create document records for all found PDFs
+    // Step 3: Create document records for found PDFs (DON'T auto-download here)
     const documents: ScrapedSDSDocument[] = pdfResults.slice(0, maxResults).map(result => ({
       product_name: productName,
       source_url: result.link,
@@ -279,109 +279,6 @@ async function scrapeSDSDocuments(productName: string, maxResults: number = 3): 
     console.error('❌ Enhanced SDS document search process error:', error);
     throw error;
   }
-}
-
-async function downloadAllPDFs(documents: ScrapedSDSDocument[]): Promise<ScrapedSDSDocument[]> {
-  console.log(`📥 Starting parallel download of ${documents.length} PDFs`);
-  
-  const downloadPromises = documents.map(async (doc, index) => {
-    try {
-      console.log(`📥 Downloading PDF ${index + 1}/${documents.length}: ${doc.source_url}`);
-      
-      // Call the download-sds-pdf function
-      const { data: downloadResult, error: downloadError } = await supabase.functions.invoke('download-sds-pdf', {
-        body: {
-          document_id: doc.id,
-          source_url: doc.source_url,
-          file_name: doc.file_name
-        }
-      });
-
-      if (downloadError) {
-        console.error(`❌ Download failed for ${doc.source_url}:`, downloadError);
-        return doc; // Return original document without bucket_url
-      }
-
-      if (downloadResult?.success && downloadResult?.bucket_url) {
-        console.log(`✅ Successfully downloaded PDF ${index + 1}: ${downloadResult.bucket_url}`);
-        return {
-          ...doc,
-          bucket_url: downloadResult.bucket_url,
-          file_size: downloadResult.file_size,
-          file_type: 'application/pdf'
-        };
-      } else {
-        console.error(`❌ Download failed for ${doc.source_url}: No bucket URL returned`);
-        return doc;
-      }
-    } catch (error) {
-      console.error(`❌ Download error for ${doc.source_url}:`, error);
-      return doc; // Return original document on error
-    }
-  });
-
-  const downloadedDocs = await Promise.all(downloadPromises);
-  const successfulDownloads = downloadedDocs.filter(doc => doc.bucket_url).length;
-  
-  console.log(`✅ Download completed: ${successfulDownloads}/${documents.length} PDFs successfully downloaded`);
-  
-  return downloadedDocs;
-}
-
-async function triggerTextExtraction(document: any): Promise<void> {
-  try {
-    console.log('🔍 Triggering text extraction for document:', document.id);
-    
-    // Check if document already has extracted data
-    if (document.h_codes && document.h_codes.length > 0) {
-      console.log('✅ Document already has extracted data, skipping extraction');
-      return;
-    }
-    
-    // Only extract if we have a bucket_url
-    if (!document.bucket_url) {
-      console.log('⚠️ No bucket_url found, skipping text extraction');
-      return;
-    }
-    
-    // Call the extract-sds-text function
-    const { error } = await supabase.functions.invoke('extract-sds-text', {
-      body: {
-        document_id: document.id,
-        bucket_url: document.bucket_url
-      }
-    });
-    
-    if (error) {
-      console.error('❌ Text extraction failed:', error);
-    } else {
-      console.log('✅ Text extraction initiated successfully');
-    }
-  } catch (error) {
-    console.error('❌ Error triggering text extraction:', error);
-  }
-}
-
-async function enhanceDocumentWithExtraction(document: any): Promise<any> {
-  // Check if document needs text extraction
-  const needsExtraction = !document.h_codes || document.h_codes.length === 0;
-  
-  if (needsExtraction && document.bucket_url) {
-    // Trigger extraction in background
-    EdgeRuntime.waitUntil(triggerTextExtraction(document));
-    
-    // Add extraction status to document
-    return {
-      ...document,
-      extraction_status: 'processing',
-      extraction_message: 'Extracting hazard data...'
-    };
-  }
-  
-  return {
-    ...document,
-    extraction_status: document.h_codes?.length > 0 ? 'complete' : 'pending'
-  };
 }
 
 Deno.serve(async (req) => {
@@ -409,239 +306,48 @@ Deno.serve(async (req) => {
 
     console.log('📊 Found existing documents:', existingDocs?.length || 0);
 
-    // Step 2: If we have existing documents, rank them by confidence
-    if (existingDocs && existingDocs.length > 0) {
-      console.log('🎯 Calculating confidence scores for existing documents...');
-      
-      const rankedDocs = confidenceScorer.rankDocuments(product_name, existingDocs);
-      
-      // Limit to top 3 results
-      const topResults = rankedDocs.slice(0, 3);
-      
-      // Log confidence scores for debugging
-      topResults.forEach((doc, index) => {
-        console.log(`📋 Document ${index + 1}: ${doc.product_name} - Confidence: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
-      });
-      
-      // Return top results if we have good matches (≥50% confidence)
-      const goodMatches = topResults.filter(doc => doc.confidence.score >= 0.5);
-      
-      if (goodMatches.length > 0) {
-        console.log(`✅ Found ${goodMatches.length} good existing matches`);
-        
-        // Enhance documents with extraction if needed
-        const enhancedResults = await Promise.all(
-          goodMatches.map(doc => enhanceDocumentWithExtraction(doc))
-        );
-        
-        return new Response(
-          JSON.stringify({ 
-            results: enhancedResults,
-            source: 'database',
-            auto_selected: false,
-            message: `Found ${enhancedResults.length} existing SDS document${enhancedResults.length > 1 ? 's' : ''} in library`
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
-      console.log(`⚠️ No good existing document matches found, proceeding to enhanced CSE search`);
-    }
-
-    // Step 3: No suitable existing documents found, create job and search CSE
-    console.log('💾 Creating SDS job for enhanced CSE document search:', product_name);
+    // Step 2: Get web search results (without auto-saving)
+    const webResults = await scrapeSDSDocuments(product_name, Math.max(1, max_results - (existingDocs?.length || 0)));
     
-    const { data: jobData, error: jobError } = await supabase
-      .from('sds_jobs')
-      .insert({
-        product_name,
-        max_results: 3,
-        status: 'pending',
-        message: 'Starting enhanced Google CSE PDF document search with automatic downloads...'
-      })
-      .select()
-      .single();
-
-    if (jobError) {
-      console.error('❌ Job creation error:', jobError);
-      throw jobError;
-    }
-
-    console.log('✅ Created job:', jobData.id);
-
-    // Step 4: Perform enhanced PDF document scraping
-    try {
-      await supabase
-        .from('sds_jobs')
-        .update({
-          status: 'processing',
-          message: 'Searching for PDF SDS documents with enhanced query variations...',
-          progress: 25
-        })
-        .eq('id', jobData.id);
-
-      const scrapedDocs = await scrapeSDSDocuments(product_name, 3);
-      
-      if (scrapedDocs.length > 0) {
-        // Step 5: Store documents first (without bucket URLs)
-        console.log('💾 Storing', scrapedDocs.length, 'PDF documents from enhanced search');
-        
-        const documentsToInsert = scrapedDocs.map(doc => ({
-          ...doc,
-          job_id: jobData.id,
-          created_at: new Date().toISOString()
-        }));
-
-        const { data: insertedDocs, error: insertError } = await supabase
-          .from('sds_documents')
-          .insert(documentsToInsert)
-          .select();
-
-        if (insertError) {
-          console.error('❌ Document insertion error:', insertError);
-          throw insertError;
-        }
-
-        // Step 6: Update job status for download phase
-        await supabase
-          .from('sds_jobs')
-          .update({
-            status: 'processing',
-            message: 'Downloading PDF documents to storage...',
-            progress: 50
-          })
-          .eq('id', jobData.id);
-
-        // Step 7: Download all PDFs in parallel
-        const docsWithBucketUrls = await downloadAllPDFs(insertedDocs || []);
-        
-        // Step 8: Update documents with bucket URLs and file info
-        const updatePromises = docsWithBucketUrls.map(async (doc) => {
-          if (doc.bucket_url) {
-            const { error: updateError } = await supabase
-              .from('sds_documents')
-              .update({
-                bucket_url: doc.bucket_url,
-                file_size: doc.file_size,
-                file_type: doc.file_type
-              })
-              .eq('id', doc.id);
-            
-            if (updateError) {
-              console.error(`❌ Failed to update document ${doc.id} with bucket URL:`, updateError);
-            }
-          }
-          return doc;
-        });
-
-        await Promise.all(updatePromises);
-
-        // Step 9: Update job status for text extraction
-        await supabase
-          .from('sds_jobs')
-          .update({
-            status: 'processing',
-            message: 'Extracting text and hazard data from PDFs...',
-            progress: 75
-          })
-          .eq('id', jobData.id);
-
-        // Step 10: Rank the documents by confidence
-        console.log('🎯 Calculating confidence scores for downloaded documents...');
-        const rankedDocs = confidenceScorer.rankDocuments(product_name, docsWithBucketUrls);
-        
-        // Limit to top 3 results
-        const topResults = rankedDocs.slice(0, 3);
-        
-        // Log confidence scores for debugging
-        topResults.forEach((doc, index) => {
-          console.log(`📋 Downloaded Document ${index + 1}: ${doc.product_name} - Confidence: ${(doc.confidence.score * 100).toFixed(1)}% - Reasons: ${doc.confidence.reasons.join(', ')}`);
-        });
-        
-        // Step 11: Update job status to completed
-        await supabase
-          .from('sds_jobs')
-          .update({
-            status: 'completed',
-            message: `Successfully downloaded and processed ${topResults.length} PDF SDS documents`,
-            progress: 100
-          })
-          .eq('id', jobData.id);
-
-        console.log('✅ Enhanced search and download job completed successfully');
-
-        // Return all results instead of auto-selecting
-        const enhancedResults = await Promise.all(
-          topResults.map(doc => enhanceDocumentWithExtraction(doc))
-        );
-
-        return new Response(
-          JSON.stringify({ 
-            job_id: jobData.id,
-            status: 'completed',
-            results: enhancedResults,
-            source: 'enhanced_google_cse_search_with_downloads',
-            auto_selected: false,
-            message: `Downloaded and processed ${topResults.length} PDF SDS documents - All saved to storage. Please select the best one.`
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      } else {
-        // No PDF documents found with any search variation
-        await supabase
-          .from('sds_jobs')
-          .update({
-            status: 'completed',
-            message: 'No PDF SDS documents found with any search variation',
-            progress: 100
-          })
-          .eq('id', jobData.id);
-
-        return new Response(
-          JSON.stringify({ 
-            job_id: jobData.id,
-            status: 'completed',
-            results: [],
-            source: 'enhanced_google_cse_search_with_downloads',
-            auto_selected: false,
-            message: 'No PDF SDS documents found with any search variation - try a different product name'
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-    } catch (scrapingError) {
-      console.error('❌ Enhanced PDF document search and download process error:', scrapingError);
-      
-      // Update job status to failed
-      await supabase
-        .from('sds_jobs')
-        .update({
-          status: 'failed',
-          error: scrapingError.message,
-          message: 'Enhanced PDF document search and download process failed',
-          progress: 0
-        })
-        .eq('id', jobData.id);
-
+    // Step 3: Combine and rank all results
+    const allResults = [...(existingDocs || []), ...webResults];
+    
+    if (allResults.length === 0) {
       return new Response(
         JSON.stringify({ 
-          job_id: jobData.id,
-          status: 'failed',
           results: [],
-          error: 'Enhanced PDF document search and download process failed',
-          message: scrapingError.message
+          source: 'combined_search',
+          auto_selected: false,
+          message: 'No SDS documents found - try a different product name'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
+
+    // Step 4: Rank by confidence
+    const rankedResults = confidenceScorer.rankDocuments(product_name, allResults);
+    
+    // Limit to requested number of results
+    const topResults = rankedResults.slice(0, max_results);
+    
+    // Log confidence scores for debugging
+    topResults.forEach((doc, index) => {
+      console.log(`📋 Result ${index + 1}: ${doc.product_name} - Confidence: ${(doc.confidence.score * 100).toFixed(1)}% - Source: ${doc.id ? 'Database' : 'Web'}`);
+    });
+
+    return new Response(
+      JSON.stringify({ 
+        results: topResults,
+        source: 'combined_search',
+        auto_selected: false,
+        message: `Found ${topResults.length} potential SDS documents. Please select one to process with AI extraction.`
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
 
   } catch (error) {
     console.error('❌ Enhanced SDS document search error:', error);

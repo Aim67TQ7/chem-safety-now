@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +109,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
             {/* Audit Trail - Premium Feature */}
             {hasPremiumAccess && (
               <FeatureAccessWrapper 
-                featureName="audit_trail" 
+                feature="audit_trail" 
                 facilityId={facility.id}
                 fallback={null}
               >
@@ -117,7 +118,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
             )}
 
             {/* Access Tools */}
-            <AccessTools facilityId={facility.id} />
+            <AccessTools facilityData={facility} />
           </div>
         </div>
       </div>

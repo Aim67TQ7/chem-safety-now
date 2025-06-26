@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -41,7 +40,14 @@ const AuditTrail = ({ facilityId }: AuditTrailProps) => {
         .limit(100);
 
       if (error) throw error;
-      setAuditRecords(data || []);
+      
+      // Transform the data to match our interface, ensuring ip_address is a string
+      const transformedData = (data || []).map(record => ({
+        ...record,
+        ip_address: record.ip_address ? String(record.ip_address) : null
+      }));
+      
+      setAuditRecords(transformedData);
     } catch (error) {
       console.error('Error fetching audit records:', error);
     } finally {
