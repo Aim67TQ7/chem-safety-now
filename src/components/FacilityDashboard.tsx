@@ -111,7 +111,6 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
               <FeatureAccessWrapper 
                 feature="audit_trail" 
                 facilityId={facility.id}
-                fallback={null}
               >
                 <AuditTrail facilityId={facility.id} />
               </FeatureAccessWrapper>
