@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -120,23 +121,23 @@ const Index = () => {
       </section>
 
       {/* OSHA Warning Section */}
-      <section className="bg-white/95 backdrop-blur-sm py-20 relative z-10">
+      <section className="py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <Alert className="max-w-4xl mx-auto bg-red-50 border-red-200 mb-8">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800 font-medium">
+            <Alert className="max-w-4xl mx-auto bg-red-900/20 border-red-400/30 backdrop-blur-sm mb-8">
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-200 font-medium">
                 <strong>2,888 OSHA citations</strong> were issued last year under Hazard Communication — the #2 most-cited standard in the U.S.
                 <br />
                 Most violations involved <strong>missing SDSs, outdated paper files, lost incident reports, and inaccessible safety info</strong> during inspections.
                 <br />
-                <strong className="text-red-900">Paper-based systems cost facilities an average of 15+ hours per week in manual filing, searching, and compliance updates.</strong>
+                <strong className="text-red-100">Paper-based systems cost facilities an average of 15+ hours per week in manual filing, searching, and compliance updates.</strong>
               </AlertDescription>
             </Alert>
 
             {/* New Beta Features Announcement */}
             <div className="max-w-4xl mx-auto mb-8">
-              <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-lg p-6 text-white">
+              <div className="bg-gradient-to-r from-blue-600/80 to-green-600/80 backdrop-blur-sm rounded-lg p-6 text-white border border-white/20">
                 <div className="flex items-center justify-center mb-3">
                   <Zap className="w-6 h-6 mr-2" />
                   <span className="text-xl font-bold">2 New Features Added Monthly</span>
@@ -147,51 +148,51 @@ const Index = () => {
               </div>
             </div>
             
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-white mb-4">
               📱 Why Smart Facilities Are Replacing Paper Systems
             </h2>
-            <p className="text-xl text-gray-700 font-semibold mb-16">
+            <p className="text-xl text-gray-200 font-semibold mb-16">
               ChemLabel-GPT eliminates the time drain and compliance risks of paper-based safety management.
             </p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <Card className="p-6 text-center hover:shadow-lg transition-shadow bg-white/10 backdrop-blur-sm border-white/20 text-white">
               <div className="flex items-center justify-center mb-4">
-                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
                 <h3 className="text-xl font-semibold">Instant SDS Access</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-gray-200">
                 Scan QR codes for instant safety data — no more wasting time digging through filing cabinets or outdated binders.
               </p>
             </Card>
 
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <Card className="p-6 text-center hover:shadow-lg transition-shadow bg-white/10 backdrop-blur-sm border-white/20 text-white">
               <div className="flex items-center justify-center mb-4">
-                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
                 <h3 className="text-xl font-semibold">Digital Incident Reports</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-gray-200">
                 Submit and track incidents digitally — eliminate paperwork delays and improve response times with automated workflows.
               </p>
             </Card>
 
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <Card className="p-6 text-center hover:shadow-lg transition-shadow bg-white/10 backdrop-blur-sm border-white/20 text-white">
               <div className="flex items-center justify-center mb-4">
-                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
                 <h3 className="text-xl font-semibold">Automated Compliance</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-gray-200">
                 Auto-generate compliance reports — no more manual tracking or scrambling to find documents during inspections.
               </p>
             </Card>
 
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <Card className="p-6 text-center hover:shadow-lg transition-shadow bg-white/10 backdrop-blur-sm border-white/20 text-white">
               <div className="flex items-center justify-center mb-4">
-                <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
                 <h3 className="text-xl font-semibold">Real-Time Updates</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-gray-200">
                 Always current information — eliminate outdated paper documents and ensure teams access the latest safety data.
               </p>
             </Card>
@@ -200,9 +201,9 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gray-50/95 backdrop-blur-sm relative z-10">
+      <section className="py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
+          <h2 className="text-3xl font-bold text-center text-white mb-16">
             From Hours of Filing to Seconds of Access
           </h2>
           
@@ -211,8 +212,8 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">1</span>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Scan & Access Instantly</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-3 text-white">Scan & Access Instantly</h3>
+              <p className="text-gray-200">
                 Workers scan QR codes with their phones — instantly access safety information instead of searching through filing systems for 10+ minutes.
               </p>
             </div>
@@ -221,8 +222,8 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">2</span>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Report Digitally</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-3 text-white">Report Digitally</h3>
+              <p className="text-gray-200">
                 Submit incident reports and access procedures digitally — eliminate paper forms and speed up response times from hours to minutes.
               </p>
             </div>
@@ -231,8 +232,8 @@ const Index = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">3</span>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Auto-Track Compliance</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-3 text-white">Auto-Track Compliance</h3>
+              <p className="text-gray-200">
                 All activity auto-logs for compliance — eliminate manual documentation and be audit-ready without hours of preparation.
               </p>
             </div>
@@ -241,19 +242,19 @@ const Index = () => {
       </section>
 
       {/* Paper vs Digital Comparison Section */}
-      <section className="py-20 bg-white/95 backdrop-blur-sm relative z-10">
+      <section className="py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
+          <h2 className="text-3xl font-bold text-center text-white mb-16">
             The Real Cost of Paper Systems
           </h2>
           
           <div className="grid md:grid-cols-2 gap-12">
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8">
-              <h3 className="text-2xl font-bold text-red-800 mb-6 flex items-center">
+            <div className="bg-red-900/20 border-2 border-red-400/30 backdrop-blur-sm rounded-lg p-8">
+              <h3 className="text-2xl font-bold text-red-400 mb-6 flex items-center">
                 <Clock className="w-6 h-6 mr-3" />
                 Paper-Based Problems
               </h3>
-              <ul className="space-y-4 text-red-700">
+              <ul className="space-y-4 text-red-200">
                 <li className="flex items-start">
                   <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
                   <span><strong>15+ hours weekly</strong> spent filing, searching, and updating paper documents</span>
@@ -277,12 +278,12 @@ const Index = () => {
               </ul>
             </div>
 
-            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-8">
-              <h3 className="text-2xl font-bold text-green-800 mb-6 flex items-center">
+            <div className="bg-green-900/20 border-2 border-green-400/30 backdrop-blur-sm rounded-lg p-8">
+              <h3 className="text-2xl font-bold text-green-400 mb-6 flex items-center">
                 <TrendingUp className="w-6 h-6 mr-3" />
                 Digital Advantages
               </h3>
-              <ul className="space-y-4 text-green-700">
+              <ul className="space-y-4 text-green-200">
                 <li className="flex items-start">
                   <Award className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
                   <span><strong>Seconds to access</strong> any safety document or incident report</span>
@@ -310,9 +311,9 @@ const Index = () => {
       </section>
 
       {/* Updated CTA Section */}
-      <section className="py-20 bg-white/95 backdrop-blur-sm relative z-10">
+      <section className="py-20 relative z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-lg p-8 text-white mb-8">
+          <div className="bg-gradient-to-r from-red-600/80 to-blue-600/80 backdrop-blur-sm rounded-lg p-8 text-white mb-8 border border-white/20">
             <h3 className="text-2xl font-bold mb-4">
               🟢 Ditch the dusty binders and filing cabinets.
             </h3>
@@ -328,19 +329,19 @@ const Index = () => {
           </div>
           
           {/* Features List */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h4 className="text-lg font-semibold mb-4">7-Day Free Trial Details</h4>
-            <div className="grid md:grid-cols-3 gap-6 text-sm text-gray-600">
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
+            <h4 className="text-lg font-semibold mb-4 text-white">7-Day Free Trial Details</h4>
+            <div className="grid md:grid-cols-3 gap-6 text-sm text-gray-200">
               <div>
-                <strong className="text-gray-900">No Credit Card Required</strong>
+                <strong className="text-white">No Credit Card Required</strong>
                 <p>Start your trial immediately without payment details</p>
               </div>
               <div>
-                <strong className="text-gray-900">Complete Plan Access</strong>
+                <strong className="text-white">Complete Plan Access</strong>
                 <p>Experience your selected plan's full feature set during trial</p>
               </div>
               <div>
-                <strong className="text-gray-900">Easy Upgrade</strong>
+                <strong className="text-white">Easy Upgrade</strong>
                 <p>Choose your plan when trial ends, cancel anytime</p>
               </div>
             </div>
@@ -349,7 +350,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900/95 backdrop-blur-sm text-white py-12 relative z-10">
+      <footer className="bg-black/50 backdrop-blur-sm text-white py-12 relative z-10 border-t border-white/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -365,11 +366,11 @@ const Index = () => {
             <div className="flex items-center space-x-6">
               <a 
                 href="/sales-partner" 
-                className="text-gray-400 hover:text-white transition-colors text-sm"
+                className="text-gray-300 hover:text-white transition-colors text-sm"
               >
                 Sales Partner Program
               </a>
-              <p className="text-gray-400">
+              <p className="text-gray-300">
                 © 2025 ChemLabel-GPT. OSHA Compliant Chemical Safety Solutions.
               </p>
             </div>
