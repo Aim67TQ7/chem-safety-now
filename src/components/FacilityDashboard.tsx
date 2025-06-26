@@ -10,6 +10,7 @@ import AccessTools from "./AccessTools";
 import FeatureAccessWrapper from "./FeatureAccessWrapper";
 import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
+import FacilityNavbar from "./FacilityNavbar";
 
 interface FacilityProps {
   id: string;
@@ -53,18 +54,11 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header Section */}
-      <header className="bg-white shadow-md py-4">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-800">{facility.facility_name} Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            <Badge variant="outline">
-              <Calendar className="w-4 h-4 mr-2" />
-              Since {new Date(facility.created_at).toLocaleDateString()}
-            </Badge>
-          </div>
-        </div>
-      </header>
+      {/* Global Navigation Bar */}
+      <FacilityNavbar 
+        facilityName={facility.facility_name}
+        facilityLogo={facility.logo_url}
+      />
 
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section - SDS Search in Prominent Colored Box */}
@@ -80,6 +74,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
           </div>
         </div>
 
+        {/* Dashboard Cards Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Facility Info & QR Code */}
           <div className="lg:col-span-1 space-y-4">
@@ -98,6 +93,10 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
                   <a href={`/facility/${facility.slug}`} className="text-blue-500 hover:underline">
                     View Public Page
                   </a>
+                </div>
+                <div className="text-gray-600">
+                  <Calendar className="w-4 h-4 inline-block mr-1" />
+                  Since {new Date(facility.created_at).toLocaleDateString()}
                 </div>
               </CardContent>
             </Card>
