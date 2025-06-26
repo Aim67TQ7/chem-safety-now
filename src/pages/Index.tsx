@@ -1,11 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award, Zap } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, TrendingUp, Award } from "lucide-react";
 import SafetyStanAvatar from "@/components/SafetyStanAvatar";
 import GlobalSafetyStanWidget from "@/components/GlobalSafetyStanWidget";
 
@@ -28,17 +27,18 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative flex flex-col"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
         backgroundBlendMode: 'overlay',
         backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        backgroundPosition: 'center',
+        width: '100vw'
       }}
     >
       {/* Enhanced double-exposure overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-transparent to-green-900/40 mix-blend-multiply"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/10 to-transparent mix-blend-screen"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-transparent to-green-900/30 mix-blend-multiply"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/5 to-transparent mix-blend-screen"></div>
       
       {/* GlobalSafetyStanWidget - Conditionally render Stanley */}
       {showStanley && (
@@ -76,86 +76,45 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section - Simplified */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
+      {/* Hero Section - Enhanced */}
+      <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
         <div className="text-center">
-          <h1 className="text-6xl font-bold text-white mb-8 drop-shadow-lg">
+          <h1 className="text-7xl font-bold text-white mb-8 drop-shadow-2xl leading-tight">
             Scan. Don't Scramble.
           </h1>
-          <p className="text-2xl text-gray-200 mb-12 max-w-2xl mx-auto drop-shadow-md">
-            SDS and safety records are easily accessed with a quick scan.
-            No more searching through filing cabinets or paper binders.
+          <p className="text-3xl text-gray-100 mb-16 max-w-3xl mx-auto drop-shadow-lg font-medium">
+            Instant access to SDS and safety records with a simple scan.<br />
+            <span className="text-2xl text-gray-300">No more digging through filing cabinets.</span>
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-12">
             <Input
               type="email"
               placeholder="Enter your work email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1"
+              className="flex-1 text-lg py-4"
             />
             <Button 
               onClick={handleGetStarted}
-              className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-8 py-3 text-lg font-semibold w-full sm:w-auto shadow-xl"
+              className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-10 py-4 text-xl font-bold w-full sm:w-auto shadow-2xl"
             >
-              Start 7-Day Free Trial
+              Start Free Trial
             </Button>
           </div>
 
-          <div className="flex items-center justify-center space-x-6 text-sm text-gray-200">
+          <div className="flex items-center justify-center space-x-8 text-lg text-gray-100 font-semibold">
             <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+              <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
               Save 10+ Hours/Week
             </div>
             <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+              <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
               No Paper Filing
             </div>
             <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+              <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
               Auto Compliance
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Problem Statement Section */}
-      <section className="py-20 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-6">
-              Stop Wasting Hours on Paperwork
-            </h2>
-            <p className="text-xl text-gray-200 mb-8 max-w-4xl mx-auto">
-              Eliminate time-consuming searches through filing cabinets and paper binders. 
-              Get instant smartphone access to safety data sheets and incident reporting, 
-              automated compliance tracking, and save hours of manual paperwork — 
-              all while improving safety response times and regulatory readiness.
-            </p>
-
-            <Alert className="max-w-4xl mx-auto bg-red-900/20 border-red-400/30 backdrop-blur-sm mb-8">
-              <AlertTriangle className="h-4 w-4 text-red-400" />
-              <AlertDescription className="text-red-200 font-medium">
-                <strong>2,888 OSHA citations</strong> were issued last year under Hazard Communication — the #2 most-cited standard in the U.S.
-                <br />
-                Most violations involved <strong>missing SDSs, outdated paper files, lost incident reports, and inaccessible safety info</strong> during inspections.
-                <br />
-                <strong className="text-red-100">Paper-based systems cost facilities an average of 15+ hours per week in manual filing, searching, and compliance updates.</strong>
-              </AlertDescription>
-            </Alert>
-
-            {/* New Beta Features Announcement */}
-            <div className="max-w-4xl mx-auto mb-8">
-              <div className="bg-gradient-to-r from-blue-600/80 to-green-600/80 backdrop-blur-sm rounded-lg p-6 text-white border border-white/20">
-                <div className="flex items-center justify-center mb-3">
-                  <Zap className="w-6 h-6 mr-2" />
-                  <span className="text-xl font-bold">2 New Features Added Monthly</span>
-                </div>
-                <p className="text-lg">
-                  Lock in your price now as an early subscriber and you will have full access to Beta Testing new modules as they are released.
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -323,6 +282,34 @@ const Index = () => {
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Problem Statement Section - Moved to bottom */}
+      <section className="py-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-white mb-6">
+              Stop Wasting Hours on Paperwork
+            </h2>
+            <p className="text-xl text-gray-200 mb-8 max-w-4xl mx-auto">
+              Eliminate time-consuming searches through filing cabinets and paper binders. 
+              Get instant smartphone access to safety data sheets and incident reporting, 
+              automated compliance tracking, and save hours of manual paperwork — 
+              all while improving safety response times and regulatory readiness.
+            </p>
+
+            <Alert className="max-w-4xl mx-auto bg-red-900/20 border-red-400/30 backdrop-blur-sm mb-8">
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-200 font-medium">
+                <strong>2,888 OSHA citations</strong> were issued last year under Hazard Communication — the #2 most-cited standard in the U.S.
+                <br />
+                Most violations involved <strong>missing SDSs, outdated paper files, lost incident reports, and inaccessible safety info</strong> during inspections.
+                <br />
+                <strong className="text-red-100">Paper-based systems cost facilities an average of 15+ hours per week in manual filing, searching, and compliance updates.</strong>
+              </AlertDescription>
+            </Alert>
           </div>
         </div>
       </section>
