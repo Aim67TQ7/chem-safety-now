@@ -17,6 +17,7 @@ export interface FacilitySubscription {
   trial_start_date: string;
   trial_end_date: string;
   trial_days_remaining: number;
+  subscription_days_remaining?: number; // New field for paid subscription countdown
 }
 
 export class SubscriptionService {
@@ -86,14 +87,26 @@ export class SubscriptionService {
       const trialEndDate = new Date(data.trial_end_date);
       const now = new Date();
       const timeDiff = trialEndDate.getTime() - now.getTime();
-      const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+      const trialDaysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+
+      // Calculate subscription days remaining for paid plans
+      let subscriptionDaysRemaining: number | undefined;
+      
+      if (['basic', 'premium'].includes(data.subscription_status)) {
+        // For paid subscriptions, use trial_end_date as the subscription end date
+        // This assumes that when a subscription is granted, trial_end_date is updated to the subscription end date
+        const subscriptionEndDate = new Date(data.trial_end_date);
+        const subscriptionTimeDiff = subscriptionEndDate.getTime() - now.getTime();
+        subscriptionDaysRemaining = Math.max(0, Math.ceil(subscriptionTimeDiff / (1000 * 3600 * 24)));
+      }
 
       return {
         subscription_status: data.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
         feature_access_level: data.feature_access_level as 'trial' | 'basic' | 'premium' | 'expired',
         trial_start_date: data.trial_start_date,
         trial_end_date: data.trial_end_date,
-        trial_days_remaining: daysRemaining
+        trial_days_remaining: trialDaysRemaining,
+        subscription_days_remaining: subscriptionDaysRemaining
       };
     } catch (error) {
       console.error('Failed to get facility subscription:', error);
