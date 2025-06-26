@@ -41,14 +41,15 @@ const FacilityPage = () => {
 
         setFacility(data);
         
-        // Log facility page visit
-        interactionLogger.logInteraction(
-          'facility_page_visit',
-          { 
+        // Set facility context and log facility page visit
+        interactionLogger.setUserContext(null, data.id);
+        interactionLogger.logFacilityUsage({
+          eventType: 'facility_page_visit',
+          eventDetail: { 
             facility_id: data.id,
             facility_slug: slug
           }
-        );
+        });
       } catch (error) {
         console.error('Error:', error);
         toast.error('Error loading facility');
