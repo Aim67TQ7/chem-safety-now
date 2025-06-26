@@ -67,13 +67,17 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Hero Section - SDS Search */}
+        {/* Hero Section - SDS Search in Prominent Colored Box */}
         <div className="mb-8">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Safety Data Sheet Access</h2>
-            <p className="text-lg text-gray-600">Scan to search for chemical safety information instantly</p>
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white shadow-lg">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold mb-2">Safety Data Sheet Access</h2>
+              <p className="text-xl text-blue-100">Scan or search for chemical safety information instantly</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
+              <SDSSearch facilityId={facility.id} />
+            </div>
           </div>
-          <SDSSearch facilityId={facility.id} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
