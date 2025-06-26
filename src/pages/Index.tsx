@@ -30,15 +30,15 @@ const Index = () => {
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat relative"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
         backgroundBlendMode: 'overlay',
-        backgroundSize: '60%',
-        backgroundPosition: 'center right'
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
       }}
     >
       {/* Enhanced double-exposure overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-transparent to-green-900/60 mix-blend-multiply"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/20 to-transparent mix-blend-screen"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-transparent to-green-900/40 mix-blend-multiply"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/10 to-transparent mix-blend-screen"></div>
       
       {/* GlobalSafetyStanWidget - Conditionally render Stanley */}
       {showStanley && (
@@ -76,17 +76,15 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+      {/* Hero Section - Simplified */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-white mb-6 drop-shadow-lg">
-            Stop Wasting Hours on Paperwork
+          <h1 className="text-6xl font-bold text-white mb-8 drop-shadow-lg">
+            Scan. Don't Scramble.
           </h1>
-          <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto drop-shadow-md">
-            Eliminate time-consuming searches through filing cabinets and paper binders. 
-            Get instant smartphone access to safety data sheets and incident reporting, 
-            automated compliance tracking, and save hours of manual paperwork — 
-            all while improving safety response times and regulatory readiness.
+          <p className="text-2xl text-gray-200 mb-12 max-w-2xl mx-auto drop-shadow-md">
+            SDS and safety records are easily accessed with a quick scan.
+            No more searching through filing cabinets or paper binders.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-8">
@@ -122,10 +120,20 @@ const Index = () => {
         </div>
       </section>
 
-      {/* OSHA Warning Section */}
+      {/* Problem Statement Section */}
       <section className="py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-white mb-6">
+              Stop Wasting Hours on Paperwork
+            </h2>
+            <p className="text-xl text-gray-200 mb-8 max-w-4xl mx-auto">
+              Eliminate time-consuming searches through filing cabinets and paper binders. 
+              Get instant smartphone access to safety data sheets and incident reporting, 
+              automated compliance tracking, and save hours of manual paperwork — 
+              all while improving safety response times and regulatory readiness.
+            </p>
+
             <Alert className="max-w-4xl mx-auto bg-red-900/20 border-red-400/30 backdrop-blur-sm mb-8">
               <AlertTriangle className="h-4 w-4 text-red-400" />
               <AlertDescription className="text-red-200 font-medium">
@@ -149,7 +157,14 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
               📱 Why Smart Facilities Are Replacing Paper Systems
             </h2>
