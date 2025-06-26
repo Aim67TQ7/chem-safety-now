@@ -1,8 +1,17 @@
 
 import { Button } from "@/components/ui/button";
 
-const SafetyStanAvatar = () => {
+interface SafetyStanAvatarProps {
+  onClick?: () => void;
+}
+
+const SafetyStanAvatar = ({ onClick }: SafetyStanAvatarProps) => {
   const handleClick = () => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    
     // Find the global Stanley widget and bring it to center and open it
     const stanleyAvatar = document.querySelector('[data-stanley-avatar]') as HTMLElement;
     if (stanleyAvatar) {

@@ -11,6 +11,7 @@ import GlobalSafetyStanWidget from "@/components/GlobalSafetyStanWidget";
 const Index = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [showStanley, setShowStanley] = useState(false);
 
   const handleGetStarted = () => {
     if (email) {
@@ -20,17 +21,33 @@ const Index = () => {
     }
   };
 
+  const handleTalkWithStanley = () => {
+    setShowStanley(true);
+  };
+
   return (
-    <div className="min-h-screen bg-transparent">
-      {/* GlobalSafetyStanWidget - Floating Stanley */}
-      <GlobalSafetyStanWidget 
-        companyName="ChemLabel-GPT"
-        industry="Chemical Safety"
-        customInstructions="You are Safety Stan, helping users understand how ChemLabel-GPT can save their facility hours of paperwork and improve safety compliance. Be enthusiastic about the benefits of digital safety management over paper systems."
-      />
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/lovable-uploads/906a5858-4278-496a-b72f-849e51561f57.png')`,
+        backgroundBlendMode: 'overlay'
+      }}
+    >
+      {/* Enhanced double-exposure overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-transparent to-green-900/60 mix-blend-multiply"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/20 to-transparent mix-blend-screen"></div>
+      
+      {/* GlobalSafetyStanWidget - Conditionally render Stanley */}
+      {showStanley && (
+        <GlobalSafetyStanWidget 
+          companyName="ChemLabel-GPT"
+          industry="Chemical Safety"
+          customInstructions="You are Safety Stan, helping users understand how ChemLabel-GPT can save their facility hours of paperwork and improve safety compliance. Be enthusiastic about the benefits of digital safety management over paper systems."
+        />
+      )}
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b">
+      <header className="bg-white/10 backdrop-blur-md shadow-lg border-b border-white/20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
@@ -42,22 +59,27 @@ const Index = () => {
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">ChemLabel-GPT</h1>
-                <p className="text-sm text-gray-600">AI-Powered Chemical Safety</p>
+                <h1 className="text-2xl font-bold text-white">ChemLabel-GPT</h1>
+                <p className="text-sm text-gray-200">AI-Powered Chemical Safety</p>
               </div>
             </div>
-            <SafetyStanAvatar />
+            <Button 
+              onClick={handleTalkWithStanley}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold"
+            >
+              Talk with Stanley
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl font-bold text-white mb-6 drop-shadow-lg">
             Stop Wasting Hours on Paperwork
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto drop-shadow-md">
             Eliminate time-consuming searches through filing cabinets and paper binders. 
             Get instant smartphone access to safety data sheets and incident reporting, 
             automated compliance tracking, and save hours of manual paperwork — 
@@ -74,23 +96,23 @@ const Index = () => {
             />
             <Button 
               onClick={handleGetStarted}
-              className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-8 py-3 text-lg font-semibold w-full sm:w-auto"
+              className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-8 py-3 text-lg font-semibold w-full sm:w-auto shadow-xl"
             >
               Start 7-Day Free Trial
             </Button>
           </div>
 
-          <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
+          <div className="flex items-center justify-center space-x-6 text-sm text-gray-200">
             <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+              <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
               Save 10+ Hours/Week
             </div>
             <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+              <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
               No Paper Filing
             </div>
             <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+              <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
               Auto Compliance
             </div>
           </div>
@@ -98,7 +120,7 @@ const Index = () => {
       </section>
 
       {/* OSHA Warning Section */}
-      <section className="bg-white/80 backdrop-blur-sm py-20">
+      <section className="bg-white/95 backdrop-blur-sm py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Alert className="max-w-4xl mx-auto bg-red-50 border-red-200 mb-8">
@@ -178,7 +200,7 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gray-50/80 backdrop-blur-sm">
+      <section className="py-20 bg-gray-50/95 backdrop-blur-sm relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
             From Hours of Filing to Seconds of Access
@@ -219,7 +241,7 @@ const Index = () => {
       </section>
 
       {/* Paper vs Digital Comparison Section */}
-      <section className="py-20 bg-white/80 backdrop-blur-sm">
+      <section className="py-20 bg-white/95 backdrop-blur-sm relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">
             The Real Cost of Paper Systems
@@ -288,7 +310,7 @@ const Index = () => {
       </section>
 
       {/* Updated CTA Section */}
-      <section className="py-20 bg-white/80 backdrop-blur-sm">
+      <section className="py-20 bg-white/95 backdrop-blur-sm relative z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-lg p-8 text-white mb-8">
             <h3 className="text-2xl font-bold mb-4">
@@ -327,7 +349,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900/90 backdrop-blur-sm text-white py-12">
+      <footer className="bg-gray-900/95 backdrop-blur-sm text-white py-12 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">

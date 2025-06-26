@@ -24,21 +24,35 @@ const FacilityPage = () => {
 
   useEffect(() => {
     const fetchFacility = async () => {
-      if (!slug) return;
+      if (!slug) {
+        console.log('No slug provided');
+        setLoading(false);
+        return;
+      }
 
       try {
+        console.log('Fetching facility with slug:', slug);
         const { data, error } = await supabase
           .from('facilities')
           .select('*')
           .eq('slug', slug)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching facility:', error);
-          toast.error('Facility not found');
+          toast.error('Error loading facility');
+          setLoading(false);
           return;
         }
 
+        if (!data) {
+          console.log('No facility found for slug:', slug);
+          toast.error('Facility not found');
+          setLoading(false);
+          return;
+        }
+
+        console.log('Facility loaded successfully:', data);
         setFacility(data);
         
         // Set facility context and log facility page visit
