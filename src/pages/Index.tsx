@@ -30,7 +30,7 @@ const Index = () => {
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat relative"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/lovable-uploads/906a5858-4278-496a-b72f-849e51561f57.png')`,
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
         backgroundBlendMode: 'overlay'
       }}
     >
