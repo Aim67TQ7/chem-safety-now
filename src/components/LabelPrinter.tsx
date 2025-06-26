@@ -13,6 +13,7 @@ import { interactionLogger } from "@/services/interactionLogger";
 import { extractSDSData } from "./utils/sdsDataExtractor";
 import { extractEnhancedSDSData } from "./utils/enhancedSdsDataExtractor";
 import { supabase } from "@/integrations/supabase/client";
+import { SafetyLabel } from "./SafetyLabel";
 
 interface LabelPrinterProps {
   initialProductName?: string;
@@ -646,81 +647,26 @@ const LabelPrinter = ({
             </div>
           </div>
 
-          {/* Enhanced Preview Content with Larger HMIS and Pictograms */}
+          {/* Professional Safety Label Preview */}
           <div className="flex-1 overflow-auto p-4 bg-gray-100 flex items-center justify-center">
-            <div 
-              className="bg-white border-2 border-gray-800 p-4 shadow-lg"
-              style={{ 
-                width: `${previewWidth}px`, 
-                height: `${previewHeight}px`,
-                minWidth: '200px',
-                minHeight: '300px'
-              }}
-            >
-              <div className="h-full flex flex-col justify-between space-y-2">
-                {/* Product Title - Prominent */}
-                <div className="text-center border-b-2 border-gray-800 pb-2">
-                  <div className="text-lg font-bold">{productName || "Product Name"}</div>
-                  {chemicalCompound && <div className="text-sm font-medium">{chemicalCompound}</div>}
-                  {manufacturer && <div className="text-xs">{manufacturer}</div>}
-                  {productId && <div className="text-xs">ID: {productId}</div>}
-                </div>
-                
-                {/* HMIS - 33% Larger */}
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-sm font-bold mb-2">HMIS RATING</div>
-                    <div className="relative w-[106px] h-[106px] mx-auto">
-                      <svg width="106" height="106" viewBox="0 0 106 106" className="absolute inset-0">
-                        <rect x="0" y="0" width="53" height="53" fill="#3B82F6" stroke="#000" strokeWidth="1"/>
-                        <rect x="53" y="0" width="53" height="53" fill="#EF4444" stroke="#000" strokeWidth="1"/>
-                        <rect x="0" y="53" width="53" height="53" fill="#FDE047" stroke="#000" strokeWidth="1"/>
-                        <rect x="53" y="53" width="53" height="53" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
-                        
-                        <text x="26.5" y="35" textAnchor="middle" className="text-xl font-bold fill-white">{hmisHealth}</text>
-                        <text x="79.5" y="35" textAnchor="middle" className="text-xl font-bold fill-white">{hmisFlammability}</text>
-                        <text x="26.5" y="88" textAnchor="middle" className="text-xl font-bold fill-black">{hmisPhysical}</text>
-                        <text x="79.5" y="88" textAnchor="middle" className="text-base font-bold fill-black">{hmisSpecial || ""}</text>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Information */}
-                <div className="space-y-1 text-center text-xs">
-                  {casNumber && <div>CAS: {casNumber}</div>}
-                  {chemicalFormula && <div>{chemicalFormula}</div>}
-                  
-                  {selectedPictograms.length > 0 && (
-                    <div className="flex justify-center space-x-1 py-1">
-                      {selectedPictograms.slice(0, 4).map((id) => {
-                        const pictogram = pictograms.find(p => p.id === id);
-                        return pictogram ? (
-                          <div key={id} className="w-8 h-8">
-                            <img 
-                              src={pictogram.imageUrl} 
-                              alt={pictogram.name}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        ) : null;
-                      })}
-                    </div>
-                  )}
-
-                  {ppeRequirements.length > 0 && (
-                    <div className="border-t border-gray-300 pt-1">
-                      <div className="font-bold">PPE Required</div>
-                      <div>{ppeRequirements.slice(0, 2).join(', ')}{ppeRequirements.length > 2 && '...'}</div>
-                    </div>
-                  )}
-
-                  {/* Print date */}
-                  <div className="border-t border-gray-300 pt-1 text-xs text-gray-500">
-                    Printed: {new Date().toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
+            <div style={{ transform: `scale(${previewZoom / 100})`, transformOrigin: 'center' }}>
+              <SafetyLabel
+                productName={productName || "Product Name"}
+                manufacturer={manufacturer}
+                chemicalFormula={chemicalFormula}
+                chemicalCompound={chemicalCompound}
+                casNumber={casNumber}
+                productId={productId}
+                hmisHealth={hmisHealth}
+                hmisFlammability={hmisFlammability}
+                hmisPhysical={hmisPhysical}
+                hmisSpecial={hmisSpecial}
+                selectedPictograms={selectedPictograms}
+                selectedHazards={selectedHazards}
+                ppeRequirements={ppeRequirements}
+                labelWidth={selectedLabelSize.width}
+                labelHeight={selectedLabelSize.height}
+              />
             </div>
           </div>
         </div>
