@@ -10,15 +10,17 @@ import {
   Menu, 
   X,
   Home,
-  QrCode
+  QrCode,
+  MapPin
 } from "lucide-react";
 
 interface FacilityNavbarProps {
   facilityName?: string;
   facilityLogo?: string;
+  facilityAddress?: string;
 }
 
-const FacilityNavbar = ({ facilityName, facilityLogo }: FacilityNavbarProps) => {
+const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: FacilityNavbarProps) => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,7 +64,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo }: FacilityNavbarProps) => 
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo and Facility Name */}
+          {/* Logo, Facility Name, and Address */}
           <div className="flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
               <Home className="w-5 h-5" />
@@ -80,6 +82,12 @@ const FacilityNavbar = ({ facilityName, facilityLogo }: FacilityNavbarProps) => 
               <span className="text-lg font-semibold text-gray-900">
                 {facilityName || 'Facility Dashboard'}
               </span>
+              {facilityAddress && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <MapPin className="w-3 h-3 mr-1" />
+                  <span>{facilityAddress}</span>
+                </div>
+              )}
             </div>
           </div>
 

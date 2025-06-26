@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Calendar, Globe, QrCode } from "lucide-react";
+import { Building2, MapPin, Calendar, Globe, QrCode, Crown, Zap } from "lucide-react";
 import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
 import FacilityActivityCard from "./FacilityActivityCard";
@@ -57,6 +58,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       <FacilityNavbar 
         facilityName={facility.facility_name}
         facilityLogo={facility.logo_url}
+        facilityAddress={facility.address}
       />
 
       <div className="container mx-auto px-4 py-8">
@@ -66,66 +68,136 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
         </div>
 
         {/* Dashboard Cards Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Facility Info & QR Code */}
-          <div className="lg:col-span-1 space-y-4">
-            <Card>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Building2 className="w-5 h-5 text-gray-500" />
-                  <h2 className="text-lg font-semibold">{facility.facility_name}</h2>
-                </div>
-                <div className="text-gray-600">
-                  <MapPin className="w-4 h-4 inline-block mr-1" />
-                  {facility.address}
-                </div>
-                <div className="text-gray-600">
-                  <Globe className="w-4 h-4 inline-block mr-1" />
-                  <a href={`/facility/${facility.slug}`} className="text-blue-500 hover:underline">
-                    View Public Page
-                  </a>
-                </div>
-                <div className="text-gray-600">
-                  <Calendar className="w-4 h-4 inline-block mr-1" />
-                  Since {new Date(facility.created_at).toLocaleDateString()}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Subscription Status Header */}
+          <SubscriptionStatusHeader facilityId={facility.id} onUpgrade={handleUpgrade} />
+
+          {/* Facility Activity Card */}
+          <FacilityActivityCard facilityId={facility.id} />
+
+          {/* Audit Trail - Premium Feature */}
+          {hasPremiumAccess && (
+            <FeatureAccessWrapper 
+              feature="audit_trail" 
+              facilityId={facility.id}
+              onUpgrade={handleUpgrade}
+            >
+              <AuditTrail facilityId={facility.id} />
+            </FeatureAccessWrapper>
+          )}
+
+          {/* Subscription Plans Section */}
+          {subscription.subscription_status === 'trial' && (
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-center text-xl font-bold text-gray-900">
+                  Choose Your Plan After 7-Day Trial
+                </CardTitle>
+                <p className="text-center text-gray-600">
+                  Continue accessing SDS search and Sarah AI with one of our plans
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Basic Plan */}
+                  <Card className="border-2 border-blue-200 hover:border-blue-300 transition-colors">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center space-x-2">
+                          <Zap className="w-5 h-5 text-blue-600" />
+                          <span>Basic Plan</span>
+                        </CardTitle>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          Most Popular
+                        </Badge>
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900">
+                        $50<span className="text-lg font-normal text-gray-600">/month</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 mb-6">
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                          <span className="text-gray-700">SDS Search & Library</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                          <span className="text-gray-700">Sarah AI Assistant</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                          <span className="text-gray-700">Basic QR Codes</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                          <span className="text-gray-700">Incident Reporting</span>
+                        </li>
+                      </ul>
+                      <Button 
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        onClick={handleUpgrade}
+                      >
+                        Choose Basic Plan
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Premium Plan */}
+                  <Card className="border-2 border-purple-200 hover:border-purple-300 transition-colors relative">
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-purple-600 text-white px-4 py-1">
+                        Best Value
+                      </Badge>
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Crown className="w-5 h-5 text-purple-600" />
+                        <span>Premium Plan</span>
+                      </CardTitle>
+                      <div className="text-3xl font-bold text-gray-900">
+                        $500<span className="text-lg font-normal text-gray-600">/month</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 mb-6">
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-gray-700">Everything in Basic</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-gray-700">GHS Label Printing</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-gray-700">Advanced QR Codes</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-gray-700">Analytics Dashboards</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-gray-700">Compliance Tracking</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-gray-700">Audit Trails</span>
+                        </li>
+                      </ul>
+                      <Button 
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                        onClick={handleUpgrade}
+                      >
+                        Choose Premium Plan
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center">
-                {facility.logo_url ? (
-                  <img src={facility.logo_url} alt="Facility Logo" className="max-w-full h-auto rounded-md mb-3" />
-                ) : (
-                  <div className="text-gray-500 italic mb-3">No logo uploaded</div>
-                )}
-                <QrCode className="w-6 h-6 text-gray-500 mb-2" />
-                <a href={`/facility/${facility.slug}`} className="text-sm text-blue-500 hover:underline">
-                  Facility QR Code
-                </a>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content - Right Side */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Subscription Status Header */}
-            <SubscriptionStatusHeader facilityId={facility.id} onUpgrade={handleUpgrade} />
-
-            {/* Facility Activity Card */}
-            <FacilityActivityCard facilityId={facility.id} />
-
-            {/* Audit Trail - Premium Feature */}
-            {hasPremiumAccess && (
-              <FeatureAccessWrapper 
-                feature="audit_trail" 
-                facilityId={facility.id}
-                onUpgrade={handleUpgrade}
-              >
-                <AuditTrail facilityId={facility.id} />
-              </FeatureAccessWrapper>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
