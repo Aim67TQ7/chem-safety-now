@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, CheckCircle, FileText, Download, ExternalLink } from 'lucide-react';
+import { AlertCircle, CheckCircle, FileText, Download, ExternalLink, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import FacilityNavbar from '@/components/FacilityNavbar';
+import LabelPrinterPopup from '@/components/popups/LabelPrinterPopup';
 
 interface SDSDocument {
   id: string;
@@ -28,6 +29,8 @@ interface SDSDocument {
 
 const SDSDocumentsPage = () => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
+  const [labelPrinterOpen, setLabelPrinterOpen] = useState(false);
+  const [selectedDocumentForLabel, setSelectedDocumentForLabel] = useState<SDSDocument | null>(null);
   
   const { data: documents, isLoading, error } = useQuery({
     queryKey: ['sds-documents'],
@@ -94,6 +97,11 @@ const SDSDocumentsPage = () => {
       console.error('❌ Download error:', error);
       toast.error('Failed to download PDF');
     }
+  };
+
+  const handlePrintLabel = (doc: SDSDocument) => {
+    setSelectedDocumentForLabel(doc);
+    setLabelPrinterOpen(true);
   };
 
   if (isLoading) {
@@ -230,6 +238,15 @@ const SDSDocumentsPage = () => {
               >
                 <Download className="h-2 w-2 mr-1" />
                 Download
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handlePrintLabel(doc)}
+                className="text-xs h-6 px-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Printer className="h-2 w-2 mr-1" />
+                Print Label
               </Button>
             </div>
           </div>
@@ -384,6 +401,18 @@ const SDSDocumentsPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Label Printer Popup */}
+      <LabelPrinterPopup
+        isOpen={labelPrinterOpen}
+        onClose={() => {
+          setLabelPrinterOpen(false);
+          setSelectedDocumentForLabel(null);
+        }}
+        initialProductName={selectedDocumentForLabel?.product_name}
+        initialManufacturer={selectedDocumentForLabel?.manufacturer}
+        selectedDocument={selectedDocumentForLabel}
+      />
     </div>
   );
 };
