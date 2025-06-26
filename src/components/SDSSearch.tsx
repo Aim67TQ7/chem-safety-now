@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SDSSearchInput from './SDSSearchInput';
 import SDSResultCard from './SDSResultCard';
-import SDSViewerPopup from './popups/SDSViewerPopup';
 import LabelPrinterPopup from './popups/LabelPrinterPopup';
+import DocumentViewerPopup from './popups/DocumentViewerPopup';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup } from '@/components/ui/radio-group';
-import { FileText, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AuditService } from '@/services/auditService';
 
@@ -24,7 +24,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showViewerPopup, setShowViewerPopup] = useState(false);
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<any>(null);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
   const [processedDocument, setProcessedDocument] = useState<any>(null);
@@ -147,7 +147,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
   const handleView = (document: any) => {
     console.log('👁️ Viewing document:', document.product_name);
     setViewingDocument(document);
-    setShowViewerPopup(true);
+    setShowDocumentViewer(true);
   };
 
   const handleDownload = (document: any) => {
@@ -297,36 +297,19 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
         </Card>
       )}
 
-      {/* No Results Message */}
-      {!isSearching && searchResults.length === 0 && searchResults !== null && (
-        <Card className="border-gray-200">
-          <CardContent className="p-6 text-center">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">
-              Enter a product name, material, or manufacturer above to search for Safety Data Sheets.
-            </p>
-            {existingDocuments && existingDocuments.length > 0 && (
-              <p className="text-sm text-gray-500 mt-2">
-                {existingDocuments.length} documents available in library
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* PDF Viewer Popup */}
-      <SDSViewerPopup
-        isOpen={showViewerPopup}
+      {/* Document Viewer Popup */}
+      <DocumentViewerPopup
+        isOpen={showDocumentViewer}
         onClose={() => {
-          setShowViewerPopup(false);
+          setShowDocumentViewer(false);
           setViewingDocument(null);
         }}
-        sdsDocument={viewingDocument}
+        document={viewingDocument}
         onDownload={handleDownload}
         onAskAI={handleAskAI}
       />
 
-      {/* Label Printer Popup with PDF Side-by-Side */}
+      {/* Label Printer Popup */}
       <LabelPrinterPopup
         isOpen={showLabelPrinter}
         onClose={() => setShowLabelPrinter(false)}
