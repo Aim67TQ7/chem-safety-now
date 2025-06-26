@@ -120,6 +120,7 @@ export type Database = {
       facilities: {
         Row: {
           address: string | null
+          billing_period: string | null
           contact_name: string | null
           created_at: string
           email: string | null
@@ -131,6 +132,7 @@ export type Database = {
           slug: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          subscription_start_date: string | null
           subscription_status: string | null
           trial_end_date: string | null
           trial_start_date: string | null
@@ -139,6 +141,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          billing_period?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null
@@ -150,6 +153,7 @@ export type Database = {
           slug: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_start_date?: string | null
           subscription_status?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -158,6 +162,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          billing_period?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null
@@ -169,6 +174,7 @@ export type Database = {
           slug?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_start_date?: string | null
           subscription_status?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -176,6 +182,66 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      facility_audit_trail: {
+        Row: {
+          action_description: string
+          action_type: string
+          created_at: string | null
+          facility_id: string | null
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_description: string
+          action_type: string
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_description?: string
+          action_type?: string
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_audit_trail_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_audit_trail_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       facility_feedback: {
         Row: {
@@ -1124,6 +1190,7 @@ export type Database = {
         Row: {
           address: string | null
           annual_price: number | null
+          billing_period: string | null
           contact_name: string | null
           created_at: string | null
           current_plan: string | null
@@ -1136,6 +1203,10 @@ export type Database = {
           monthly_price: number | null
           qr_code_url: string | null
           slug: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_days_remaining: number | null
+          subscription_start_date: string | null
           subscription_status: string | null
           trial_days_remaining: number | null
           trial_end_date: string | null
