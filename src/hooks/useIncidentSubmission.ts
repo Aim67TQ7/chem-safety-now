@@ -1,17 +1,48 @@
 
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 export const useIncidentSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { facilitySlug } = useParams<{ facilitySlug: string }>();
 
   const submitIncident = async (incidentData: any) => {
     setIsSubmitting(true);
     try {
-      // Get current facility ID (this would come from your app's context/state)
-      // For now, we'll use a placeholder - in real app, get from user session
-      const facilityId = 'placeholder-facility-id';
+      // Get facility ID from the facility slug
+      if (!facilitySlug) {
+        console.error('No facility slug available');
+        toast({
+          title: 'Error',
+          description: 'Unable to determine facility. Please navigate to a specific facility page.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      console.log('Looking up facility with slug:', facilitySlug);
+
+      // Look up the facility ID using the slug
+      const { data: facility, error: facilityError } = await supabase
+        .from('facilities')
+        .select('id')
+        .eq('slug', facilitySlug)
+        .single();
+
+      if (facilityError || !facility) {
+        console.error('Error finding facility:', facilityError);
+        toast({
+          title: 'Error',
+          description: 'Unable to find facility information.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      const facilityId = facility.id;
+      console.log('Found facility ID:', facilityId);
 
       // Extract images from the data
       const { images, ...restData } = incidentData;
