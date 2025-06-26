@@ -45,6 +45,11 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
 
   const hasPremiumAccess = subscription ? SubscriptionService.hasPremiumAccess(subscription) : false;
 
+  const handleUpgrade = () => {
+    // TODO: Implement upgrade functionality
+    console.log('Upgrade requested for facility:', facility.id);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header Section */}
@@ -101,7 +106,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
           {/* Main Content - Right Side */}
           <div className="lg:col-span-2 space-y-6">
             {/* Subscription Status Header */}
-            <SubscriptionStatusHeader facilityId={facility.id} onUpgrade={() => {}} />
+            <SubscriptionStatusHeader facilityId={facility.id} onUpgrade={handleUpgrade} />
 
             {/* Facility Activity Card */}
             <FacilityActivityCard facilityId={facility.id} />
@@ -111,6 +116,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
               <FeatureAccessWrapper 
                 feature="audit_trail" 
                 facilityId={facility.id}
+                onUpgrade={handleUpgrade}
               >
                 <AuditTrail facilityId={facility.id} />
               </FeatureAccessWrapper>

@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import FacilityDashboard from "@/components/FacilityDashboard";
-import { InteractionLogger } from "@/services/interactionLogger";
+import { interactionLogger } from "@/services/interactionLogger";
 import { toast } from "sonner";
 
 interface FacilityData {
@@ -42,7 +42,7 @@ const FacilityPage = () => {
         setFacility(data);
         
         // Log facility page visit
-        InteractionLogger.logInteraction(
+        interactionLogger.logInteraction(
           'facility_page_visit',
           { 
             facility_id: data.id,
