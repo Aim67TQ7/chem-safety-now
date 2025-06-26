@@ -157,7 +157,7 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print:shadow-none print:border-none">
         <DialogHeader className="print:hidden">
           <DialogTitle className="text-xl font-bold">
-            Print Professional Safety Poster
+            SDS Discovery Link
           </DialogTitle>
         </DialogHeader>
         

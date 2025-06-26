@@ -6,7 +6,6 @@ import { Building2, MapPin, Calendar, Globe, QrCode } from "lucide-react";
 import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
 import FacilityActivityCard from "./FacilityActivityCard";
-import AccessTools from "./AccessTools";
 import FeatureAccessWrapper from "./FeatureAccessWrapper";
 import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
@@ -61,17 +60,9 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Hero Section - SDS Search in Prominent Colored Box */}
+        {/* SDS Search Section */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white shadow-lg">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold mb-2">Safety Data Sheet Access</h2>
-              <p className="text-xl text-blue-100">Scan or search for chemical safety information instantly</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
-              <SDSSearch facilityId={facility.id} />
-            </div>
-          </div>
+          <SDSSearch facilityId={facility.id} />
         </div>
 
         {/* Dashboard Cards Section */}
@@ -134,9 +125,6 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
                 <AuditTrail facilityId={facility.id} />
               </FeatureAccessWrapper>
             )}
-
-            {/* Access Tools */}
-            <AccessTools facilityData={facility} />
           </div>
         </div>
       </div>

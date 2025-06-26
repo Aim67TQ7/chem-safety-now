@@ -9,7 +9,8 @@ import {
   Settings, 
   Menu, 
   X,
-  Home
+  Home,
+  QrCode
 } from "lucide-react";
 
 interface FacilityNavbarProps {
@@ -32,6 +33,11 @@ const FacilityNavbar = ({ facilityName, facilityLogo }: FacilityNavbarProps) => 
       name: 'SDS Documents',
       path: `/facility/${facilitySlug}/sds-documents`,
       icon: <FileText className="w-4 h-4" />,
+    },
+    {
+      name: 'Access Tools',
+      path: `/facility/${facilitySlug}/access-tools`,
+      icon: <QrCode className="w-4 h-4" />,
     },
     {
       name: 'Incidents',
