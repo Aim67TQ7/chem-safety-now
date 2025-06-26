@@ -18,24 +18,24 @@ interface FacilityData {
 }
 
 const FacilityPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const [facility, setFacility] = useState<FacilityData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFacility = async () => {
-      if (!slug) {
-        console.log('No slug provided');
+      if (!facilitySlug) {
+        console.log('No facility slug provided');
         setLoading(false);
         return;
       }
 
       try {
-        console.log('Fetching facility with slug:', slug);
+        console.log('Fetching facility with slug:', facilitySlug);
         const { data, error } = await supabase
           .from('facilities')
           .select('*')
-          .eq('slug', slug)
+          .eq('slug', facilitySlug)
           .maybeSingle();
 
         if (error) {
@@ -46,7 +46,7 @@ const FacilityPage = () => {
         }
 
         if (!data) {
-          console.log('No facility found for slug:', slug);
+          console.log('No facility found for slug:', facilitySlug);
           toast.error('Facility not found');
           setLoading(false);
           return;
@@ -61,7 +61,7 @@ const FacilityPage = () => {
           eventType: 'facility_page_visit',
           eventDetail: { 
             facility_id: data.id,
-            facility_slug: slug
+            facility_slug: facilitySlug
           }
         });
       } catch (error) {
@@ -73,7 +73,7 @@ const FacilityPage = () => {
     };
 
     fetchFacility();
-  }, [slug]);
+  }, [facilitySlug]);
 
   if (loading) {
     return (
