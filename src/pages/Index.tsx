@@ -30,8 +30,10 @@ const Index = () => {
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat relative"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
-        backgroundBlendMode: 'overlay'
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
+        backgroundBlendMode: 'overlay',
+        backgroundSize: '60%',
+        backgroundPosition: 'center right'
       }}
     >
       {/* Enhanced double-exposure overlay */}
