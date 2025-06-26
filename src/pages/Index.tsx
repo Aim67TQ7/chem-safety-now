@@ -22,8 +22,8 @@ const Index = () => {
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.95)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
         backgroundBlendMode: 'overlay',
-        backgroundSize: '87.5% auto',
-        backgroundPosition: 'left center',
+        backgroundSize: '100% auto',
+        backgroundPosition: 'top left',
         minHeight: '100vh'
       }}
     >
