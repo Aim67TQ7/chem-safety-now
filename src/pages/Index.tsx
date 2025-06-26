@@ -20,9 +20,9 @@ const Index = () => {
     <div 
       className="min-h-screen bg-cover bg-left bg-no-repeat relative flex flex-col w-full"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.95)), url('/lovable-uploads/d83b9d2d-01f6-44be-9fc0-7cd3b3a48061.png')`,
         backgroundBlendMode: 'overlay',
-        backgroundSize: 'cover',
+        backgroundSize: '50% auto',
         backgroundPosition: 'left center',
         minHeight: '100vh'
       }}
