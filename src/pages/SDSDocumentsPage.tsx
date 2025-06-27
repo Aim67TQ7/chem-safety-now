@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
@@ -8,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, CheckCircle, FileText, Download, ExternalLink, Printer, Shield, AlertTriangle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertCircle, CheckCircle, FileText, Download, ExternalLink, Printer, Shield, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import LabelPrinterPopup from '@/components/popups/LabelPrinterPopup';
@@ -35,20 +36,36 @@ const SDSDocumentsPage = () => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const [labelPrinterOpen, setLabelPrinterOpen] = useState(false);
   const [selectedDocumentForLabel, setSelectedDocumentForLabel] = useState<SDSDocument | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const pageSize = 20;
   
-  const { data: documents, isLoading, error } = useQuery({
-    queryKey: ['sds-documents'],
+  const { data: documentsData, isLoading, error, refetch } = useQuery({
+    queryKey: ['sds-documents', currentPage, searchTerm, filterType, filterStatus],
     queryFn: async () => {
       console.log('🔍 Fetching SDS documents...');
-      const response = await supabase.functions.invoke('sds-documents');
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString()
+      });
+      
+      if (searchTerm) params.append('search', searchTerm);
+      if (filterType !== 'all') params.append('document_type', filterType);
+      if (filterStatus !== 'all') params.append('extraction_status', filterStatus);
+      
+      const response = await supabase.functions.invoke('sds-documents', {
+        body: Object.fromEntries(params)
+      });
       
       if (response.error) {
         console.error('❌ Error fetching documents:', response.error);
         throw new Error(response.error.message);
       }
       
-      console.log('✅ Fetched documents:', response.data?.documents?.length || 0);
-      return response.data?.documents || [];
+      console.log('✅ Fetched documents:', response.data);
+      return response.data;
     }
   });
 
@@ -74,6 +91,11 @@ const SDSDocumentsPage = () => {
     enabled: !!facilitySlug
   });
 
+  const documents = documentsData?.documents || [];
+  const totalCount = documentsData?.count || 0;
+  const totalPages = documentsData?.totalPages || 1;
+  const hasMore = documentsData?.hasMore || false;
+
   const getQualityLabel = (score?: number) => {
     if (!score) return 'Unknown';
     if (score >= 98) return 'OSHA Compliant';
@@ -94,6 +116,15 @@ const SDSDocumentsPage = () => {
       return { status: 'high_quality', label: 'High Quality', icon: CheckCircle, color: 'bg-blue-600' };
     }
     return { status: 'basic', label: 'Basic Extraction', icon: AlertCircle, color: 'bg-gray-600' };
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    refetch();
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   const handleDownloadPDF = async (sourceUrl: string, fileName: string) => {
@@ -306,6 +337,53 @@ const SDSDocumentsPage = () => {
           </p>
         </div>
 
+        {/* Search and Filter Controls */}
+        <div className="mb-4 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Input
+                  placeholder="Search by product name, manufacturer, or CAS number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pr-10"
+                />
+                <Button
+                  onClick={handleSearch}
+                  size="sm"
+                  className="absolute right-1 top-1 h-6 w-6 p-0"
+                >
+                  <Search className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="safety_data_sheet">Safety Data Sheets</SelectItem>
+                  <SelectItem value="regulatory_sheet">Regulatory Sheets</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="osha_compliant">OSHA Compliant</SelectItem>
+                  <SelectItem value="manual_review_required">Manual Review</SelectItem>
+                  <SelectItem value="ai_enhanced">AI Enhanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
           <Card>
@@ -314,7 +392,7 @@ const SDSDocumentsPage = () => {
                 <FileText className="h-4 w-4 text-blue-600" />
                 <div>
                   <p className="text-xs font-medium text-gray-600">Total</p>
-                  <p className="text-lg font-bold text-gray-900">{documents?.length || 0}</p>
+                  <p className="text-lg font-bold text-gray-900">{totalCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -369,104 +447,60 @@ const SDSDocumentsPage = () => {
           </Card>
         </div>
 
-        {/* Documents Tabs */}
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-8">
-            <TabsTrigger value="all" className="text-xs">All ({documents?.length || 0})</TabsTrigger>
-            <TabsTrigger value="osha-compliant" className="text-xs">OSHA ({oshaCompliantDocs.length})</TabsTrigger>
-            <TabsTrigger value="manual-review" className="text-xs">Review ({manualReviewDocs.length})</TabsTrigger>
-            <TabsTrigger value="high-quality" className="text-xs">Quality ({highQualityDocs.length})</TabsTrigger>
-            <TabsTrigger value="readable" className="text-xs">Readable ({readableDocs.length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="mt-3">
-            <div className="space-y-2">
-              {documents && documents.length > 0 ? (
-                documents.map((doc: SDSDocument) => (
-                  <DocumentCard key={doc.id} doc={doc} />
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">No SDS documents found.</p>
-                  </CardContent>
-                </Card>
+        {/* Documents Display */}
+        <div className="space-y-2">
+          {documents && documents.length > 0 ? (
+            <>
+              {documents.map((doc: SDSDocument) => (
+                <DocumentCard key={doc.id} doc={doc} />
+              ))}
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-gray-600">
+                    Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} documents
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="osha-compliant" className="mt-3">
-            <div className="space-y-2">
-              {oshaCompliantDocs.length > 0 ? (
-                oshaCompliantDocs.map((doc: SDSDocument) => (
-                  <DocumentCard key={doc.id} doc={doc} />
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Shield className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">No OSHA-compliant documents found.</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Documents need ≥98% confidence to be OSHA compliant.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="manual-review" className="mt-3">
-            <div className="space-y-2">
-              {manualReviewDocs.length > 0 ? (
-                manualReviewDocs.map((doc: SDSDocument) => (
-                  <DocumentCard key={doc.id} doc={doc} />
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <AlertTriangle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">No documents requiring manual review.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="high-quality" className="mt-3">
-            <div className="space-y-2">
-              {highQualityDocs.length > 0 ? (
-                highQualityDocs.map((doc: SDSDocument) => (
-                  <DocumentCard key={doc.id} doc={doc} />
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">No high-quality documents found.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="readable" className="mt-3">
-            <div className="space-y-2">
-              {readableDocs.length > 0 ? (
-                readableDocs.map((doc: SDSDocument) => (
-                  <DocumentCard key={doc.id} doc={doc} />
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">No readable documents found.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+            </>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <FileText className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-600">No SDS documents found.</p>
+                {(searchTerm || filterType !== 'all' || filterStatus !== 'all') && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Try adjusting your search or filter criteria.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
       {/* Label Printer Popup */}
