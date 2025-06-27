@@ -1,155 +1,114 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Download, QrCode, Printer, Share } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect, useRef } from "react";
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { QrCode, Printer, Download, Eye } from 'lucide-react';
 import QRCodeLib from 'qrcode';
-import { interactionLogger } from "@/services/interactionLogger";
-import QRPrintPopup from "@/components/popups/QRPrintPopup";
+import { useToast } from '@/hooks/use-toast';
+import QRCodePrintPreviewPopup from './popups/QRCodePrintPreviewPopup';
 
 interface QRCodeGeneratorProps {
   facilityData: {
     id: string;
     slug: string;
     facility_name: string | null;
-    contact_name: string | null;
-    email: string | null;
-    address: string | null;
     logo_url?: string;
+    contact_name?: string | null;
+    email?: string | null;
+    address?: string | null;
   };
-  facilityUrl: string;
-  isSetup?: boolean;
 }
 
-const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGeneratorProps) => {
+const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showPreviewPopup, setShowPreviewPopup] = useState(false);
   const { toast } = useToast();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [showPrintPopup, setShowPrintPopup] = useState(false);
 
   const facilityDisplayName = facilityData.facility_name || 'Facility';
-
-  // Ensure we're using the correct domain
-  const correctedFacilityUrl = facilityUrl.includes('chemlabel-gpt.com') 
-    ? facilityUrl 
-    : `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
 
   useEffect(() => {
-    if (canvasRef.current) {
-      QRCodeLib.toCanvas(canvasRef.current, correctedFacilityUrl, {
-        width: 256,
-        margin: 2,
+    generateQRCode();
+  }, [facilityData.slug]);
+
+  const generateQRCode = async () => {
+    setIsGenerating(true);
+    try {
+      const dataUrl = await QRCodeLib.toDataURL(facilityUrl, {
+        width: 300,
+        margin: 3,
         color: {
           dark: '#000000',
           light: '#ffffff'
-        }
-      }, (error) => {
-        if (error) console.error('QR Code generation failed:', error);
+        },
+        errorCorrectionLevel: 'M'
       });
+      setQrCodeDataUrl(dataUrl);
+    } catch (error) {
+      console.error('QR Code generation failed:', error);
+      toast({
+        title: "QR Code Generation Failed",
+        description: "There was an error generating the QR code.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
     }
-  }, [correctedFacilityUrl]);
+  };
 
-  const downloadQRCode = async () => {
-    if (canvasRef.current) {
+  const downloadQRCode = () => {
+    if (qrCodeDataUrl) {
       const link = document.createElement('a');
       link.download = `${facilityDisplayName}-QR-Code.png`;
-      link.href = canvasRef.current.toDataURL();
+      link.href = qrCodeDataUrl;
       link.click();
-
-      // Log QR code download
-      await interactionLogger.logQRCodeInteraction({
-        actionType: 'download',
-        metadata: {
-          facilityName: facilityDisplayName,
-          fileName: `${facilityDisplayName}-QR-Code.png`
-        }
-      });
-
-      await interactionLogger.logFacilityUsage({
-        eventType: 'qr_code_downloaded',
-        eventDetail: {
-          facilityName: facilityDisplayName,
-          fileName: `${facilityDisplayName}-QR-Code.png`
-        }
-      });
       
       toast({
         title: "QR Code Downloaded",
-        description: "Your facility QR code has been saved to downloads.",
+        description: "Your QR code has been saved to downloads.",
       });
     }
   };
 
-  const copyUrl = async () => {
-    navigator.clipboard.writeText(correctedFacilityUrl);
-
-    // Log URL copy
-    await interactionLogger.logQRCodeInteraction({
-      actionType: 'copy_url',
-      metadata: {
-        facilityUrl: correctedFacilityUrl,
-        facilityName: facilityDisplayName
-      }
-    });
-
-    await interactionLogger.logFacilityUsage({
-      eventType: 'facility_url_copied',
-      eventDetail: {
-        facilityUrl: correctedFacilityUrl
-      }
-    });
-
+  const openPrintView = () => {
+    const printUrl = `/qr-print/${facilityData.slug}`;
+    window.open(printUrl, '_blank');
+    
     toast({
-      title: "URL Copied",
-      description: "Facility URL copied to clipboard.",
-    });
-  };
-
-  const openPrintPopup = async () => {
-    setShowPrintPopup(true);
-
-    // Log print poster action
-    await interactionLogger.logQRCodeInteraction({
-      actionType: 'print',
-      metadata: {
-        action: 'print_poster',
-        facilityName: facilityDisplayName
-      }
-    });
-
-    await interactionLogger.logFacilityUsage({
-      eventType: 'qr_print_poster_requested',
-      eventDetail: {
-        facilityName: facilityDisplayName
-      }
+      title: "Print View Opened",
+      description: "A new tab with the print-ready poster has been opened.",
     });
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <div className="text-center space-y-6">
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              {facilityDisplayName} QR Code
-            </h3>
-            <p className="text-gray-600">
-              Deploy QR codes throughout your facility for instant worker access to safety data
-            </p>
-          </div>
-
-          {/* QR Code Display Area */}
-          <div className="bg-white border-2 border-gray-200 rounded-lg p-8 inline-block">
-            <div className="text-center space-y-4">
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <QrCode className="w-5 h-5" />
+            QR Code Access
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center">
+            {isGenerating ? (
+              <div className="w-64 h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mx-auto">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                  <span className="text-gray-500">Generating QR Code...</span>
+                </div>
+              </div>
+            ) : qrCodeDataUrl ? (
               <div className="relative inline-block">
-                <canvas 
-                  ref={canvasRef} 
-                  className="mx-auto border border-gray-200 rounded"
+                <img 
+                  src={qrCodeDataUrl} 
+                  alt="Facility QR Code"
+                  className="w-64 h-64 mx-auto border border-gray-200 rounded-lg"
                 />
-                {/* Company logo overlay in center of QR code */}
+                {/* Company logo overlay */}
                 {facilityData.logo_url && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-lg shadow-lg border-2 border-gray-800">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-3 rounded-lg shadow-lg border-2 border-gray-800">
                     <img 
                       src={facilityData.logo_url} 
                       alt={`${facilityDisplayName} Logo`}
@@ -158,111 +117,69 @@ const QRCodeGenerator = ({ facilityData, facilityUrl, isSetup }: QRCodeGenerator
                   </div>
                 )}
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-900">{facilityDisplayName}</p>
-                <p className="text-xs text-gray-500">Chemical Safety Portal</p>
-                <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">
-                  Scan with Phone Camera
-                </Badge>
+            ) : (
+              <div className="w-64 h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mx-auto">
+                <span className="text-gray-500">QR Code will appear here</span>
               </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={openPrintPopup}
-              className="bg-gray-800 hover:bg-gray-900 text-white"
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Print Professional Poster
-            </Button>
-
-            <Button 
-              onClick={downloadQRCode}
-              variant="outline"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download QR Code
-            </Button>
+            )}
             
-            <Button variant="outline" onClick={copyUrl}>
-              <Share className="w-4 h-4 mr-2" />
-              Copy URL
-            </Button>
+            <div className="mt-4 text-center">
+              <h3 className="font-semibold text-gray-900">{facilityDisplayName}</h3>
+              <p className="text-sm text-gray-600 break-all">{facilityUrl}</p>
+            </div>
           </div>
 
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-gray-600 mb-2">Facility URL:</p>
-            <code className="text-sm bg-white border border-gray-200 rounded px-3 py-2 block break-all">
-              {correctedFacilityUrl}
-            </code>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Button
+                onClick={() => setShowPreviewPopup(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                disabled={!qrCodeDataUrl}
+              >
+                <Eye className="w-4 h-4" />
+                Preview
+              </Button>
+              
+              <Button
+                onClick={openPrintView}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                disabled={!qrCodeDataUrl}
+              >
+                <Printer className="w-4 h-4" />
+                Print
+              </Button>
+              
+              <Button
+                onClick={downloadQRCode}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                disabled={!qrCodeDataUrl}
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                <strong>Instructions:</strong> Workers can scan this QR code with their phone camera to instantly access safety information. No app download required.
+              </p>
+            </div>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
-      <Card className="p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">
-          Setup Instructions
-        </h4>
-        
-        <div className="space-y-4 text-sm text-gray-600">
-          <div className="flex items-start space-x-3">
-            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">1</Badge>
-            <div>
-              <p className="font-medium text-gray-900">Print Professional Posters</p>
-              <p>Generate branded QR code posters with your company logo for facility deployment.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-3">
-            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">2</Badge>
-            <div>
-              <p className="font-medium text-gray-900">Strategic Placement</p>
-              <p>Position QR codes in high-traffic areas: break rooms, tool storage, chemical areas, and workstations.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-3">
-            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">3</Badge>
-            <div>
-              <p className="font-medium text-gray-900">Worker Training</p>
-              <p>Train personnel to scan with standard camera apps - no additional software required.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-3">
-            <Badge className="bg-gray-100 text-gray-800 border-gray-300 mt-0.5">4</Badge>
-            <div>
-              <p className="font-medium text-gray-900">Compliance Monitoring</p>
-              <p>All interactions are logged automatically for OSHA compliance and audit documentation.</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-6 bg-orange-50 border-orange-200">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          Important Guidelines
-        </h4>
-        
-        <ul className="space-y-2 text-sm text-gray-700">
-          <li>• Protect QR codes from moisture and direct sunlight exposure</li>
-          <li>• Replace damaged or faded QR codes immediately to maintain accessibility</li>
-          <li>• Ensure codes are positioned at appropriate heights for easy scanning</li>
-          <li>• Maintain backup printed copies in your EHS office</li>
-          <li>• Conduct regular testing to verify QR code functionality</li>
-        </ul>
-      </Card>
-
-      {/* Print Popup */}
-      <QRPrintPopup
-        isOpen={showPrintPopup}
-        onClose={() => setShowPrintPopup(false)}
+      <QRCodePrintPreviewPopup
+        isOpen={showPreviewPopup}
+        onClose={() => setShowPreviewPopup(false)}
         facilityData={facilityData}
-        facilityUrl={correctedFacilityUrl}
       />
-    </div>
+    </>
   );
 };
 
