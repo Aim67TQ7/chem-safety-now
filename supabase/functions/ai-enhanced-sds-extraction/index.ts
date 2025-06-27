@@ -7,117 +7,77 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-interface EnhancedSDSData {
-  // HMIS values (most important)
-  hmis_health: number;
-  hmis_flammability: number;
-  hmis_physical: number;
-  hmis_special: string;
-  hmis_confidence: number;
-  
-  // Product information
-  product_title: string;
-  chemical_compound: string;
-  chemical_formula: string;
-  manufacturer: string;
-  product_id: string;
-  
-  // Safety information
-  ghs_pictograms: Array<{
-    code: string;
+interface OSHAExtractionResponse {
+  status: 'ok' | 'manual-review';
+  product_identifier: { value: string; confidence: number };
+  signal_word: { value: 'Danger' | 'Warning' | 'None'; confidence: number };
+  pictograms: Array<{
     name: string;
+    unicode: string;
     confidence: number;
   }>;
-  required_ppe: string[];
-  
-  // Metadata
-  extraction_confidence: number;
-  label_print_date: string;
+  hazard_statements: Array<{ value: string; confidence: number }>;
+  precautionary_statements_critical: Array<{ value: string; confidence: number }>;
+  hmis: {
+    health: { value: number; confidence: number };
+    flammability: { value: number; confidence: number };
+    physical: { value: number; confidence: number };
+    ppe: { value: string; confidence: number };
+  };
+  overall_confidence: number;
 }
 
-function createExtractionPrompt(sdsText: string): string {
-  return `You are an expert chemical safety data analyst specializing in HMIS (Hazardous Materials Identification System) scoring. Extract the following critical information from this SDS document for safety label generation.
+function createOSHAExtractionPrompt(sdsText: string): string {
+  return `You are "SDS-Label-Extractor v1.0," an OSHA-compliant expert on the Hazard Communication Standard (29 CFR 1910.1200, GHS Rev 7).  
+Goal: From the full, raw text of a Safety Data Sheet (SDS) provided below, identify the information needed for a U.S. workplace secondary container label with ≥ 0.98 confidence.  
+If ≥ 0.98 confidence cannot be reached for **every** element, output "status":"manual-review" and explain the low-confidence fields.
 
-CRITICAL HMIS SCORING CRITERIA:
-You MUST use these standardized HMIS scoring criteria (0-4 scale):
+1. **Locate the data in this priority order**  
+   • Section 2 "Hazard(s) Identification" – pictograms, signal word, hazard statements.  
+   • Section 1 "Identification" – product identifier/trade name.  
+   • Section 4 "First-aid Measures" & Section 7 "Handling & Storage" – critical cautionary statements if Section 2 omits them.  
+   • Section 16 or any footers – HMIS (Health, Flammability, Physical Hazard, PPE code).  
+   • Anywhere images show GHS symbols → map to standard IDs (e.g., flame, skull-and-crossbones, exclamation-mark).  
+   • Ignore marketing language and supplier SDS summaries.
 
-🔷 HEALTH HAZARD (Blue Bar) - Rate 0-4:
-• 4: Life-threatening or major permanent damage (e.g., hydrogen cyanide, phosgene, carcinogens)
-• 3: Serious temporary/residual injury, medical attention needed (e.g., strong acids/bases, phenol, H₂S)
-• 2: Temporary injury may occur, prompt treatment usually not required (e.g., solvents causing CNS depression)
-• 1: Irritation or minor reversible injury (e.g., isopropyl alcohol, ammonia solution)
-• 0: No significant risk to health (e.g., water, inert substances)
+2. **Parse & reconcile**  
+   • Trim whitespace, join wrapped lines, preserve punctuation.  
+   • Accept common synonyms (e.g., "Warning" ↔ signal word).  
+   • If multiple conflicting values appear, choose the one with the **highest safety rating** (more severe) and lower the element's confidence accordingly.  
+   • Normalize HMIS to 0-4 integers; normalize PPE code to a single letter A–K or "X."  
+   • Return pictograms as an array of the official GHS keyword strings: ["flame","gas-cylinder", …].
 
-🔥 FLAMMABILITY (Red Bar) - Rate 0-4 based on flash points:
-• 4: Flash point < 73°F (22.8°C) AND boiling point < 100°F (37.8°C)
-• 3: Flash point < 100°F (37.8°C)
-• 2: Flash point 100–200°F (37.8–93.3°C)
-• 1: Flash point > 200°F (93.3°C)
-• 0: Will not burn under typical fire conditions (e.g., water, salts)
+3. **Deliver JSON exactly in this schema**  
+   {
+     "status": "ok" | "manual-review",
+     "product_identifier": { "value": "...", "confidence": 0.00-1.00 },
+     "signal_word":        { "value": "Danger | Warning | None", "confidence": … },
+     "pictograms":         [
+                              { "name": "flame", "unicode": "🔥", "confidence": … },
+                              …
+                            ],
+     "hazard_statements":  [{ "value": "...", "confidence": … }, …],
+     "precautionary_statements_critical": [{ "value": "...", "confidence": … }, …],
+     "hmis": {
+       "health":        { "value": 0-4, "confidence": … },
+       "flammability":  { "value": 0-4, "confidence": … },
+       "physical":      { "value": 0-4, "confidence": … },
+       "ppe":           { "value": "A"-"K" | "X", "confidence": … }
+     },
+     "overall_confidence": 0.00-1.00
+   }
+• overall_confidence = harmonic mean of all element confidences; must be ≥ 0.98 to avoid "manual-review".
 
-⚙️ PHYSICAL HAZARD/REACTIVITY (Yellow Bar) - Rate 0-4:
-• 4: May detonate or explode under normal conditions (e.g., nitroglycerin)
-• 3: May detonate with strong initiating force or heat (e.g., ammonium perchlorate)
-• 2: Unstable with violent chemical change (e.g., peroxides, cyanides in heat)
-• 1: Normally stable, but unstable when heated (e.g., sodium)
-• 0: Stable and unreactive under fire conditions (e.g., common solvents)
+Quality checks (abort if any fail)
+• At least one pictogram OR one hazard statement must be present.
+• Signal word must be "Warning" or "Danger" if any GHS category 1–3 hazards are detected.
+• HMIS ratings must be integers 0-4; none can be null.
+• No confidence may be < 0.80 in a successful extraction.
 
-🧤 PERSONAL PROTECTION (White Bar) - Use these codes:
-• A: Safety glasses
-• B: Safety glasses, gloves
-• C: Safety glasses, gloves, apron
-• D: Face shield, gloves, apron
-• E: Safety glasses, gloves, dust respirator
-• F: Safety glasses, gloves, apron, dust respirator
-• G: Safety glasses, vapor respirator
-• H: Splash goggles, gloves, apron, vapor respirator
-• X: Consult supervisor or SDS for guidance
-
-EXTRACTION REQUIREMENTS:
-1. Look for explicit HMIS ratings first
-2. If not found, calculate using flash point, LD50, pH, volatility data
-3. Extract CAS numbers in format XX-XX-X (e.g., "67-63-0")
-4. Find chemical formulas (e.g., "C3H8O")
-5. Identify official product names
-6. Map GHS pictograms to correct codes (GHS01-GHS09)
-7. Determine PPE requirements using A-X coding system
-
-Use SDS Sections 2, 4, 5, 9, 10, and 11 for information gathering.
+Output only the JSON block – no prose, no markdown — so that downstream code can parse it cleanly.
 
 SDS Document Text:
-${sdsText.substring(0, 12000)}
-
-Extract and return ONLY a JSON object with this exact structure:
-{
-  "hmis_health": <number 0-4 using criteria above>,
-  "hmis_flammability": <number 0-4 using flash point criteria>,
-  "hmis_physical": <number 0-4 using reactivity criteria>,  
-  "hmis_special": "<PPE code A-X or special hazard codes>",
-  "hmis_confidence": <confidence 0-100 based on data availability>,
-  "product_title": "<official product name>",
-  "chemical_compound": "<primary chemical name>",
-  "chemical_formula": "<molecular formula like C3H8O>",
-  "manufacturer": "<company name>",
-  "product_id": "<product ID, lot number, or catalog number>",
-  "cas_number": "<CAS number in XX-XX-X format>",
-  "ghs_pictograms": [
-    {
-      "code": "<GHS code like GHS02, GHS07>",
-      "name": "<pictogram name like flame, exclamation>",
-      "confidence": <confidence 0-100>
-    }
-  ],
-  "required_ppe": ["<PPE items based on precautionary statements>"],
-  "extraction_confidence": <overall confidence 0-100>,
-  "label_print_date": "${new Date().toISOString().split('T')[0]}"
-}
-
-SCORING LOGIC:
-- Use explicit HMIS ratings when available (confidence 90+)
-- Calculate from flash points for flammability (confidence 80+)
-- Infer from toxicity data (LD50) for health ratings (confidence 70+)
-- Use reactivity warnings for physical hazards (confidence 60+)
-- Default to conservative ratings if uncertain (confidence <50)`
+${sdsText.substring(0, 12000)}`;
 }
 
 async function callOpenAI(prompt: string): Promise<any> {
@@ -133,11 +93,11 @@ async function callOpenAI(prompt: string): Promise<any> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-2025-04-14',
       messages: [
         {
           role: 'system',
-          content: 'You are an expert chemical safety analyst and HMIS scoring specialist. You understand flash points, LD50 values, reactivity data, and can accurately score HMIS ratings using standardized criteria. Always return valid JSON responses with precise HMIS scores.'
+          content: 'You are SDS-Label-Extractor v1.0, an OSHA-compliant expert on the Hazard Communication Standard. You extract information from SDS documents with ≥98% confidence for secondary container labeling. Always return valid JSON responses with precise confidence scores.'
         },
         {
           role: 'user',
@@ -145,7 +105,7 @@ async function callOpenAI(prompt: string): Promise<any> {
         }
       ],
       temperature: 0.1,
-      max_tokens: 2500
+      max_tokens: 3000
     }),
   });
 
@@ -165,7 +125,7 @@ Deno.serve(async (req) => {
   try {
     const { document_id } = await req.json();
     
-    console.log('🤖 Starting AI-enhanced SDS extraction with HMIS expertise for document:', document_id);
+    console.log('🤖 Starting OSHA-compliant SDS extraction for document:', document_id);
 
     // Get the SDS document
     const { data: document, error: docError } = await supabase
@@ -180,13 +140,13 @@ Deno.serve(async (req) => {
 
     console.log('📄 Processing document:', document.product_name);
 
-    // Check if we already have high-confidence AI-enhanced data
-    if (document.ai_extracted_data && document.ai_extraction_confidence > 80) {
-      console.log('✅ Document already has high-confidence AI extraction');
+    // Check if we already have high-confidence OSHA-compliant data
+    if (document.ai_extracted_data && document.ai_extraction_confidence >= 98) {
+      console.log('✅ Document already has high-confidence OSHA extraction');
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Document already has high-confidence AI-enhanced data',
+          message: 'Document already has high-confidence OSHA-compliant data',
           data: document.ai_extracted_data,
           confidence: document.ai_extraction_confidence
         }),
@@ -197,17 +157,17 @@ Deno.serve(async (req) => {
     // Extract text for AI analysis
     const sdsText = document.full_text || '';
     if (!sdsText || sdsText.length < 100) {
-      throw new Error('Insufficient text content for AI analysis');
+      throw new Error('Insufficient text content for OSHA analysis');
     }
 
-    // Create enhanced extraction prompt with HMIS expertise
-    const extractionPrompt = createExtractionPrompt(sdsText);
-    console.log('🧠 Calling OpenAI with HMIS scoring expertise...');
+    // Create OSHA-compliant extraction prompt
+    const extractionPrompt = createOSHAExtractionPrompt(sdsText);
+    console.log('🧠 Calling OpenAI with OSHA-compliant extraction...');
     
     const aiResponse = await callOpenAI(extractionPrompt);
     
     // Parse AI response
-    let extractedData: EnhancedSDSData;
+    let extractedData: OSHAExtractionResponse;
     try {
       // Clean the response to extract JSON
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
@@ -216,42 +176,84 @@ Deno.serve(async (req) => {
       }
       extractedData = JSON.parse(jsonMatch[0]);
     } catch (parseError) {
-      console.error('❌ Failed to parse AI response:', parseError);
-      throw new Error('Invalid JSON response from AI');
+      console.error('❌ Failed to parse OSHA extraction response:', parseError);
+      throw new Error('Invalid JSON response from OSHA extraction');
     }
 
-    // Validate and enhance the extracted data with HMIS intelligence
+    // Validate OSHA extraction quality
+    if (extractedData.status === 'manual-review' || extractedData.overall_confidence < 0.98) {
+      console.log('⚠️ OSHA extraction requires manual review:', extractedData.overall_confidence);
+      
+      // Store the data but flag for manual review
+      const { error: updateError } = await supabase
+        .from('sds_documents')
+        .update({
+          ai_extracted_data: extractedData,
+          ai_extraction_confidence: Math.round(extractedData.overall_confidence * 100),
+          ai_extraction_date: new Date().toISOString(),
+          extraction_status: 'manual_review_required'
+        })
+        .eq('id', document_id);
+
+      if (updateError) {
+        console.error('❌ Error updating document for manual review:', updateError);
+        throw updateError;
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          status: 'manual_review_required',
+          extracted_data: extractedData,
+          confidence: Math.round(extractedData.overall_confidence * 100),
+          message: `OSHA extraction completed but requires manual review (${Math.round(extractedData.overall_confidence * 100)}% confidence)`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Convert OSHA data to our database format
     const validatedData = {
-      // HMIS ratings with validation (ensure 0-4 range)
+      // HMIS ratings from OSHA extraction
       hmis_codes: {
-        health: Math.max(0, Math.min(4, extractedData.hmis_health || 0)),
-        flammability: Math.max(0, Math.min(4, extractedData.hmis_flammability || 0)),
-        physical: Math.max(0, Math.min(4, extractedData.hmis_physical || 0)),
-        special: extractedData.hmis_special || ''
+        health: extractedData.hmis.health.value,
+        flammability: extractedData.hmis.flammability.value,
+        physical: extractedData.hmis.physical.value,
+        special: extractedData.hmis.ppe.value
       },
       
-      // Enhanced product information with better extraction
+      // Enhanced product information
       ai_extracted_data: {
-        product_title: extractedData.product_title || document.product_name,
-        chemical_compound: extractedData.chemical_compound || '',
-        chemical_formula: extractedData.chemical_formula || '',
-        manufacturer: extractedData.manufacturer || document.manufacturer,
-        product_id: extractedData.product_id || '',
-        cas_number: extractedData.cas_number || document.cas_number,
-        ghs_pictograms: extractedData.ghs_pictograms || [],
-        required_ppe: extractedData.required_ppe || [],
-        hmis_confidence: extractedData.hmis_confidence || 50,
-        label_print_date: extractedData.label_print_date
+        product_title: extractedData.product_identifier.value,
+        signal_word: extractedData.signal_word.value,
+        hazard_statements: extractedData.hazard_statements.map(h => h.value),
+        precautionary_statements: extractedData.precautionary_statements_critical.map(p => p.value),
+        ghs_pictograms: extractedData.pictograms.map(p => ({
+          name: p.name,
+          unicode: p.unicode,
+          confidence: p.confidence
+        })),
+        hmis_confidence: Math.min(
+          extractedData.hmis.health.confidence,
+          extractedData.hmis.flammability.confidence,
+          extractedData.hmis.physical.confidence,
+          extractedData.hmis.ppe.confidence
+        ) * 100,
+        overall_confidence: extractedData.overall_confidence * 100,
+        osha_compliant: true,
+        extraction_method: 'osha_compliant_v1.0'
       },
       
-      // Update CAS number if found by AI
-      cas_number: extractedData.cas_number || document.cas_number,
+      // Update signal word and pictograms in main document
+      signal_word: extractedData.signal_word.value,
+      pictograms: extractedData.pictograms.map(p => p.name),
       
-      ai_extraction_confidence: extractedData.extraction_confidence || 50,
-      ai_extraction_date: new Date().toISOString()
+      ai_extraction_confidence: Math.round(extractedData.overall_confidence * 100),
+      ai_extraction_date: new Date().toISOString(),
+      extraction_status: 'osha_compliant'
     };
 
-    // Update the document with AI-enhanced data
+    // Update the document with OSHA-compliant data
     const { error: updateError } = await supabase
       .from('sds_documents')
       .update(validatedData)
@@ -262,29 +264,30 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    console.log('✅ Successfully completed AI-enhanced SDS extraction with HMIS scoring');
-    console.log(`📊 Extraction confidence: ${validatedData.ai_extraction_confidence}%`);
-    console.log(`🏥 HMIS Health: ${validatedData.hmis_codes.health} (Blue)`);
-    console.log(`🔥 HMIS Flammability: ${validatedData.hmis_codes.flammability} (Red)`);
-    console.log(`⚠️ HMIS Physical: ${validatedData.hmis_codes.physical} (Yellow)`);
-    console.log(`🧤 HMIS Special: ${validatedData.hmis_codes.special} (White)`);
+    console.log('✅ Successfully completed OSHA-compliant SDS extraction');
+    console.log(`📊 Overall confidence: ${Math.round(extractedData.overall_confidence * 100)}%`);
+    console.log(`🏥 HMIS Health: ${extractedData.hmis.health.value}`);
+    console.log(`🔥 HMIS Flammability: ${extractedData.hmis.flammability.value}`);
+    console.log(`⚠️ HMIS Physical: ${extractedData.hmis.physical.value}`);
+    console.log(`🧤 HMIS PPE: ${extractedData.hmis.ppe.value}`);
 
     return new Response(
       JSON.stringify({ 
         success: true,
+        status: 'osha_compliant',
         extracted_data: validatedData,
-        confidence: validatedData.ai_extraction_confidence,
-        message: `AI extraction completed with ${validatedData.ai_extraction_confidence}% confidence using HMIS scoring criteria`
+        confidence: Math.round(extractedData.overall_confidence * 100),
+        message: `OSHA-compliant extraction completed with ${Math.round(extractedData.overall_confidence * 100)}% confidence`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ AI-enhanced SDS extraction error:', error);
+    console.error('❌ OSHA-compliant SDS extraction error:', error);
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: 'AI extraction failed',
+        error: 'OSHA extraction failed',
         details: error.message 
       }),
       { 

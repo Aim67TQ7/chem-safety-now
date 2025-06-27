@@ -18,13 +18,118 @@ export interface EnhancedSDSData {
   productId?: string;
   labelPrintDate?: string;
   extractionConfidence?: number;
-  dataSource?: 'ai_enhanced' | 'basic_extraction' | 'manual';
+  dataSource?: 'osha_compliant' | 'ai_enhanced' | 'basic_extraction' | 'manual';
+  oshaCompliant?: boolean;
+  requiresManualReview?: boolean;
 }
 
 export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData => {
   if (!selectedDocument) return {};
 
-  // Check for AI-enhanced data first (highest priority)
+  // Check for OSHA-compliant data first (highest priority)
+  if (selectedDocument.ai_extracted_data && 
+      selectedDocument.ai_extracted_data.osha_compliant && 
+      selectedDocument.ai_extraction_confidence >= 98) {
+    
+    const oshaData = selectedDocument.ai_extracted_data;
+    
+    // Map GHS pictograms from OSHA data
+    const pictograms: string[] = [];
+    if (Array.isArray(oshaData.ghs_pictograms)) {
+      oshaData.ghs_pictograms.forEach((p: any) => {
+        // Map GHS names to our pictogram IDs
+        const nameMapping: Record<string, string> = {
+          'flame': 'flame',
+          'gas-cylinder': 'gas_cylinder',
+          'skull-and-crossbones': 'skull_crossbones',
+          'exclamation-mark': 'exclamation',
+          'health-hazard': 'health_hazard',
+          'corrosion': 'corrosion',
+          'exploding-bomb': 'exploding_bomb',
+          'flame-over-circle': 'flame_over_circle',
+          'environment': 'environment'
+        };
+        
+        const mappedPictogram = nameMapping[p.name] || p.name?.toLowerCase().replace(/[-\s]+/g, '_') || 'exclamation';
+        pictograms.push(mappedPictogram);
+      });
+    }
+
+    return {
+      productName: oshaData.product_title || selectedDocument.product_name,
+      manufacturer: selectedDocument.manufacturer,
+      casNumber: selectedDocument.cas_number,
+      signalWord: oshaData.signal_word || 'WARNING',
+      hazardCodes: Array.isArray(oshaData.hazard_statements) ? oshaData.hazard_statements : [],
+      pictograms: [...new Set(pictograms)], // Remove duplicates
+      hmisRatings: {
+        health: selectedDocument.hmis_codes?.health?.toString() || '2',
+        flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
+        physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
+        special: selectedDocument.hmis_codes?.special || 'A'
+      },
+      ppeRequirements: Array.isArray(oshaData.precautionary_statements) ? oshaData.precautionary_statements : [],
+      chemicalFormula: '',
+      chemicalCompound: oshaData.product_title || selectedDocument.product_name,
+      productId: '',
+      labelPrintDate: new Date().toISOString().split('T')[0],
+      extractionConfidence: selectedDocument.ai_extraction_confidence || 0,
+      dataSource: 'osha_compliant',
+      oshaCompliant: true,
+      requiresManualReview: false
+    };
+  }
+
+  // Check for manual review required
+  if (selectedDocument.extraction_status === 'manual_review_required') {
+    const reviewData = selectedDocument.ai_extracted_data;
+    
+    const pictograms: string[] = [];
+    if (reviewData && Array.isArray(reviewData.ghs_pictograms)) {
+      reviewData.ghs_pictograms.forEach((p: any) => {
+        const nameMapping: Record<string, string> = {
+          'flame': 'flame',
+          'gas-cylinder': 'gas_cylinder',
+          'skull-and-crossbones': 'skull_crossbones',
+          'exclamation-mark': 'exclamation',
+          'health-hazard': 'health_hazard',
+          'corrosion': 'corrosion',
+          'exploding-bomb': 'exploding_bomb',
+          'flame-over-circle': 'flame_over_circle',
+          'environment': 'environment'
+        };
+        
+        const mappedPictogram = nameMapping[p.name] || p.name?.toLowerCase().replace(/[-\s]+/g, '_') || 'exclamation';
+        pictograms.push(mappedPictogram);
+      });
+    }
+
+    return {
+      productName: reviewData?.product_title || selectedDocument.product_name,
+      manufacturer: selectedDocument.manufacturer,
+      casNumber: selectedDocument.cas_number,
+      signalWord: reviewData?.signal_word || 'WARNING',
+      hazardCodes: Array.isArray(reviewData?.hazard_statements) ? reviewData.hazard_statements : [],
+      pictograms: [...new Set(pictograms)],
+      hmisRatings: {
+        health: selectedDocument.hmis_codes?.health?.toString() || '2',
+        flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
+        physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
+        special: selectedDocument.hmis_codes?.special || 'A'
+      },
+      ppeRequirements: Array.isArray(reviewData?.precautionary_statements) ? reviewData.precautionary_statements : [],
+      chemicalFormula: '',
+      chemicalCompound: reviewData?.product_title || selectedDocument.product_name,
+      productId: '',
+      labelPrintDate: new Date().toISOString().split('T')[0],
+      extractionConfidence: selectedDocument.ai_extraction_confidence || 0,
+      dataSource: 'ai_enhanced',
+      oshaCompliant: false,
+      requiresManualReview: true
+    };
+  }
+
+  // Check for AI-enhanced data (legacy system)
   if (selectedDocument.ai_extracted_data && selectedDocument.ai_extraction_confidence > 50) {
     const aiData = selectedDocument.ai_extracted_data;
     
@@ -32,7 +137,6 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     const pictograms: string[] = [];
     if (Array.isArray(aiData.ghs_pictograms)) {
       aiData.ghs_pictograms.forEach((p: any) => {
-        // Map GHS codes to our pictogram IDs
         const codeMapping: Record<string, string> = {
           'GHS01': 'exploding_bomb',
           'GHS02': 'flame',
@@ -50,7 +154,6 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       });
     }
 
-    // Fix hazardCodes type safety
     const hazardCodes: string[] = [];
     if (Array.isArray(selectedDocument.h_codes)) {
       selectedDocument.h_codes.forEach((h: any) => {
@@ -65,12 +168,12 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       casNumber: selectedDocument.cas_number,
       signalWord: selectedDocument.signal_word || 'WARNING',
       hazardCodes,
-      pictograms: [...new Set(pictograms)], // Remove duplicates
+      pictograms: [...new Set(pictograms)],
       hmisRatings: {
         health: selectedDocument.hmis_codes?.health?.toString() || '2',
         flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
         physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
-        special: selectedDocument.hmis_codes?.special || ''
+        special: selectedDocument.hmis_codes?.special || 'A'
       },
       ppeRequirements: Array.isArray(aiData.required_ppe) ? aiData.required_ppe.map(String) : [],
       chemicalFormula: aiData.chemical_formula || '',
@@ -78,7 +181,9 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       productId: aiData.product_id || '',
       labelPrintDate: aiData.label_print_date || new Date().toISOString().split('T')[0],
       extractionConfidence: selectedDocument.ai_extraction_confidence || 0,
-      dataSource: 'ai_enhanced'
+      dataSource: 'ai_enhanced',
+      oshaCompliant: false,
+      requiresManualReview: false
     };
   }
 
@@ -117,7 +222,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     health: hmisData.health?.toString() || '2',
     flammability: hmisData.flammability?.toString() || '1',
     physical: hmisData.physical?.toString() || '0',
-    special: hmisData.special || ''
+    special: hmisData.special || 'A'
   };
 
   // Basic PPE extraction from precautionary statements
@@ -145,6 +250,8 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     productId: '',
     labelPrintDate: new Date().toISOString().split('T')[0],
     extractionConfidence: selectedDocument.extraction_quality_score || 0,
-    dataSource: 'basic_extraction'
+    dataSource: 'basic_extraction',
+    oshaCompliant: false,
+    requiresManualReview: false
   };
 };
