@@ -59,6 +59,7 @@ export default function GlobalSafetyStanWidget({
   const [emailInput, setEmailInput] = useState('');
   const [hasAskedSetupQuestion, setHasAskedSetupQuestion] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [stanleyVisible, setStanleyVisible] = useState(true);
 
   const avatarRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -116,9 +117,14 @@ export default function GlobalSafetyStanWidget({
 
   const handleClose = () => {
     setIsVisible(false);
+    setStanleyVisible(false);
     if (onClose) {
       onClose();
     }
+  };
+
+  const handleCloseStanleyOnly = () => {
+    setStanleyVisible(false);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -566,51 +572,53 @@ export default function GlobalSafetyStanWidget({
       />
 
       {/* Floating Stanley Avatar - 20% taller - Above background but below content */}
-      <div
-        ref={avatarRef}
-        data-stanley-avatar
-        className="fixed z-[999] cursor-move select-none"
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          transform: isDragging ? 'scale(1.05)' : 'scale(1)',
-          transition: isDragging ? 'none' : 'transform 0.2s ease'
-        }}
-        onMouseDown={handleMouseDown}
-        onClick={() => !isDragging && setIsOpen(true)}
-      >
-        <div className="relative group">
-          {/* X button to hide Stanley */}
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose();
-            }}
-            variant="ghost"
-            size="sm"
-            className="absolute -top-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
-          >
-            <X className="w-3 h-3" />
-          </Button>
+      {stanleyVisible && (
+        <div
+          ref={avatarRef}
+          data-stanley-avatar
+          className="fixed z-[999] cursor-move select-none"
+          style={{
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            transform: isDragging ? 'scale(1.05)' : 'scale(1)',
+            transition: isDragging ? 'none' : 'transform 0.2s ease'
+          }}
+          onMouseDown={handleMouseDown}
+          onClick={() => !isDragging && setIsOpen(true)}
+        >
+          <div className="relative group">
+            {/* X button to hide Stanley only */}
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCloseStanleyOnly();
+              }}
+              variant="ghost"
+              size="sm"
+              className="absolute -top-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+            >
+              <X className="w-3 h-3" />
+            </Button>
 
-          {/* Stanley's full body - 20% taller (288 * 1.2 = 346) */}
-          <div className="w-60 h-[346px] flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
-            <img
-              src={isThinking 
-                ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
-                : "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png"
-              }
-              alt="Safety Stan"
-              className="w-full h-full object-contain"
-              draggable={false}
-            />
+            {/* Stanley's full body - 20% taller (288 * 1.2 = 346) */}
+            <div className="w-60 h-[346px] flex items-center justify-center hover:drop-shadow-xl transition-all duration-200">
+              <img
+                src={isThinking 
+                  ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
+                  : "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png"
+                }
+                alt="Safety Stan"
+                className="w-full h-full object-contain"
+                draggable={false}
+              />
+            </div>
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              {selectedDocument ? `Ask about ${selectedDocument.product_name}` : 'Safety Expert Stan'}
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
-          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-            {selectedDocument ? `Ask about ${selectedDocument.product_name}` : 'Safety Expert Stan'}
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
         </div>
-      </div>
+      )}
 
       {/* Chat Interface - Above Stanley but transparent with resizable functionality */}
       {isOpen && (
@@ -624,27 +632,10 @@ export default function GlobalSafetyStanWidget({
             height: isMinimized ? 'auto' : `${chatSize.height}px`
           }}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600/90 to-green-600/90 text-white p-4 rounded-t-lg backdrop-blur-sm">
+          {/* Simplified Header - no clutter */}
+          <div className="bg-gradient-to-r from-blue-600/90 to-green-600/90 text-white p-3 rounded-t-lg backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 border-2 border-white rounded-lg overflow-hidden bg-white">
-                  <img
-                    src={isThinking 
-                      ? "/lovable-uploads/dc6f065c-1503-43fd-91fc-15ffc9fbf39e.png" 
-                      : "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png"
-                    }
-                    alt="Safety Stan"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm">Safety Stan</h3>
-                  <p className="text-xs opacity-90">
-                    {isThinking ? "Thinking..." : selectedDocument ? `Expert on ${selectedDocument.product_name}` : isSignupPage ? "Setup Assistant" : "Safety Expert"}
-                  </p>
-                </div>
-              </div>
+              <div className="text-sm font-medium">Safety Stan</div>
               <div className="flex items-center space-x-2">
                 {selectedDocument && (
                   <Button
@@ -654,17 +645,9 @@ export default function GlobalSafetyStanWidget({
                     className="text-white hover:bg-white/20 h-6 px-2 text-xs"
                   >
                     <FileText className="w-3 h-3 mr-1" />
-                    View PDF
+                    PDF
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-white hover:bg-white/20 h-6 w-6 p-0"
-                >
-                  <Maximize2 className="w-3 h-3" />
-                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -676,28 +659,13 @@ export default function GlobalSafetyStanWidget({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="text-white hover:bg-white/20 h-6 w-6 p-0"
                 >
                   <X className="w-3 h-3" />
                 </Button>
               </div>
             </div>
-
-            {/* Document Context Banner */}
-            {selectedDocument && !isMinimized && (
-              <div className="mt-3 p-2 bg-white/20 rounded text-xs">
-                <div className="flex items-center space-x-2">
-                  <FileText className="w-4 h-4" />
-                  <div>
-                    <div className="font-medium">{selectedDocument.product_name}</div>
-                    {selectedDocument.manufacturer && (
-                      <div className="opacity-80">{selectedDocument.manufacturer}</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {!isMinimized && (
@@ -796,7 +764,7 @@ export default function GlobalSafetyStanWidget({
               <div 
                 className="flex-1 overflow-y-auto p-4 space-y-3" 
                 style={{ 
-                  height: isHomepage ? `${chatSize.height - 200}px` : isSignupPage ? `${chatSize.height - 260}px` : selectedDocument ? `${chatSize.height - 320}px` : `${chatSize.height - 260}px`,
+                  height: isHomepage ? `${chatSize.height - 200}px` : isSignupPage ? `${chatSize.height - 260}px` : selectedDocument ? `${chatSize.height - 260}px` : `${chatSize.height - 260}px`,
                   maxHeight: `${chatSize.height - 160}px`
                 }}
               >
