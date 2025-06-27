@@ -1,10 +1,24 @@
-
 import { PDFExtract } from 'https://esm.sh/pdf.js-extract@0.2.1';
+
+// Configure PDF.js worker for Deno environment
+const setupPDFWorker = () => {
+  try {
+    // Set up the worker source for PDF.js in Deno environment
+    globalThis.GlobalWorkerOptions = {
+      workerSrc: 'https://esm.sh/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+    };
+  } catch (error) {
+    console.log('⚠️ PDF worker setup not available, continuing with fallback');
+  }
+};
 
 export async function downloadAndExtractPDF(url: string) {
   console.log('📥 Downloading PDF for extraction:', url);
   
   try {
+    // Setup PDF worker before extraction
+    setupPDFWorker();
+
     // Download the PDF
     const response = await fetch(url, {
       headers: {
@@ -24,27 +38,33 @@ export async function downloadAndExtractPDF(url: string) {
       throw new Error('Downloaded PDF is empty');
     }
 
-    // Extract text from PDF
+    // Extract text from PDF with better error handling
     console.log('🔍 Extracting SDS data from text...');
-    const pdfExtract = new PDFExtract();
-    const extractionResult = await pdfExtract.extractBuffer(new Uint8Array(pdfBuffer));
-    
-    // Combine all text from all pages
     let fullText = '';
-    if (extractionResult.pages && extractionResult.pages.length > 0) {
-      fullText = extractionResult.pages
-        .map(page => page.content.map(item => item.str).join(' '))
-        .join('\n');
+    
+    try {
+      const pdfExtract = new PDFExtract();
+      const extractionResult = await pdfExtract.extractBuffer(new Uint8Array(pdfBuffer));
+      
+      // Combine all text from all pages
+      if (extractionResult.pages && extractionResult.pages.length > 0) {
+        fullText = extractionResult.pages
+          .map(page => page.content.map(item => item.str).join(' '))
+          .join('\n');
+      }
+    } catch (pdfError) {
+      console.log('⚠️ PDF.js extraction failed, trying fallback:', pdfError.message);
+      // Fallback: try simple text extraction
+      fullText = await fallbackTextExtraction(pdfBuffer);
     }
 
     // Clean the text to remove null bytes and other problematic characters
     fullText = cleanExtractedText(fullText);
     
-    if (!fullText || fullText.trim().length < 100) {
-      console.log('⚠️ Insufficient text extracted, using fallback extraction');
-      // Fallback: try simple text extraction
-      fullText = await fallbackTextExtraction(pdfBuffer);
-      fullText = cleanExtractedText(fullText);
+    if (!fullText || fullText.trim().length < 50) {
+      console.log('⚠️ Insufficient text extracted, using basic document structure');
+      // Create a basic structure if we can't extract meaningful text
+      fullText = `Safety Data Sheet document processed. File size: ${pdfBuffer.byteLength} bytes. Extraction may require manual review.`;
     }
 
     console.log('📝 Extracted text length:', fullText.length);
@@ -58,7 +78,26 @@ export async function downloadAndExtractPDF(url: string) {
 
   } catch (error) {
     console.error('❌ PDF extraction error:', error);
-    throw new Error(`PDF extraction failed: ${error.message}`);
+    
+    // Return a basic extraction result instead of throwing
+    return {
+      full_text: `PDF processing encountered an error: ${error.message}. Manual review may be required.`,
+      extraction_quality_score: 10,
+      is_readable: false,
+      h_codes: [],
+      pictograms: [],
+      hazard_statements: [],
+      precautionary_statements: [],
+      physical_hazards: [],
+      health_hazards: [],
+      environmental_hazards: [],
+      hmis_codes: {},
+      nfpa_codes: {},
+      signal_word: null,
+      cas_number: null,
+      first_aid: {},
+      regulatory_notes: []
+    };
   }
 }
 
@@ -75,14 +114,24 @@ function cleanExtractedText(text: string): string {
     // Trim and normalize
     .trim()
     // Ensure it's valid UTF-8
-    .normalize('NFD');
+    .normalize('NFD')
+    // Limit size to prevent database issues (50KB limit)
+    .substring(0, 50000);
 }
 
 async function fallbackTextExtraction(pdfBuffer: ArrayBuffer): Promise<string> {
   try {
-    // Simple text extraction fallback
+    // Simple text extraction fallback - look for readable text patterns
     const text = new TextDecoder('utf-8', { fatal: false }).decode(pdfBuffer);
-    return text || '';
+    
+    // Try to extract some basic information
+    const lines = text.split(/[\r\n]+/).filter(line => 
+      line.trim().length > 3 && 
+      /[a-zA-Z]/.test(line) && 
+      !line.includes('\u0000')
+    );
+    
+    return lines.slice(0, 100).join(' ') || '';
   } catch (error) {
     console.error('❌ Fallback extraction failed:', error);
     return '';

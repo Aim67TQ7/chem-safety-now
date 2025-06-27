@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Eye, Bot, ExternalLink } from 'lucide-react';
+import { FileText, Eye, ExternalLink } from 'lucide-react';
 import { RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
@@ -83,25 +83,15 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
       </CardHeader>
       
       <CardContent className="pt-0">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex justify-center">
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
-            onClick={() => onView(document)}
-            className="flex items-center space-x-1"
+            onClick={() => onDownload(document)}
+            className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Eye className="h-4 w-4" />
             <span>View</span>
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDownload(document)}
-            className="flex items-center space-x-1"
-          >
-            <Download className="h-4 w-4" />
-            <span>Download</span>
           </Button>
         </div>
       </CardContent>
