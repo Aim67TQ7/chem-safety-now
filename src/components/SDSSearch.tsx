@@ -168,8 +168,8 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
       }
 
       // Show success message based on extraction status with fallbacks
-      const extractionStatus = (updatedDoc as any).extraction_status || 'completed';
-      const aiConfidence = (updatedDoc as any).ai_extraction_confidence || 0;
+      const extractionStatus = updatedDoc.extraction_status || 'completed';
+      const aiConfidence = updatedDoc.ai_extraction_confidence || 0;
       
       if (extractionStatus === 'osha_compliant') {
         toast.success(`✅ OSHA-compliant extraction completed for ${updatedDoc.product_name} (${aiConfidence}% confidence)`);
@@ -223,14 +223,14 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
   };
 
   const getComplianceIcon = (doc: any) => {
-    const status = (doc as any).extraction_status || 'completed';
+    const status = doc.extraction_status || 'completed';
     if (status === 'osha_compliant') return Shield;
     if (status === 'manual_review_required') return AlertTriangle;
     return CheckCircle;
   };
 
   const getComplianceColor = (doc: any) => {
-    const status = (doc as any).extraction_status || 'completed';
+    const status = doc.extraction_status || 'completed';
     if (status === 'osha_compliant') return 'text-green-600';
     if (status === 'manual_review_required') return 'text-orange-600';
     return 'text-blue-600';
@@ -326,9 +326,9 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
       {/* Processed Document Display */}
       {processedDocument && (
         <Card className={`border-2 ${
-          (processedDocument as any).extraction_status === 'osha_compliant' 
+          processedDocument.extraction_status === 'osha_compliant' 
             ? 'border-green-200 bg-green-50' 
-            : (processedDocument as any).extraction_status === 'manual_review_required'
+            : processedDocument.extraction_status === 'manual_review_required'
             ? 'border-orange-200 bg-orange-50'
             : 'border-blue-200 bg-blue-50'
         }`}>
@@ -341,45 +341,45 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
                 })()}
                 <div className="flex-1">
                   <h4 className={`font-medium ${
-                    (processedDocument as any).extraction_status === 'osha_compliant' 
+                    processedDocument.extraction_status === 'osha_compliant' 
                       ? 'text-green-900' 
-                      : (processedDocument as any).extraction_status === 'manual_review_required'
+                      : processedDocument.extraction_status === 'manual_review_required'
                       ? 'text-orange-900'
                       : 'text-blue-900'
                   }`}>
-                    {(processedDocument as any).extraction_status === 'osha_compliant' && '🏥 OSHA Compliant: '}
-                    {(processedDocument as any).extraction_status === 'manual_review_required' && '⚠️ Manual Review Required: '}
-                    {(processedDocument as any).extraction_status === 'ai_enhanced' && '🤖 AI Enhanced: '}
+                    {processedDocument.extraction_status === 'osha_compliant' && '🏥 OSHA Compliant: '}
+                    {processedDocument.extraction_status === 'manual_review_required' && '⚠️ Manual Review Required: '}
+                    {processedDocument.extraction_status === 'ai_enhanced' && '🤖 AI Enhanced: '}
                     {processedDocument.product_name}
                   </h4>
                   {processedDocument.manufacturer && (
                     <p className={`text-sm ${
-                      (processedDocument as any).extraction_status === 'osha_compliant' 
+                      processedDocument.extraction_status === 'osha_compliant' 
                         ? 'text-green-700' 
-                        : (processedDocument as any).extraction_status === 'manual_review_required'
+                        : processedDocument.extraction_status === 'manual_review_required'
                         ? 'text-orange-700'
                         : 'text-blue-700'
                     }`}>
                       Manufacturer: {processedDocument.manufacturer}
                     </p>
                   )}
-                  {(processedDocument as any).ai_extraction_confidence && (
+                  {processedDocument.ai_extraction_confidence && (
                     <div className={`text-sm mt-2 ${
-                      (processedDocument as any).extraction_status === 'osha_compliant' 
+                      processedDocument.extraction_status === 'osha_compliant' 
                         ? 'text-green-700' 
-                        : (processedDocument as any).extraction_status === 'manual_review_required'
+                        : processedDocument.extraction_status === 'manual_review_required'
                         ? 'text-orange-700'
                         : 'text-blue-700'
                     }`}>
-                      <strong>Confidence Score:</strong> {(processedDocument as any).ai_extraction_confidence}%
-                      {(processedDocument as any).extraction_status === 'osha_compliant' && ' (OSHA Compliant)'}
+                      <strong>Confidence Score:</strong> {processedDocument.ai_extraction_confidence}%
+                      {processedDocument.extraction_status === 'osha_compliant' && ' (OSHA Compliant)'}
                     </div>
                   )}
                   {processedDocument.hmis_codes && (
                     <div className={`text-sm mt-1 ${
-                      (processedDocument as any).extraction_status === 'osha_compliant' 
+                      processedDocument.extraction_status === 'osha_compliant' 
                         ? 'text-green-700' 
-                        : (processedDocument as any).extraction_status === 'manual_review_required'
+                        : processedDocument.extraction_status === 'manual_review_required'
                         ? 'text-orange-700'
                         : 'text-blue-700'
                     }`}>
@@ -388,7 +388,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
                       Physical: {processedDocument.hmis_codes.physical}
                     </div>
                   )}
-                  {(processedDocument as any).extraction_status === 'manual_review_required' && (
+                  {processedDocument.extraction_status === 'manual_review_required' && (
                     <div className="text-xs text-orange-700 bg-orange-100 p-2 rounded border border-orange-200 mt-2">
                       <AlertTriangle className="h-3 w-3 inline mr-1" />
                       This document requires manual review by an EHS specialist before use for labeling.
@@ -400,9 +400,9 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
                 onClick={handlePrintLabel}
                 size="sm"
                 className={`ml-4 text-white ${
-                  (processedDocument as any).extraction_status === 'osha_compliant' 
+                  processedDocument.extraction_status === 'osha_compliant' 
                     ? 'bg-green-600 hover:bg-green-700' 
-                    : (processedDocument as any).extraction_status === 'manual_review_required'
+                    : processedDocument.extraction_status === 'manual_review_required'
                     ? 'bg-orange-600 hover:bg-orange-700'
                     : 'bg-blue-600 hover:bg-blue-700'
                 }`}

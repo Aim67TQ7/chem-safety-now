@@ -785,12 +785,16 @@ export type Database = {
       }
       sds_documents: {
         Row: {
+          ai_extracted_data: Json | null
+          ai_extraction_confidence: number | null
+          ai_extraction_date: string | null
           bucket_url: string | null
           cas_number: string | null
           created_at: string | null
           document_type: string | null
           environmental_hazards: Json | null
           extraction_quality_score: number | null
+          extraction_status: string | null
           file_name: string
           file_size: number | null
           file_type: string | null
@@ -817,12 +821,16 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_extracted_data?: Json | null
+          ai_extraction_confidence?: number | null
+          ai_extraction_date?: string | null
           bucket_url?: string | null
           cas_number?: string | null
           created_at?: string | null
           document_type?: string | null
           environmental_hazards?: Json | null
           extraction_quality_score?: number | null
+          extraction_status?: string | null
           file_name: string
           file_size?: number | null
           file_type?: string | null
@@ -849,12 +857,16 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_extracted_data?: Json | null
+          ai_extraction_confidence?: number | null
+          ai_extraction_date?: string | null
           bucket_url?: string | null
           cas_number?: string | null
           created_at?: string | null
           document_type?: string | null
           environmental_hazards?: Json | null
           extraction_quality_score?: number | null
+          extraction_status?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string | null
