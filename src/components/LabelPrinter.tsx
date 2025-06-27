@@ -44,7 +44,7 @@ const LabelPrinter = ({
   const [previewZoom, setPreviewZoom] = useState(100);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [aiConfidence, setAiConfidence] = useState(0);
-  const [dataSource, setDataSource] = useState<'ai_enhanced' | 'basic_extraction' | 'manual'>('manual');
+  const [dataSource, setDataSource] = useState<'osha_compliant' | 'ai_enhanced' | 'basic_extraction' | 'manual'>('manual');
   const { toast } = useToast();
 
   // Auto-populate from SDS data
@@ -270,8 +270,9 @@ const LabelPrinter = ({
     if (!hasData) return null;
     
     const badgeProps = {
-      'ai_enhanced': { className: "ml-2 bg-green-100 text-green-800 text-xs", text: `AI Enhanced (${aiConfidence}%)` },
-      'basic_extraction': { className: "ml-2 bg-blue-100 text-blue-800 text-xs", text: "Auto Extracted" },
+      'osha_compliant': { className: "ml-2 bg-green-100 text-green-800 text-xs", text: `OSHA Compliant (${aiConfidence}%)` },
+      'ai_enhanced': { className: "ml-2 bg-blue-100 text-blue-800 text-xs", text: `AI Enhanced (${aiConfidence}%)` },
+      'basic_extraction': { className: "ml-2 bg-yellow-100 text-yellow-800 text-xs", text: "Auto Extracted" },
       'manual': { className: "ml-2 bg-gray-100 text-gray-800 text-xs", text: "Manual Entry" }
     };
     
@@ -291,7 +292,7 @@ const LabelPrinter = ({
         <div className="h-full overflow-y-auto p-4 space-y-6">
           
           {/* AI Enhancement Section */}
-          {selectedDocument && dataSource !== 'ai_enhanced' && (
+          {selectedDocument && dataSource !== 'osha_compliant' && (
             <Card className="p-4 bg-blue-50 border-blue-200">
               <div className="flex items-center justify-between">
                 <div>
