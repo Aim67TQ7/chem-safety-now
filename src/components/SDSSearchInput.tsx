@@ -154,7 +154,7 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="text-sm text-gray-600">
-          Enter a product name, material name, or manufacturer to search for Safety Data Sheets:
+          <strong>Search for official Safety Data Sheets (SDS/MSDS) only.</strong> Enter a product name, material name, or manufacturer:
         </div>
         
         <div className="flex gap-2">
@@ -256,9 +256,9 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
                 {/* Search Tips */}
                 {suggestions.search_tips && suggestions.search_tips.length > 0 && (
                   <div>
-                    <div className="font-medium text-blue-800 mb-1">Search tips:</div>
+                    <div className="font-medium text-blue-800 mb-1">SDS Search tips:</div>
                     <ul className="text-xs text-blue-700 space-y-1">
-                      {suggestions.search_tips.slice(0, 3).map((tip, index) => (
+                      {suggestions.search_tips.slice(0, 4).map((tip, index) => (
                         <li key={index} className="flex items-start gap-1">
                           <span className="text-blue-400 mt-0.5">•</span>
                           {tip}
@@ -282,7 +282,7 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
         )}
 
         <div className="text-xs text-gray-500">
-          <strong>Tips:</strong> Use specific product names, include manufacturer if known, or try chemical names/CAS numbers. Search times out after 15 seconds.
+          <strong>Important:</strong> We only search for official Safety Data Sheets (SDS/MSDS), not product catalogs or general information. Use specific product names, include manufacturer if known, or try chemical names/CAS numbers.
         </div>
       </CardContent>
     </Card>

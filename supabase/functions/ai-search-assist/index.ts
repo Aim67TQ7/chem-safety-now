@@ -59,13 +59,17 @@ serve(async (req) => {
             role: 'system',
             content: `You are a chemical safety expert helping users search for Safety Data Sheets (SDS). 
             
-            Your job is to analyze search queries and provide helpful suggestions to improve SDS search results.
+            CRITICAL: All searches MUST be for Safety Data Sheets specifically. Documents must contain "Safety Data Sheet" or "MSDS" to be valid results.
+            
+            Your job is to analyze search queries and provide helpful suggestions to improve SDS search results while ensuring they target actual Safety Data Sheets.
             
             For the given search query, provide:
-            1. Spelling corrections if needed
+            1. Spelling corrections if needed (but keep SDS focus)
             2. Possible manufacturer/brand names that make this chemical
             3. Alternative chemical names or synonyms
-            4. Search tips to improve results
+            4. Search tips to improve SDS-specific results
+            
+            IMPORTANT: Always emphasize that results must be Safety Data Sheets, not product catalogs, Wikipedia pages, or general product information.
             
             Response format (JSON only, no markdown):
             {
@@ -73,11 +77,11 @@ serve(async (req) => {
               "spelling_corrections": ["list of spelling corrections if any"],
               "suggested_manufacturers": ["list of 3-5 common manufacturers that make this chemical"],
               "alternative_terms": ["list of alternative chemical names, synonyms, or CAS numbers"],
-              "search_tips": ["3-4 practical tips for better search results"],
+              "search_tips": ["3-4 practical tips for better SDS search results, emphasizing SDS requirement"],
               "confidence": 0.85
             }
             
-            Be concise and practical. Focus on real chemical manufacturers and actual alternative names.`
+            Be concise and practical. Focus on real chemical manufacturers and actual alternative names. Always remind about SDS requirement.`
           },
           {
             role: 'user',
@@ -102,11 +106,40 @@ serve(async (req) => {
     let suggestions: SearchSuggestion;
     try {
       suggestions = JSON.parse(aiResponse);
+      
+      // Ensure search tips always emphasize SDS requirement
+      if (suggestions.search_tips) {
+        suggestions.search_tips = suggestions.search_tips.map(tip => {
+          if (!tip.toLowerCase().includes('sds') && !tip.toLowerCase().includes('safety data sheet') && !tip.toLowerCase().includes('msds')) {
+            return tip + ' - ensure results are actual Safety Data Sheets';
+          }
+          return tip;
+        });
+        
+        // Add SDS emphasis tip if not present
+        const hasSdsTip = suggestions.search_tips.some(tip => 
+          tip.toLowerCase().includes('safety data sheet') || 
+          tip.toLowerCase().includes('sds') || 
+          tip.toLowerCase().includes('msds')
+        );
+        
+        if (!hasSdsTip) {
+          suggestions.search_tips.unshift('Look specifically for "Safety Data Sheet" or "MSDS" documents, not product catalogs');
+        }
+      } else {
+        suggestions.search_tips = ['Look specifically for "Safety Data Sheet" or "MSDS" documents, not product catalogs'];
+      }
+      
     } catch (parseError) {
       console.error('❌ Failed to parse AI response as JSON:', parseError);
-      // Fallback response
+      // Fallback response with SDS emphasis
       suggestions = {
-        search_tips: ['Try using the exact product name from the label', 'Include manufacturer name if known', 'Use chemical name instead of trade name'],
+        search_tips: [
+          'Look specifically for "Safety Data Sheet" or "MSDS" documents, not product catalogs',
+          'Try using the exact product name from the container label',
+          'Include manufacturer name if known',
+          'Use chemical name instead of trade name for SDS documents'
+        ],
         confidence: 0.5
       };
     }
@@ -124,7 +157,10 @@ serve(async (req) => {
       JSON.stringify({ 
         error: 'Search assistance temporarily unavailable',
         suggestions: {
-          search_tips: ['Try using the exact product name from the container label'],
+          search_tips: [
+            'Look specifically for "Safety Data Sheet" or "MSDS" documents',
+            'Try using the exact product name from the container label'
+          ],
           confidence: 0.1
         }
       }),
