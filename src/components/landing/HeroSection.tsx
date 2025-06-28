@@ -21,11 +21,11 @@ const HeroSection = () => {
     <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
       <div className="text-center">
         <h1 className="text-7xl font-bold text-white mb-8 drop-shadow-2xl leading-tight">
-          Scan. Don't Scramble.
+          In 60 seconds, boost your safety program's reliability by 80%.
         </h1>
         <p className="text-3xl text-gray-100 mb-16 max-w-3xl mx-auto drop-shadow-lg font-medium">
-          SDS and safety records are easily accessed with a quick scan.<br />
-          <span className="text-2xl text-gray-300">Skip the filing cabinet hunt.</span>
+          SDS Lookup, Secondary Label Printing, and Incident Reporting—all in one place.<br />
+          <span className="text-2xl text-gray-300">History. Tracking. Unmatched reliability.</span>
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-12">

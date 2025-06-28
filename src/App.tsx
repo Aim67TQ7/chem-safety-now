@@ -20,6 +20,7 @@ import SignupPage from "./pages/SignupPage";
 import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
 import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
 import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
+import SubscriptionPlansPage from "./pages/SubscriptionPlansPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
           <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
           <Route path="/subscription/required" element={<SubscriptionRequiredPage />} />
+          <Route path="/subscription/plans" element={<SubscriptionPlansPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

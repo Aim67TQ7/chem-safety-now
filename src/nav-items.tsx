@@ -1,5 +1,5 @@
 
-import { HomeIcon, Building2, FileText, AlertTriangle, Settings, Users, BarChart3, HelpCircle, ShieldCheck, UserCheck, Phone } from "lucide-react";
+import { HomeIcon, Building2, FileText, AlertTriangle, Settings, Users, BarChart3, HelpCircle, ShieldCheck, UserCheck, Phone, Crown } from "lucide-react";
 
 export const navItems = [
   {
@@ -36,6 +36,11 @@ export const navItems = [
     title: "Admin",
     to: "/admin",
     icon: <Users className="h-4 w-4" />,
+  },
+  {
+    title: "Upgrade",
+    to: "/subscription/plans",
+    icon: <Crown className="h-4 w-4" />,
   },
   {
     title: "Privacy Policy",
