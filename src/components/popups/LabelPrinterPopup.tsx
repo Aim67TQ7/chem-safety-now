@@ -22,6 +22,14 @@ const LabelPrinterPopup = ({
 }: LabelPrinterPopupProps) => {
   const [showPDF, setShowPDF] = useState(true);
 
+  // Get the PDF URL - prefer bucket_url over source_url
+  const getPDFUrl = () => {
+    if (!selectedDocument) return null;
+    return selectedDocument.bucket_url || selectedDocument.source_url;
+  };
+
+  const pdfUrl = getPDFUrl();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] w-full h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0">
@@ -36,7 +44,7 @@ const LabelPrinterPopup = ({
             )}
           </DialogTitle>
           <div className="flex items-center gap-2">
-            {selectedDocument?.bucket_url && (
+            {pdfUrl && (
               <Button
                 variant="outline"
                 size="sm"
@@ -60,7 +68,7 @@ const LabelPrinterPopup = ({
         
         <div className="flex-1 overflow-hidden flex">
           {/* Label Printer Side */}
-          <div className={`${showPDF && selectedDocument?.bucket_url ? 'w-1/2' : 'w-full'} overflow-hidden border-r`}>
+          <div className={`${showPDF && pdfUrl ? 'w-1/2' : 'w-full'} overflow-hidden border-r`}>
             <LabelPrinter 
               initialProductName={initialProductName}
               initialManufacturer={initialManufacturer}
@@ -69,7 +77,7 @@ const LabelPrinterPopup = ({
           </div>
           
           {/* PDF Viewer Side */}
-          {showPDF && selectedDocument?.bucket_url && (
+          {showPDF && pdfUrl && (
             <div className="w-1/2 overflow-hidden bg-gray-100">
               <div className="h-full">
                 <div className="bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 border-b">
@@ -77,7 +85,7 @@ const LabelPrinterPopup = ({
                 </div>
                 <div className="h-[calc(100%-2.5rem)]">
                   <iframe
-                    src={selectedDocument.bucket_url}
+                    src={pdfUrl}
                     className="w-full h-full border-none"
                     title={`SDS for ${selectedDocument.product_name}`}
                   />

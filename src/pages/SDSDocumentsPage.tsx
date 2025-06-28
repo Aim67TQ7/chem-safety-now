@@ -13,6 +13,7 @@ import { AlertCircle, CheckCircle, FileText, Download, ExternalLink, Printer, Sh
 import { toast } from 'sonner';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import LabelPrinterPopup from '@/components/popups/LabelPrinterPopup';
+import SDSViewerPopup from '@/components/popups/SDSViewerPopup';
 
 interface SDSDocument {
   id: string;
@@ -36,6 +37,8 @@ const SDSDocumentsPage = () => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const [labelPrinterOpen, setLabelPrinterOpen] = useState(false);
   const [selectedDocumentForLabel, setSelectedDocumentForLabel] = useState<SDSDocument | null>(null);
+  const [sdsViewerOpen, setSDSViewerOpen] = useState(false);
+  const [selectedDocumentForViewer, setSelectedDocumentForViewer] = useState<SDSDocument | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -127,25 +130,52 @@ const SDSDocumentsPage = () => {
     setCurrentPage(newPage);
   };
 
-  const handleDownloadPDF = async (sourceUrl: string, fileName: string) => {
+  const handleDownloadPDF = async (doc: SDSDocument) => {
     try {
-      console.log('📥 Downloading PDF:', sourceUrl);
-      const response = await supabase.functions.invoke('download-sds-pdf', {
-        body: { source_url: sourceUrl, file_name: fileName }
-      });
+      console.log('📥 Downloading PDF for:', doc.product_name);
       
-      if (response.error) {
-        throw new Error(response.error.message);
+      // If we have a bucket_url, open it directly
+      if (doc.bucket_url) {
+        window.open(doc.bucket_url, '_blank');
+        toast.success(`Opening PDF for ${doc.product_name}`);
+        return;
       }
       
-      if (response.data?.download_url) {
-        window.open(response.data.download_url, '_blank');
-        toast.success('PDF download started');
+      // If we only have source_url, try to download via edge function
+      if (doc.source_url) {
+        const response = await supabase.functions.invoke('download-sds-pdf', {
+          body: { 
+            document_id: doc.id,
+            source_url: doc.source_url, 
+            file_name: doc.file_name 
+          }
+        });
+        
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+        
+        if (response.data?.download_url) {
+          window.open(response.data.download_url, '_blank');
+          toast.success('PDF download started');
+        } else {
+          // Fallback to source URL
+          window.open(doc.source_url, '_blank');
+          toast.success(`Opening source document for ${doc.product_name}`);
+        }
+      } else {
+        throw new Error('No PDF URL available');
       }
     } catch (error) {
       console.error('❌ Download error:', error);
-      toast.error('Failed to download PDF');
+      toast.error(`Failed to download PDF: ${error.message}`);
     }
+  };
+
+  const handleViewDocument = (doc: SDSDocument) => {
+    console.log('👁️ Viewing document:', doc.product_name);
+    setSelectedDocumentForViewer(doc);
+    setSDSViewerOpen(true);
   };
 
   const handlePrintLabel = (doc: SDSDocument) => {
@@ -284,7 +314,7 @@ const SDSDocumentsPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(doc.source_url, '_blank')}
+                  onClick={() => handleViewDocument(doc)}
                   className="text-xs h-6 px-2"
                 >
                   <ExternalLink className="h-2 w-2 mr-1" />
@@ -293,7 +323,7 @@ const SDSDocumentsPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDownloadPDF(doc.source_url, doc.file_name)}
+                  onClick={() => handleDownloadPDF(doc)}
                   className="text-xs h-6 px-2"
                 >
                   <Download className="h-2 w-2 mr-1" />
@@ -502,6 +532,17 @@ const SDSDocumentsPage = () => {
           )}
         </div>
       </div>
+
+      {/* SDS Viewer Popup */}
+      <SDSViewerPopup
+        isOpen={sdsViewerOpen}
+        onClose={() => {
+          setSDSViewerOpen(false);
+          setSelectedDocumentForViewer(null);
+        }}
+        sdsDocument={selectedDocumentForViewer}
+        onDownload={selectedDocumentForViewer ? () => handleDownloadPDF(selectedDocumentForViewer) : undefined}
+      />
 
       {/* Label Printer Popup */}
       <LabelPrinterPopup
