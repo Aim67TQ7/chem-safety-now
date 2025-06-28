@@ -47,7 +47,6 @@ const AccessTools = ({ facilityData }: AccessToolsProps) => {
             <TabsContent value="qr-codes" className="p-6 m-0">
               <QRCodeGenerator 
                 facilityData={facilityData}
-                facilityUrl={facilityUrl}
               />
             </TabsContent>
             

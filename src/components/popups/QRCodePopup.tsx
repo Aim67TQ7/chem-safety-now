@@ -30,7 +30,6 @@ const QRCodePopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRCodePopup
         <div className="mt-4">
           <QRCodeGenerator 
             facilityData={facilityData}
-            facilityUrl={facilityUrl}
           />
         </div>
       </DialogContent>
