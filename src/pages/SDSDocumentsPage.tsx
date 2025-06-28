@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
@@ -10,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle, FileText, Download, ExternalLink, Printer, Shield, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, CheckCircle, FileText, ExternalLink, Printer, Shield, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import LabelPrinterPopup from '@/components/popups/LabelPrinterPopup';
@@ -321,15 +320,6 @@ const SDSDocumentsPage = () => {
                 >
                   <ExternalLink className="h-2 w-2 mr-1" />
                   View
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownloadPDF(doc)}
-                  className="text-xs h-6 px-2"
-                >
-                  <Download className="h-2 w-2 mr-1" />
-                  Download
                 </Button>
                 <Button
                   variant="default"

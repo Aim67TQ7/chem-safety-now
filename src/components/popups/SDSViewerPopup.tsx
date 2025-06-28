@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Download, Printer, Bot, ExternalLink, FileText, AlertCircle, Eye } from "lucide-react";
+import { X, Printer, Bot, ExternalLink, FileText, AlertCircle, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PDFViewerPopup from "./PDFViewerPopup";
@@ -13,7 +13,6 @@ interface SDSViewerPopupProps {
   sdsDocument: any;
   onGenerateLabel?: (document: any) => void;
   onAskAI?: (document: any) => void;
-  onDownload?: (document: any) => void;
 }
 
 const SDSViewerPopup = ({ 
@@ -21,8 +20,7 @@ const SDSViewerPopup = ({
   onClose, 
   sdsDocument,
   onGenerateLabel,
-  onAskAI,
-  onDownload
+  onAskAI
 }: SDSViewerPopupProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPDFViewer, setShowPDFViewer] = useState(false);
@@ -44,14 +42,6 @@ const SDSViewerPopup = ({
         description: "PDF document is not available for viewing.",
         variant: "destructive"
       });
-    }
-  };
-
-  const handleDownloadPDF = () => {
-    if (onDownload) {
-      onDownload(sdsDocument);
-    } else {
-      handleViewOriginal();
     }
   };
 
@@ -149,17 +139,6 @@ const SDSViewerPopup = ({
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Open Original
                   </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleDownloadPDF}
-                    className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                    disabled={!getPDFUrl()}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </Button>
                 </div>
               </div>
               
@@ -176,7 +155,6 @@ const SDSViewerPopup = ({
           
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">Product Information</h3>
@@ -354,7 +332,6 @@ const SDSViewerPopup = ({
         onClose={() => setShowPDFViewer(false)}
         pdfUrl={getPDFUrl() || ''}
         documentName={sdsDocument.product_name}
-        onDownload={handleDownloadPDF}
       />
     </>
   );
