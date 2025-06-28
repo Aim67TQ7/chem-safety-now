@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
@@ -21,6 +22,7 @@ interface SDSDocument {
   manufacturer?: string;
   cas_number?: string;
   source_url: string;
+  bucket_url?: string;
   file_name: string;
   extraction_quality_score?: number;
   is_readable?: boolean;
