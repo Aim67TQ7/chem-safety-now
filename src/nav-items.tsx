@@ -39,7 +39,7 @@ export const navItems = [
   },
   {
     title: "Upgrade",
-    to: "/subscription/plans",
+    to: "/upgrade",
     icon: <Crown className="h-4 w-4" />,
   },
   {

@@ -50,7 +50,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
   const hasPremiumAccess = subscription ? SubscriptionService.hasPremiumAccess(subscription) : false;
 
   const handleUpgrade = () => {
-    navigate(`/subscription/plans?facility=${facility.slug}`);
+    navigate('/upgrade');
   };
 
   return (
@@ -85,29 +85,6 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
             >
               <AuditTrail facilityId={facility.id} />
             </FeatureAccessWrapper>
-          )}
-
-          {/* Upgrade Prompt for Trial Users */}
-          {subscription.subscription_status === 'trial' && (
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <CardHeader>
-                <CardTitle className="text-center text-xl font-bold text-gray-900">
-                  Ready to Upgrade?
-                </CardTitle>
-                <p className="text-center text-gray-600">
-                  Continue accessing SDS search and Sarah AI with one of our plans
-                </p>
-              </CardHeader>
-              <CardContent className="text-center">
-                <Button 
-                  onClick={handleUpgrade}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold"
-                >
-                  <Crown className="w-5 h-5 mr-2" />
-                  View Plans & Pricing
-                </Button>
-              </CardContent>
-            </Card>
           )}
         </div>
       </div>

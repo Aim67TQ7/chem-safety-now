@@ -21,6 +21,7 @@ import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
 import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
 import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
 import SubscriptionPlansPage from "./pages/SubscriptionPlansPage";
+import UpgradePage from "./pages/UpgradePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
           <Route path="/subscription/required" element={<SubscriptionRequiredPage />} />
           <Route path="/subscription/plans" element={<SubscriptionPlansPage />} />
+          <Route path="/upgrade" element={<UpgradePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
