@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import LabelPrinter from "@/components/LabelPrinter";
 import { Printer, X, FileText } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LabelPrinterPopupProps {
   isOpen: boolean;
@@ -22,10 +23,20 @@ const LabelPrinterPopup = ({
 }: LabelPrinterPopupProps) => {
   const [showPDF, setShowPDF] = useState(true);
 
-  // Get the PDF URL - prefer bucket_url over source_url
+  // Get the PDF URL - generate public URL for bucket files
   const getPDFUrl = () => {
     if (!selectedDocument) return null;
-    return selectedDocument.bucket_url || selectedDocument.source_url;
+    
+    // If we have a bucket_url, generate the public URL from Supabase storage
+    if (selectedDocument.bucket_url) {
+      const { data } = supabase.storage
+        .from('sds-documents')
+        .getPublicUrl(selectedDocument.bucket_url.replace('sds-documents/', ''));
+      return data.publicUrl;
+    }
+    
+    // Fallback to source_url if no bucket_url
+    return selectedDocument.source_url;
   };
 
   const pdfUrl = getPDFUrl();

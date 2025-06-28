@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Download, Printer, Bot, ExternalLink, FileText, AlertCircle, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import PDFViewerPopup from "./PDFViewerPopup";
 
 interface SDSViewerPopupProps {
@@ -34,10 +35,9 @@ const SDSViewerPopup = ({
   };
 
   const handleViewOriginal = () => {
-    if (sdsDocument.bucket_url) {
-      window.open(sdsDocument.bucket_url, '_blank');
-    } else if (sdsDocument.source_url) {
-      window.open(sdsDocument.source_url, '_blank');
+    const pdfUrl = getPDFUrl();
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
     } else {
       toast({
         title: "Document Unavailable",
@@ -56,7 +56,15 @@ const SDSViewerPopup = ({
   };
 
   const getPDFUrl = () => {
-    return sdsDocument.bucket_url || sdsDocument.source_url;
+    // If we have a bucket_url, generate the public URL from Supabase storage
+    if (sdsDocument.bucket_url) {
+      const { data } = supabase.storage
+        .from('sds-documents')
+        .getPublicUrl(sdsDocument.bucket_url.replace('sds-documents/', ''));
+      return data.publicUrl;
+    }
+    // Fallback to source_url if no bucket_url
+    return sdsDocument.source_url;
   };
 
   const getSignalWordVariant = (signalWord?: string) => {
