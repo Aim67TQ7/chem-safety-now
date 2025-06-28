@@ -533,7 +533,6 @@ const SDSDocumentsPage = () => {
           setSelectedDocumentForViewer(null);
         }}
         sdsDocument={selectedDocumentForViewer}
-        onDownload={selectedDocumentForViewer ? () => handleDownloadPDF(selectedDocumentForViewer) : undefined}
       />
 
       {/* Label Printer Popup */}
