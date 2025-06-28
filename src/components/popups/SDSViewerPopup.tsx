@@ -62,6 +62,56 @@ const SDSViewerPopup = ({
     return signalWord.toLowerCase() === 'danger' ? 'destructive' : 'secondary';
   };
 
+  const getPictogramImage = (pictogramCode: string) => {
+    const pictogramImages: Record<string, string> = {
+      'skull_crossbones': '/lovable-uploads/908b3ab5-a4ce-4a8d-a700-8eba7f9f0533.png',
+      'flame': '/lovable-uploads/906a5858-4278-496a-b72f-849e51561f57.png',
+      'flame_over_circle': '/lovable-uploads/9ec62de0-3471-44e9-9981-e1ddff927939.png',
+      'exclamation': '/lovable-uploads/833367f7-138f-4e1f-b4c6-2bfdfd6901b3.png',
+      'health_hazard': '/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png',
+      'gas_cylinder': '/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png',
+      'corrosion': '/lovable-uploads/54ad4b94-8ebd-4158-aaf2-03ef75373444.png',
+      'exploding_bomb': '/lovable-uploads/5146a1d1-bc42-4a39-ae55-cf61a2dc012f.png',
+      'environment': '/lovable-uploads/4c13f8f5-8a47-4c2d-a5ed-90cdf7a521c0.png'
+    };
+    return pictogramImages[pictogramCode];
+  };
+
+  const renderPictograms = () => {
+    if (!sdsDocument.pictograms || sdsDocument.pictograms.length === 0) {
+      return <p className="text-sm text-gray-500">No pictograms detected</p>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-3">
+        {sdsDocument.pictograms.map((pictogram: any, index: number) => {
+          const pictogramCode = typeof pictogram === 'string' ? pictogram : pictogram.ghs_code;
+          const pictogramName = typeof pictogram === 'string' ? pictogram : pictogram.name;
+          const imageUrl = getPictogramImage(pictogramCode);
+          
+          return (
+            <div key={index} className="flex flex-col items-center space-y-1">
+              {imageUrl ? (
+                <img 
+                  src={imageUrl} 
+                  alt={`GHS ${pictogramName || pictogramCode}`}
+                  className="w-12 h-12 object-contain"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                  <span className="text-xs text-gray-500">GHS</span>
+                </div>
+              )}
+              <Badge variant="secondary" className="text-xs">
+                {pictogramName || pictogramCode}
+              </Badge>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -249,13 +299,7 @@ const SDSViewerPopup = ({
                 {sdsDocument.pictograms?.length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-gray-600 mb-2 block">GHS Pictograms</label>
-                    <div className="flex flex-wrap gap-2">
-                      {sdsDocument.pictograms.map((pictogram: any, index: number) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {pictogram.name} ({pictogram.ghs_code})
-                        </Badge>
-                      ))}
-                    </div>
+                    {renderPictograms()}
                   </div>
                 )}
               </div>
