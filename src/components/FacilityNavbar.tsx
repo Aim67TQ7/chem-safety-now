@@ -9,7 +9,6 @@ import {
   Settings, 
   Menu, 
   X,
-  Home,
   QrCode,
   MapPin
 } from "lucide-react";
@@ -64,13 +63,8 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo, Facility Name, and Address */}
+          {/* Facility Name and Address */}
           <div className="flex items-center space-x-3">
-            <Link to="/" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-              <Home className="w-5 h-5" />
-              <span className="text-sm font-medium">Home</span>
-            </Link>
-            <span className="text-gray-300">/</span>
             {facilityLogo && (
               <img 
                 src={facilityLogo} 
