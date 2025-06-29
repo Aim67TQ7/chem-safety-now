@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, RefreshCw, FileText, TestTube, Eye, Code, Zap, ExternalLink, Bot, GitCompare } from "lucide-react";
+import { ArrowLeft, RefreshCw, FileText, TestTube, Eye, Code, Zap, ExternalLink, Bot, GitCompare, Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Json } from "@/integrations/supabase/types";
 
@@ -48,16 +47,40 @@ interface HMISBotResult {
   error?: string;
 }
 
+interface OpenAIAnalysisResult {
+  success: boolean;
+  data?: {
+    product_name: string;
+    cas_number: string;
+    manufacturer: string;
+    hmis_codes: {
+      health: string;
+      flammability: number;
+      physical_hazard: number;
+      ppe: string;
+    };
+    ghs_pictograms: string[];
+    revision_date: string;
+    signal_word: string;
+    h_codes: string[];
+    confidence_score: number;
+    processing_time_ms: number;
+  };
+  error?: string;
+}
+
 const PDFParserTestPage = () => {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<SDSDocument[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<SDSDocument | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isHmisBotProcessing, setIsHmisBotProcessing] = useState(false);
+  const [isOpenAIProcessing, setIsOpenAIProcessing] = useState(false);
   const [extractedText, setExtractedText] = useState('');
   const [processingResults, setProcessingResults] = useState<any>(null);
   const [hmisBotResults, setHmisBotResults] = useState<HMISBotResult | null>(null);
-  const [activeTab, setActiveTab] = useState<'current' | 'hmis-bot' | 'comparison'>('current');
+  const [openAIResults, setOpenAIResults] = useState<OpenAIAnalysisResult | null>(null);
+  const [activeTab, setActiveTab] = useState<'current' | 'hmis-bot' | 'openai' | 'comparison'>('current');
 
   useEffect(() => {
     fetchDocuments();
@@ -96,8 +119,9 @@ const PDFParserTestPage = () => {
         confidence: doc.ai_extraction_confidence,
         quality_score: doc.extraction_quality_score
       });
-      // Reset HMIS-BOT results when selecting new document
+      // Reset results when selecting new document
       setHmisBotResults(null);
+      setOpenAIResults(null);
       setActiveTab('current');
     }
   };
@@ -174,6 +198,39 @@ const PDFParserTestPage = () => {
       toast.error('Failed to process with HMIS-BOT');
     } finally {
       setIsHmisBotProcessing(false);
+    }
+  };
+
+  const processWithOpenAI = async () => {
+    if (!selectedDocument) {
+      toast.error('No document selected for OpenAI analysis');
+      return;
+    }
+
+    if (!selectedDocument.source_url) {
+      toast.error('No PDF URL available for OpenAI analysis');
+      return;
+    }
+
+    setIsOpenAIProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('openai-sds-analysis', {
+        body: {
+          document_id: selectedDocument.id,
+          pdf_url: selectedDocument.source_url
+        }
+      });
+
+      if (error) throw error;
+
+      setOpenAIResults(data);
+      setActiveTab('openai');
+      toast.success('OpenAI analysis complete');
+    } catch (error) {
+      console.error('OpenAI analysis error:', error);
+      toast.error('Failed to process with OpenAI');
+    } finally {
+      setIsOpenAIProcessing(false);
     }
   };
 
@@ -389,9 +446,125 @@ const PDFParserTestPage = () => {
     </div>
   );
 
+  const renderOpenAIResults = () => (
+    <div className="space-y-4">
+      {openAIResults && openAIResults.success && openAIResults.data ? (
+        <>
+          {/* Product Information */}
+          <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200">
+            <h4 className="font-bold mb-3 text-lg flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              OpenAI Analysis Results
+            </h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="font-semibold mb-1">Product: <Badge variant="outline">{openAIResults.data.product_name}</Badge></div>
+                <div className="font-semibold mb-1">CAS Number: <Badge variant="outline">{openAIResults.data.cas_number}</Badge></div>
+                <div className="font-semibold mb-1">Manufacturer: <Badge variant="outline">{openAIResults.data.manufacturer}</Badge></div>
+              </div>
+              <div>
+                <div className="font-semibold mb-1">Signal Word: <Badge variant="outline">{openAIResults.data.signal_word}</Badge></div>
+                <div className="font-semibold mb-1">Revision Date: <Badge variant="outline">{openAIResults.data.revision_date}</Badge></div>
+                <div className="font-semibold mb-1">Confidence: <Badge variant="outline">{openAIResults.data.confidence_score}%</Badge></div>
+              </div>
+            </div>
+          </div>
+
+          {/* HMIS Codes */}
+          <div className="p-3 bg-green-50 rounded-lg">
+            <h4 className="font-semibold mb-2">HMIS Codes (OpenAI)</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Health:</span>
+                  <Badge variant="default" className="text-lg px-3 py-1">
+                    {openAIResults.data.hmis_codes.health}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-semibold">Flammability:</span>
+                  <Badge variant="destructive" className="text-lg px-3 py-1">
+                    {openAIResults.data.hmis_codes.flammability}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Physical:</span>
+                  <Badge variant="secondary" className="text-lg px-3 py-1">
+                    {openAIResults.data.hmis_codes.physical_hazard}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-semibold">PPE:</span>
+                  <Badge variant="outline" className="text-lg px-3 py-1">
+                    {openAIResults.data.hmis_codes.ppe}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* H-Codes */}
+          <div className="p-3 bg-red-50 rounded-lg">
+            <h4 className="font-semibold mb-2">H-Codes</h4>
+            <div className="flex flex-wrap gap-1">
+              {openAIResults.data.h_codes.length > 0 ? (
+                openAIResults.data.h_codes.map((code, idx) => (
+                  <Badge key={idx} variant="outline" className="text-xs">
+                    {code}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-gray-500">None identified</span>
+              )}
+            </div>
+          </div>
+
+          {/* GHS Pictograms */}
+          <div className="p-3 bg-orange-50 rounded-lg">
+            <h4 className="font-semibold mb-2">GHS Pictograms</h4>
+            <div className="flex flex-wrap gap-1">
+              {openAIResults.data.ghs_pictograms.length > 0 ? (
+                openAIResults.data.ghs_pictograms.map((pic, idx) => (
+                  <Badge key={idx} variant="outline" className="text-xs">
+                    {pic}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-gray-500">None identified</span>
+              )}
+            </div>
+          </div>
+
+          {/* Processing Stats */}
+          <div className="p-3 bg-purple-50 rounded-lg">
+            <h4 className="font-semibold mb-2">Processing Stats</h4>
+            <div className="text-sm space-y-1">
+              <div>Processing Time: <Badge variant="outline">{openAIResults.data.processing_time_ms}ms</Badge></div>
+              <div>Confidence Score: <Badge variant="outline">{openAIResults.data.confidence_score}%</Badge></div>
+            </div>
+          </div>
+        </>
+      ) : openAIResults && !openAIResults.success ? (
+        <div className="p-3 bg-red-50 rounded-lg">
+          <h4 className="font-semibold mb-2 text-red-700">Error</h4>
+          <p className="text-sm text-red-600">{openAIResults.error}</p>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="text-center">
+            <Brain className="h-12 w-12 mx-auto mb-4" />
+            <p>Run OpenAI analysis to see results</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderComparison = () => (
     <div className="space-y-4">
-      {processingResults && hmisBotResults ? (
+      {processingResults && (hmisBotResults || openAIResults) ? (
         <>
           {/* HMIS Codes Comparison */}
           <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
@@ -399,7 +572,7 @@ const PDFParserTestPage = () => {
               <GitCompare className="h-5 w-5" />
               HMIS Codes Comparison
             </h4>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <h5 className="font-semibold mb-2 text-blue-700">Current System</h5>
                 <div className="space-y-1 text-sm">
@@ -409,32 +582,56 @@ const PDFParserTestPage = () => {
                   <div>PPE: <Badge variant="outline">{processingResults.hmis_codes?.ppe || 'N/A'}</Badge></div>
                 </div>
               </div>
-              <div>
-                <h5 className="font-semibold mb-2 text-purple-700">HMIS-BOT</h5>
-                <div className="space-y-1 text-sm">
-                  <div>Health: <Badge variant="default">{hmisBotResults.hmis_label.health}</Badge></div>
-                  <div>Flammability: <Badge variant="destructive">{hmisBotResults.hmis_label.flammability}</Badge></div>
-                  <div>Physical: <Badge variant="secondary">{hmisBotResults.hmis_label.physical_hazard}</Badge></div>
-                  <div>PPE: <Badge variant="outline">{hmisBotResults.hmis_label.ppe}</Badge></div>
+              
+              {hmisBotResults && (
+                <div>
+                  <h5 className="font-semibold mb-2 text-purple-700">HMIS-BOT</h5>
+                  <div className="space-y-1 text-sm">
+                    <div>Health: <Badge variant="default">{hmisBotResults.hmis_label.health}</Badge></div>
+                    <div>Flammability: <Badge variant="destructive">{hmisBotResults.hmis_label.flammability}</Badge></div>
+                    <div>Physical: <Badge variant="secondary">{hmisBotResults.hmis_label.physical_hazard}</Badge></div>
+                    <div>PPE: <Badge variant="outline">{hmisBotResults.hmis_label.ppe}</Badge></div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {openAIResults?.success && openAIResults.data && (
+                <div>
+                  <h5 className="font-semibold mb-2 text-green-700">OpenAI</h5>
+                  <div className="space-y-1 text-sm">
+                    <div>Health: <Badge variant="default">{openAIResults.data.hmis_codes.health}</Badge></div>
+                    <div>Flammability: <Badge variant="destructive">{openAIResults.data.hmis_codes.flammability}</Badge></div>
+                    <div>Physical: <Badge variant="secondary">{openAIResults.data.hmis_codes.physical_hazard}</Badge></div>
+                    <div>PPE: <Badge variant="outline">{openAIResults.data.hmis_codes.ppe}</Badge></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Performance Comparison */}
           <div className="p-3 bg-gray-50 rounded-lg">
             <h4 className="font-semibold mb-2">Performance Comparison</h4>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <div className="font-medium text-blue-700">Current System</div>
                 <div>Confidence: {processingResults.confidence || 0}%</div>
                 <div>Quality Score: {processingResults.quality_score || 0}/100</div>
               </div>
-              <div>
-                <div className="font-medium text-purple-700">HMIS-BOT</div>
-                <div>Confidence: {hmisBotResults.confidence_score}%</div>
-                <div>Processing Time: {hmisBotResults.processing_time_ms}ms</div>
-              </div>
+              {hmisBotResults && (
+                <div>
+                  <div className="font-medium text-purple-700">HMIS-BOT</div>
+                  <div>Confidence: {hmisBotResults.confidence_score}%</div>
+                  <div>Processing Time: {hmisBotResults.processing_time_ms}ms</div>
+                </div>
+              )}
+              {openAIResults?.success && openAIResults.data && (
+                <div>
+                  <div className="font-medium text-green-700">OpenAI</div>
+                  <div>Confidence: {openAIResults.data.confidence_score}%</div>
+                  <div>Processing Time: {openAIResults.data.processing_time_ms}ms</div>
+                </div>
+              )}
             </div>
           </div>
         </>
@@ -442,7 +639,7 @@ const PDFParserTestPage = () => {
         <div className="flex items-center justify-center h-full text-gray-500">
           <div className="text-center">
             <GitCompare className="h-12 w-12 mx-auto mb-4" />
-            <p>Process document with both systems to see comparison</p>
+            <p>Process document with multiple systems to see comparison</p>
           </div>
         </div>
       )}
@@ -504,6 +701,7 @@ const PDFParserTestPage = () => {
                   onClick={processWithHMISBot}
                   disabled={isHmisBotProcessing || !extractedText}
                   className="flex items-center gap-2"
+                  variant="outline"
                 >
                   {isHmisBotProcessing ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -511,6 +709,19 @@ const PDFParserTestPage = () => {
                     <Bot className="h-4 w-4" />
                   )}
                   {isHmisBotProcessing ? 'Analyzing...' : 'HMIS-BOT'}
+                </Button>
+
+                <Button
+                  onClick={processWithOpenAI}
+                  disabled={isOpenAIProcessing}
+                  className="flex items-center gap-2"
+                >
+                  {isOpenAIProcessing ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Brain className="h-4 w-4" />
+                  )}
+                  {isOpenAIProcessing ? 'Analyzing...' : 'OpenAI'}
                 </Button>
               </>
             )}
@@ -589,6 +800,14 @@ const PDFParserTestPage = () => {
                       </Button>
                       <Button
                         size="sm"
+                        variant={activeTab === 'openai' ? 'default' : 'ghost'}
+                        onClick={() => setActiveTab('openai')}
+                        className="text-xs px-3 py-1"
+                      >
+                        OpenAI
+                      </Button>
+                      <Button
+                        size="sm"
                         variant={activeTab === 'comparison' ? 'default' : 'ghost'}
                         onClick={() => setActiveTab('comparison')}
                         className="text-xs px-3 py-1"
@@ -602,6 +821,7 @@ const PDFParserTestPage = () => {
                 <CardContent className="space-y-4 overflow-y-auto h-[calc(100%-5rem)]">
                   {activeTab === 'current' && renderCurrentSystemResults()}
                   {activeTab === 'hmis-bot' && renderHMISBotResults()}
+                  {activeTab === 'openai' && renderOpenAIResults()}
                   {activeTab === 'comparison' && renderComparison()}
                 </CardContent>
               </Card>
@@ -613,11 +833,10 @@ const PDFParserTestPage = () => {
               <TestTube className="h-16 w-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-xl font-semibold mb-2">PDF Parser Test Environment</h3>
               <p className="text-gray-600 mb-4">
-                Select a document from the dropdown above to begin testing PDF parsing and HMIS logic.
+                Select a document from the dropdown above to begin testing PDF parsing and analysis methods.
               </p>
               <p className="text-sm text-gray-500">
-                This environment allows you to test PDF text extraction, HMIS code calculation, 
-                and GHS pictogram identification. Now includes HMIS-BOT for algorithm comparison.
+                This environment allows you to compare Current System, HMIS-BOT, and OpenAI analysis results.
               </p>
             </CardContent>
           </Card>
