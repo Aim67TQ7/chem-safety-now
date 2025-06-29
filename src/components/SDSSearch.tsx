@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SDSSearchInput from './SDSSearchInput';
 import SDSResultCard from './SDSResultCard';
 import LabelPrinterPopup from './popups/LabelPrinterPopup';
 import DocumentViewerPopup from './popups/DocumentViewerPopup';
+import EnhancedSDSSearchCard from './EnhancedSDSSearchCard';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -237,13 +237,15 @@ const SDSSearch: React.FC<SDSSearchProps> = ({ facilityId, onDocumentSelect, onA
   };
 
   return (
-    <div className="space-y-6">
-      {/* Main Search Input */}
-      <SDSSearchInput
-        facilityId={facilityId}
-        onSearchResults={handleSearchResults}
-        onSearchStart={handleSearchStart}
-      />
+    <div className="space-y-8">
+      {/* Enhanced Main Search Input */}
+      <EnhancedSDSSearchCard>
+        <SDSSearchInput
+          facilityId={facilityId}
+          onSearchResults={handleSearchResults}
+          onSearchStart={handleSearchStart}
+        />
+      </EnhancedSDSSearchCard>
 
       {/* Search Status */}
       {isSearching && (

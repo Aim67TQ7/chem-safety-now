@@ -39,9 +39,37 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       />
 
       <div className="container mx-auto px-4 py-8">
-        {/* SDS Search Section */}
-        <div className="mb-8">
-          <SDSSearch facilityId={facility.id} />
+        {/* Hero SDS Search Section - Primary Feature */}
+        <div className="mb-12">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Find Your Safety Data Sheets
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Search our comprehensive database of Safety Data Sheets to get OSHA-compliant labeling and safety information instantly.
+            </p>
+          </div>
+          
+          {/* Enhanced SDS Search Component */}
+          <div className="max-w-4xl mx-auto">
+            <SDSSearch facilityId={facility.id} />
+          </div>
+          
+          {/* Visual Emphasis Elements */}
+          <div className="flex justify-center items-center mt-8 space-x-8 text-sm text-gray-500">
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+              <span>OSHA Compliant</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+              <span>Instant Results</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></div>
+              <span>Label Ready</span>
+            </div>
+          </div>
         </div>
 
         {/* Dashboard Cards Section */}
