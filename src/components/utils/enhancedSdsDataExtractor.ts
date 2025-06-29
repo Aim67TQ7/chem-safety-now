@@ -26,18 +26,22 @@ export interface EnhancedSDSData {
 export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData => {
   if (!selectedDocument) return {};
 
-  // Check for OSHA-compliant data first (highest priority)
-  if (selectedDocument.ai_extracted_data && 
-      selectedDocument.ai_extracted_data.osha_compliant && 
+  console.log('🔍 Extracting enhanced SDS data for:', selectedDocument.product_name);
+  console.log('📊 Document status:', selectedDocument.extraction_status);
+  console.log('🤖 AI confidence:', selectedDocument.ai_extraction_confidence);
+
+  // PRIORITY 1: OSHA-compliant data (highest priority for safety compliance)
+  if (selectedDocument.extraction_status === 'osha_compliant' && 
+      selectedDocument.ai_extracted_data && 
       selectedDocument.ai_extraction_confidence >= 98) {
     
+    console.log('✅ Using OSHA-compliant data extraction');
     const oshaData = selectedDocument.ai_extracted_data;
     
-    // Map GHS pictograms from OSHA data
+    // Map GHS pictograms from OSHA data with enhanced mapping
     const pictograms: string[] = [];
     if (Array.isArray(oshaData.ghs_pictograms)) {
       oshaData.ghs_pictograms.forEach((p: any) => {
-        // Map GHS names to our pictogram IDs
         const nameMapping: Record<string, string> = {
           'flame': 'flame',
           'gas-cylinder': 'gas_cylinder',
@@ -55,22 +59,34 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       });
     }
 
+    // Extract HMIS ratings with fallbacks to ensure we always have values
+    const hmisRatings = {
+      health: selectedDocument.hmis_codes?.health?.toString() || 
+               (oshaData.hmis?.health?.value?.toString()) || '2',
+      flammability: selectedDocument.hmis_codes?.flammability?.toString() || 
+                   (oshaData.hmis?.flammability?.value?.toString()) || '1',
+      physical: selectedDocument.hmis_codes?.physical?.toString() || 
+               (oshaData.hmis?.physical?.value?.toString()) || '0',
+      special: selectedDocument.hmis_codes?.special || 
+              (oshaData.hmis?.ppe?.value) || 'A'
+    };
+
+    console.log('🏥 OSHA HMIS ratings:', hmisRatings);
+
     return {
-      productName: oshaData.product_title || selectedDocument.product_name,
+      productName: oshaData.product_identifier?.value || oshaData.product_title || selectedDocument.product_name,
       manufacturer: selectedDocument.manufacturer,
       casNumber: selectedDocument.cas_number,
-      signalWord: oshaData.signal_word || 'WARNING',
-      hazardCodes: Array.isArray(oshaData.hazard_statements) ? oshaData.hazard_statements : [],
+      signalWord: oshaData.signal_word?.value || oshaData.signal_word || 'WARNING',
+      hazardCodes: Array.isArray(oshaData.hazard_statements) ? 
+        oshaData.hazard_statements.map((h: any) => typeof h === 'string' ? h : h.value) : [],
       pictograms: [...new Set(pictograms)], // Remove duplicates
-      hmisRatings: {
-        health: selectedDocument.hmis_codes?.health?.toString() || '2',
-        flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
-        physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
-        special: selectedDocument.hmis_codes?.special || 'A'
-      },
-      ppeRequirements: Array.isArray(oshaData.precautionary_statements) ? oshaData.precautionary_statements : [],
+      hmisRatings,
+      ppeRequirements: Array.isArray(oshaData.precautionary_statements_critical) ? 
+        oshaData.precautionary_statements_critical.map((p: any) => typeof p === 'string' ? p : p.value) :
+        Array.isArray(oshaData.precautionary_statements) ? oshaData.precautionary_statements : [],
       chemicalFormula: '',
-      chemicalCompound: oshaData.product_title || selectedDocument.product_name,
+      chemicalCompound: oshaData.product_identifier?.value || oshaData.product_title || selectedDocument.product_name,
       productId: '',
       labelPrintDate: new Date().toISOString().split('T')[0],
       extractionConfidence: selectedDocument.ai_extraction_confidence || 0,
@@ -80,8 +96,9 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     };
   }
 
-  // Check for manual review required
+  // PRIORITY 2: Manual review required (high confidence but needs verification)
   if (selectedDocument.extraction_status === 'manual_review_required') {
+    console.log('⚠️ Using manual review data extraction');
     const reviewData = selectedDocument.ai_extracted_data;
     
     const pictograms: string[] = [];
@@ -104,22 +121,30 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       });
     }
 
+    // Ensure HMIS ratings are always present with safe defaults
+    const hmisRatings = {
+      health: selectedDocument.hmis_codes?.health?.toString() || '2',
+      flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
+      physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
+      special: selectedDocument.hmis_codes?.special || 'A'
+    };
+
+    console.log('🔍 Manual review HMIS ratings:', hmisRatings);
+
     return {
-      productName: reviewData?.product_title || selectedDocument.product_name,
+      productName: reviewData?.product_identifier?.value || reviewData?.product_title || selectedDocument.product_name,
       manufacturer: selectedDocument.manufacturer,
       casNumber: selectedDocument.cas_number,
-      signalWord: reviewData?.signal_word || 'WARNING',
-      hazardCodes: Array.isArray(reviewData?.hazard_statements) ? reviewData.hazard_statements : [],
+      signalWord: reviewData?.signal_word?.value || reviewData?.signal_word || 'WARNING',
+      hazardCodes: Array.isArray(reviewData?.hazard_statements) ? 
+        reviewData.hazard_statements.map((h: any) => typeof h === 'string' ? h : h.value) : [],
       pictograms: [...new Set(pictograms)],
-      hmisRatings: {
-        health: selectedDocument.hmis_codes?.health?.toString() || '2',
-        flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
-        physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
-        special: selectedDocument.hmis_codes?.special || 'A'
-      },
-      ppeRequirements: Array.isArray(reviewData?.precautionary_statements) ? reviewData.precautionary_statements : [],
+      hmisRatings,
+      ppeRequirements: Array.isArray(reviewData?.precautionary_statements_critical) ? 
+        reviewData.precautionary_statements_critical.map((p: any) => typeof p === 'string' ? p : p.value) :
+        Array.isArray(reviewData?.precautionary_statements) ? reviewData.precautionary_statements : [],
       chemicalFormula: '',
-      chemicalCompound: reviewData?.product_title || selectedDocument.product_name,
+      chemicalCompound: reviewData?.product_identifier?.value || reviewData?.product_title || selectedDocument.product_name,
       productId: '',
       labelPrintDate: new Date().toISOString().split('T')[0],
       extractionConfidence: selectedDocument.ai_extraction_confidence || 0,
@@ -129,11 +154,12 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     };
   }
 
-  // Check for AI-enhanced data (legacy system)
-  if (selectedDocument.ai_extracted_data && selectedDocument.ai_extraction_confidence > 50) {
+  // PRIORITY 3: High-confidence AI extraction
+  if (selectedDocument.ai_extracted_data && selectedDocument.ai_extraction_confidence >= 80) {
+    console.log('🤖 Using high-confidence AI extraction');
     const aiData = selectedDocument.ai_extracted_data;
     
-    // Map GHS pictograms from AI data with proper type safety
+    // Map GHS pictograms from AI data with comprehensive mapping
     const pictograms: string[] = [];
     if (Array.isArray(aiData.ghs_pictograms)) {
       aiData.ghs_pictograms.forEach((p: any) => {
@@ -149,11 +175,25 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
           'GHS09': 'environment'
         };
         
-        const mappedPictogram = codeMapping[p.code] || p.name?.toLowerCase().replace(/\s+/g, '_') || 'exclamation';
+        const nameMapping: Record<string, string> = {
+          'flame': 'flame',
+          'gas-cylinder': 'gas_cylinder',
+          'skull-and-crossbones': 'skull_crossbones',
+          'exclamation-mark': 'exclamation',
+          'health-hazard': 'health_hazard',
+          'corrosion': 'corrosion',
+          'exploding-bomb': 'exploding_bomb',
+          'flame-over-circle': 'flame_over_circle',
+          'environment': 'environment'
+        };
+        
+        let mappedPictogram = codeMapping[p.code] || nameMapping[p.name] || 
+                             p.name?.toLowerCase().replace(/\s+/g, '_') || 'exclamation';
         pictograms.push(mappedPictogram);
       });
     }
 
+    // Extract hazard codes with proper handling
     const hazardCodes: string[] = [];
     if (Array.isArray(selectedDocument.h_codes)) {
       selectedDocument.h_codes.forEach((h: any) => {
@@ -162,6 +202,16 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       });
     }
 
+    // HMIS ratings with safe defaults
+    const hmisRatings = {
+      health: selectedDocument.hmis_codes?.health?.toString() || '2',
+      flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
+      physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
+      special: selectedDocument.hmis_codes?.special || 'A'
+    };
+
+    console.log('🎯 AI-enhanced HMIS ratings:', hmisRatings);
+
     return {
       productName: aiData.product_title || selectedDocument.product_name,
       manufacturer: aiData.manufacturer || selectedDocument.manufacturer,
@@ -169,12 +219,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       signalWord: selectedDocument.signal_word || 'WARNING',
       hazardCodes,
       pictograms: [...new Set(pictograms)],
-      hmisRatings: {
-        health: selectedDocument.hmis_codes?.health?.toString() || '2',
-        flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
-        physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
-        special: selectedDocument.hmis_codes?.special || 'A'
-      },
+      hmisRatings,
       ppeRequirements: Array.isArray(aiData.required_ppe) ? aiData.required_ppe.map(String) : [],
       chemicalFormula: aiData.chemical_formula || '',
       chemicalCompound: aiData.chemical_compound || '',
@@ -187,7 +232,8 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     };
   }
 
-  // Fallback to basic extraction (from original extractor)
+  // PRIORITY 4: Basic extraction fallback
+  console.log('📋 Using basic extraction fallback');
   const productName = selectedDocument.product_name || '';
   const manufacturer = selectedDocument.manufacturer || '';
   const casNumber = selectedDocument.cas_number || '';
@@ -217,13 +263,16 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     .map((code: string) => pictogramMapping[code] || code)
     .filter((id: string) => Object.values(pictogramMapping).includes(id));
 
+  // HMIS ratings with conservative defaults for safety
   const hmisData = selectedDocument.hmis_codes || {};
   const hmisRatings = {
-    health: hmisData.health?.toString() || '2',
-    flammability: hmisData.flammability?.toString() || '1',
-    physical: hmisData.physical?.toString() || '0',
-    special: hmisData.special || 'A'
+    health: hmisData.health?.toString() || '2', // Default to moderate health hazard
+    flammability: hmisData.flammability?.toString() || '1', // Default to slight fire hazard  
+    physical: hmisData.physical?.toString() || '0', // Default to minimal physical hazard
+    special: hmisData.special || 'A' // Default to standard PPE
   };
+
+  console.log('🔧 Basic extraction HMIS ratings:', hmisRatings);
 
   // Basic PPE extraction from precautionary statements
   const ppeRequirements: string[] = [];
