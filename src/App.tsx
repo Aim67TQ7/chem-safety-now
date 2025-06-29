@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Index from "./pages/Index";
-import FacilityPage from "./pages/FacilityPage";
+import FacilityDashboard from "./components/FacilityDashboard";
 import SDSDocumentsPage from "./pages/SDSDocumentsPage";
 import AccessToolsPage from "./pages/AccessToolsPage";
 import IncidentsPage from "./pages/IncidentsPage";
@@ -25,6 +25,7 @@ import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
 import SubscriptionPlansPage from "./pages/SubscriptionPlansPage";
 import UpgradePage from "./pages/UpgradePage";
 import NotFound from "./pages/NotFound";
+import FacilityPageWrapper from "./pages/FacilityPageWrapper";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +36,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/facility/:facilitySlug" element={<FacilityPage />} />
+          <Route path="/facility/:facilitySlug" element={<FacilityPageWrapper />} />
           <Route path="/facility/:facilitySlug/sds-documents" element={<SDSDocumentsPage />} />
           <Route path="/facility/:facilitySlug/access-tools" element={<AccessToolsPage />} />
           <Route path="/facility/:facilitySlug/incidents" element={<IncidentsPage />} />
