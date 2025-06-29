@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, FileText, Loader2, Lightbulb, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, FileText, Loader2, Lightbulb, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -146,7 +146,7 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
 
   return (
     <div className="space-y-6">
-      {/* ULTRA-PROMINENT Search Input */}
+      {/* Search Input */}
       <div className="relative">
         {/* Glowing background for the search area */}
         <div className="absolute -inset-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-2xl blur opacity-30 animate-pulse"></div>
@@ -154,7 +154,7 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
         <div className="relative flex gap-4 p-2 bg-white rounded-2xl border-4 border-orange-400 shadow-2xl">
           <Input
             type="text"
-            placeholder="🚨 ENTER CHEMICAL NAME, PRODUCT, OR MANUFACTURER (e.g., Acetone, 3M Scotch-Weld, Loctite 242...)"
+            placeholder="Enter chemical name, product, or manufacturer (e.g., Acetone, 3M Scotch-Weld, Loctite 242...)"
             value={searchQuery}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
@@ -180,18 +180,6 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
             )}
           </Button>
         </div>
-      </div>
-
-      {/* Mandatory Action Notice */}
-      <div className="bg-gradient-to-r from-red-100 to-orange-100 border-3 border-red-400 rounded-xl p-6">
-        <div className="flex items-center justify-center gap-3 text-red-800 font-black text-lg md:text-xl mb-2">
-          <AlertTriangle className="w-6 h-6" />
-          SAFETY REQUIREMENT
-          <AlertTriangle className="w-6 h-6" />
-        </div>
-        <p className="text-center text-red-700 font-bold">
-          Federal law requires Safety Data Sheets for all hazardous chemicals. Search now to ensure compliance!
-        </p>
       </div>
 
       {/* AI Search Suggestions */}
@@ -289,7 +277,7 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
         </Card>
       )}
 
-      {/* Enhanced Information Section */}
+      {/* Information Section */}
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border-2 border-gray-300">
         <div className="space-y-3">
           <div className="flex items-center gap-3 text-gray-800">

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Search, Zap, Shield, Clock, AlertTriangle } from "lucide-react";
+import { FileText, Search, Zap, Shield, Clock } from "lucide-react";
 
 interface EnhancedSDSSearchCardProps {
   children: React.ReactNode;
@@ -31,14 +31,6 @@ const EnhancedSDSSearchCard = ({ children }: EnhancedSDSSearchCardProps) => {
             SAFETY DATA SHEET SEARCH
             <Search className="w-8 h-8 text-orange-600" />
           </CardTitle>
-          
-          <div className="bg-red-100 border-2 border-red-300 rounded-xl p-4 mb-4">
-            <div className="flex items-center justify-center gap-2 text-red-800 font-bold text-lg">
-              <AlertTriangle className="w-6 h-6" />
-              MANDATORY: Search before handling any chemicals
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-          </div>
           
           <p className="text-gray-700 text-xl md:text-2xl font-semibold leading-relaxed">
             The <span className="text-orange-600 font-black">FASTEST</span> and <span className="text-red-600 font-black">SAFEST</span> way to find, process, and label your chemicals

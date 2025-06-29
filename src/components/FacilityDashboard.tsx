@@ -39,46 +39,29 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       />
 
       <div className="container mx-auto px-4 py-8">
-        {/* ULTRA-PROMINENT SDS Search Section */}
+        {/* SDS Search Section */}
         <div className="mb-16 relative">
-          {/* Attention-Grabbing Header with Animation */}
+          {/* Header */}
           <div className="text-center mb-8 relative">
-            {/* Animated Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-200 via-yellow-200 to-orange-200 opacity-30 rounded-3xl blur-3xl animate-pulse"></div>
-            
             <div className="relative z-10">
-              {/* Urgent Action Message */}
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-4 animate-bounce shadow-lg">
-                <Search className="w-4 h-4" />
-                START HERE - SEARCH FOR YOUR CHEMICALS
-                <Search className="w-4 h-4" />
-              </div>
-              
-              <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 mb-4 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 mb-4 leading-tight">
                 FIND YOUR SDS
               </h1>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
                 Safety Data Sheet Search
               </h2>
-              <p className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto font-semibold">
-                🚨 <span className="text-red-600">REQUIRED:</span> Search our database to get OSHA-compliant labels instantly
+              <p className="text-lg md:text-xl text-gray-700 max-w-4xl mx-auto font-semibold">
+                Search our database to get OSHA-compliant labels instantly
               </p>
             </div>
           </div>
           
-          {/* Animated Arrow Pointing Down */}
-          <div className="flex justify-center mb-6">
-            <div className="animate-bounce">
-              <ArrowDown className="w-8 h-8 text-orange-500" />
-            </div>
-          </div>
-          
-          {/* Ultra-Enhanced SDS Search Component */}
+          {/* SDS Search Component */}
           <div className="max-w-6xl mx-auto">
             <SDSSearch facilityId={facility.id} />
           </div>
           
-          {/* Enhanced Visual Emphasis Elements */}
+          {/* Status Elements */}
           <div className="flex justify-center items-center mt-8 space-x-8">
             <div className="flex items-center bg-green-100 px-4 py-2 rounded-full border-2 border-green-300">
               <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse"></div>
@@ -95,12 +78,12 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
           </div>
         </div>
 
-        {/* Dashboard Cards Section - Now Secondary */}
+        {/* Dashboard Cards Section */}
         <div className="grid grid-cols-1 gap-6">
           {/* Facility Activity Card */}
           <FacilityActivityCard facilityId={facility.id} />
 
-          {/* Audit Trail - Now always available */}
+          {/* Audit Trail */}
           <AuditTrail facilityId={facility.id} />
         </div>
       </div>
