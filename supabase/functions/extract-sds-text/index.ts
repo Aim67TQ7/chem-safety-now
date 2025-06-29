@@ -47,6 +47,142 @@ function resolveDownloadUrl(url: string): string {
   return fullUrl;
 }
 
+// Improved PDF text extraction function
+async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
+  console.log('📄 Starting PDF text extraction...');
+  
+  try {
+    // Convert ArrayBuffer to Uint8Array for processing
+    const pdfBytes = new Uint8Array(pdfBuffer);
+    
+    // Check if this is actually a PDF file
+    const pdfHeader = new TextDecoder('ascii').decode(pdfBytes.slice(0, 5));
+    if (!pdfHeader.startsWith('%PDF')) {
+      throw new Error('File does not appear to be a valid PDF');
+    }
+    
+    console.log('✅ Valid PDF file detected');
+    
+    // Extract text content by finding text streams and objects
+    const extractedText = await extractPDFTextContent(pdfBytes);
+    
+    if (!extractedText || extractedText.length < 50) {
+      console.log('⚠️ Low text content extracted, trying alternative method...');
+      return await extractPDFTextAlternative(pdfBytes);
+    }
+    
+    console.log(`✅ Successfully extracted ${extractedText.length} characters from PDF`);
+    return extractedText;
+    
+  } catch (error) {
+    console.error('❌ PDF text extraction failed:', error);
+    throw new Error(`PDF text extraction failed: ${error.message}`);
+  }
+}
+
+// Main PDF text extraction method
+async function extractPDFTextContent(pdfBytes: Uint8Array): Promise<string> {
+  const pdfString = new TextDecoder('latin1').decode(pdfBytes);
+  const textChunks: string[] = [];
+  
+  // Find text objects in PDF
+  const streamRegex = /stream\s*(.*?)\s*endstream/gs;
+  const textRegex = /\((.*?)\)\s*Tj/g;
+  const showTextRegex = /\[(.*?)\]\s*TJ/g;
+  
+  // Extract from streams
+  let streamMatch;
+  while ((streamMatch = streamRegex.exec(pdfString)) !== null) {
+    const streamContent = streamMatch[1];
+    
+    // Look for text operators
+    let textMatch;
+    while ((textMatch = textRegex.exec(streamContent)) !== null) {
+      const text = textMatch[1]
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r')
+        .replace(/\\t/g, '\t')
+        .replace(/\\\\/g, '\\')
+        .replace(/\\'/g, "'")
+        .replace(/\\"/g, '"');
+      
+      if (text.length > 2 && /[a-zA-Z]/.test(text)) {
+        textChunks.push(text);
+      }
+    }
+    
+    // Look for array text operators
+    while ((textMatch = showTextRegex.exec(streamContent)) !== null) {
+      const textArray = textMatch[1];
+      const cleanText = textArray
+        .replace(/\((.*?)\)/g, '$1')
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r');
+      
+      if (cleanText.length > 2 && /[a-zA-Z]/.test(cleanText)) {
+        textChunks.push(cleanText);
+      }
+    }
+  }
+  
+  // Clean and join extracted text
+  const extractedText = textChunks
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  return extractedText;
+}
+
+// Alternative extraction method for complex PDFs
+async function extractPDFTextAlternative(pdfBytes: Uint8Array): Promise<string> {
+  console.log('🔄 Trying alternative PDF extraction method...');
+  
+  const pdfString = new TextDecoder('latin1').decode(pdfBytes);
+  const textChunks: string[] = [];
+  
+  // More aggressive text extraction
+  const objRegex = /obj\s*(.*?)\s*endobj/gs;
+  
+  let objMatch;
+  while ((objMatch = objRegex.exec(pdfString)) !== null) {
+    const objContent = objMatch[1];
+    
+    // Look for readable text patterns
+    const readableTextRegex = /[A-Za-z][A-Za-z0-9\s\-\.,;:()]{10,}/g;
+    let textMatch;
+    
+    while ((textMatch = readableTextRegex.exec(objContent)) !== null) {
+      const text = textMatch[0].trim();
+      if (text.length > 10 && !text.includes('\x00')) {
+        textChunks.push(text);
+      }
+    }
+  }
+  
+  // Fallback: extract any readable ASCII text
+  if (textChunks.length === 0) {
+    console.log('🔄 Using fallback ASCII extraction...');
+    const asciiText = new TextDecoder('ascii', { fatal: false }).decode(pdfBytes);
+    const cleanAscii = asciiText
+      .replace(/[\x00-\x1F\x7F-\xFF]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    if (cleanAscii.length > 100) {
+      return cleanAscii;
+    }
+  }
+  
+  const result = textChunks.join(' ').replace(/\s+/g, ' ').trim();
+  
+  if (result.length < 50) {
+    throw new Error('Unable to extract sufficient text content from PDF');
+  }
+  
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -115,31 +251,15 @@ Deno.serve(async (req) => {
       throw new Error('Downloaded PDF is empty');
     }
 
-    // Extract text using enhanced processor
-    let fullText = '';
-    try {
-      // Simple text extraction - in production, you'd use a proper PDF parser
-      const textDecoder = new TextDecoder('utf-8', { fatal: false });
-      const rawText = textDecoder.decode(pdfBuffer);
-      
-      // Basic text cleaning and extraction
-      const lines = rawText.split(/[\r\n]+/).filter(line => 
-        line.trim().length > 3 && 
-        /[a-zA-Z]/.test(line) && 
-        !line.includes('\u0000')
-      );
-      
-      fullText = lines.join(' ');
-    } catch (error) {
-      console.error('❌ Text extraction failed:', error);
-      throw new Error('Failed to extract text from PDF');
-    }
+    // Extract text using improved PDF processing
+    const fullText = await extractTextFromPDF(pdfBuffer);
 
     if (!fullText || fullText.length < 100) {
       throw new Error('Insufficient text extracted from PDF');
     }
 
     console.log('📝 Extracted text length:', fullText.length);
+    console.log('📝 Text preview:', fullText.substring(0, 200) + '...');
 
     // Process with enhanced SDS processor
     const processingResult = await EnhancedSDSProcessor.processSDSText(
