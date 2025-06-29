@@ -9,23 +9,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, RefreshCw, FileText, TestTube, Eye, Code, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Json } from "@/integrations/supabase/types";
 
 interface SDSDocument {
   id: string;
   product_name: string;
   file_name: string;
-  bucket_url: string;
+  bucket_url: string | null;
   source_url: string;
-  extraction_status: string;
-  ai_extraction_confidence: number;
-  extraction_quality_score: number;
-  full_text?: string;
-  h_codes?: any[];
-  pictograms?: any[];
-  hmis_codes?: any;
-  nfpa_codes?: any;
-  signal_word?: string;
-  manufacturer?: string;
+  extraction_status: string | null;
+  ai_extraction_confidence: number | null;
+  extraction_quality_score: number | null;
+  full_text?: string | null;
+  h_codes?: Json;
+  pictograms?: Json;
+  hmis_codes?: Json;
+  nfpa_codes?: Json;
+  signal_word?: string | null;
+  manufacturer?: string | null;
 }
 
 const PDFParserTestPage = () => {
@@ -262,7 +263,7 @@ const PDFParserTestPage = () => {
                           <div className="p-3 bg-orange-50 rounded-lg">
                             <h4 className="font-semibold mb-2">GHS Pictograms</h4>
                             <div className="flex flex-wrap gap-1">
-                              {processingResults.pictograms?.length > 0 ? (
+                              {Array.isArray(processingResults.pictograms) && processingResults.pictograms.length > 0 ? (
                                 processingResults.pictograms.map((pic: any, idx: number) => (
                                   <Badge key={idx} variant="outline" className="text-xs">
                                     {typeof pic === 'string' ? pic : pic.name || pic.ghs_code}
@@ -278,7 +279,7 @@ const PDFParserTestPage = () => {
                           <div className="p-3 bg-red-50 rounded-lg">
                             <h4 className="font-semibold mb-2">Hazard Codes</h4>
                             <div className="flex flex-wrap gap-1">
-                              {processingResults.h_codes?.length > 0 ? (
+                              {Array.isArray(processingResults.h_codes) && processingResults.h_codes.length > 0 ? (
                                 processingResults.h_codes.map((code: any, idx: number) => (
                                   <Badge key={idx} variant="outline" className="text-xs">
                                     {typeof code === 'string' ? code : code.code}
