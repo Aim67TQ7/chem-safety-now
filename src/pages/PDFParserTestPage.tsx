@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -122,19 +121,6 @@ const PDFParserTestPage = () => {
     }
   };
 
-  const getPDFUrl = () => {
-    if (!selectedDocument) return null;
-    
-    if (selectedDocument.bucket_url) {
-      const { data } = supabase.storage
-        .from('sds-documents')
-        .getPublicUrl(selectedDocument.bucket_url.replace('sds-documents/', ''));
-      return data.publicUrl;
-    }
-    
-    return selectedDocument.source_url;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -192,156 +178,118 @@ const PDFParserTestPage = () => {
       <div className="p-6 h-[calc(100vh-88px)]">
         {selectedDocument ? (
           <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* Left Panel - PDF Viewer */}
+            {/* Left Panel - Extracted Text */}
             <ResizablePanel defaultSize={40} minSize={25}>
               <Card className="h-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Eye className="h-5 w-5" />
-                    PDF Document
+                    <Code className="h-5 w-5" />
+                    Extracted Text
                     <Badge variant="outline" className="ml-2">
-                      {selectedDocument.file_name}
+                      {extractedText.length} characters
                     </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 h-[calc(100%-4rem)]">
-                  {getPDFUrl() ? (
-                    <iframe
-                      src={getPDFUrl()}
-                      className="w-full h-full border-none"
-                      title={`PDF: ${selectedDocument.product_name}`}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      <div className="text-center">
-                        <FileText className="h-12 w-12 mx-auto mb-4" />
-                        <p>PDF not available</p>
-                      </div>
-                    </div>
-                  )}
+                  <div className="h-full bg-gray-900 text-green-400 p-4 overflow-y-auto font-mono text-xs">
+                    <pre className="whitespace-pre-wrap">
+                      {extractedText || 'No text extracted yet...'}
+                    </pre>
+                  </div>
                 </CardContent>
               </Card>
             </ResizablePanel>
 
             <ResizableHandle withHandle />
 
-            {/* Right Panel Group */}
+            {/* Right Panel - Processing Logic */}
             <ResizablePanel defaultSize={60} minSize={35}>
-              <ResizablePanelGroup direction="vertical">
-                {/* Top Right Panel - Processing Logic */}
-                <ResizablePanel defaultSize={60} minSize={30}>
-                  <Card className="h-full">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Zap className="h-5 w-5" />
-                        HMIS/PPE/Pictogram Logic
-                        {processingResults && (
-                          <Badge 
-                            variant={processingResults.confidence >= 80 ? "default" : "secondary"}
-                            className="ml-2"
-                          >
-                            {processingResults.confidence}% Confidence
-                          </Badge>
-                        )}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 overflow-y-auto h-[calc(100%-4rem)]">
-                      {processingResults ? (
-                        <div className="space-y-4">
-                          {/* HMIS Codes */}
-                          <div className="p-3 bg-blue-50 rounded-lg">
-                            <h4 className="font-semibold mb-2">HMIS Codes</h4>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              <div>Health: <Badge variant="outline">{processingResults.hmis_codes?.health || 'N/A'}</Badge></div>
-                              <div>Flammability: <Badge variant="outline">{processingResults.hmis_codes?.flammability || 'N/A'}</Badge></div>
-                              <div>Physical: <Badge variant="outline">{processingResults.hmis_codes?.physical || 'N/A'}</Badge></div>
-                              <div>PPE: <Badge variant="outline">{processingResults.hmis_codes?.ppe || 'N/A'}</Badge></div>
-                            </div>
-                          </div>
-
-                          {/* Pictograms */}
-                          <div className="p-3 bg-orange-50 rounded-lg">
-                            <h4 className="font-semibold mb-2">GHS Pictograms</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {Array.isArray(processingResults.pictograms) && processingResults.pictograms.length > 0 ? (
-                                processingResults.pictograms.map((pic: any, idx: number) => (
-                                  <Badge key={idx} variant="outline" className="text-xs">
-                                    {typeof pic === 'string' ? pic : pic.name || pic.ghs_code}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-gray-500">None identified</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* H-Codes */}
-                          <div className="p-3 bg-red-50 rounded-lg">
-                            <h4 className="font-semibold mb-2">Hazard Codes</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {Array.isArray(processingResults.h_codes) && processingResults.h_codes.length > 0 ? (
-                                processingResults.h_codes.map((code: any, idx: number) => (
-                                  <Badge key={idx} variant="outline" className="text-xs">
-                                    {typeof code === 'string' ? code : code.code}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-gray-500">None identified</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Metadata */}
-                          <div className="p-3 bg-gray-50 rounded-lg">
-                            <h4 className="font-semibold mb-2">Processing Metadata</h4>
-                            <div className="text-sm space-y-1">
-                              <div>Status: <Badge variant="outline">{processingResults.extraction_status}</Badge></div>
-                              <div>Quality Score: <Badge variant="outline">{processingResults.quality_score}/100</Badge></div>
-                              {processingResults.signal_word && (
-                                <div>Signal Word: <Badge variant="outline">{processingResults.signal_word}</Badge></div>
-                              )}
-                              {processingResults.manufacturer && (
-                                <div>Manufacturer: <Badge variant="outline">{processingResults.manufacturer}</Badge></div>
-                              )}
-                            </div>
-                          </div>
+              <Card className="h-full">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Zap className="h-5 w-5" />
+                    HMIS/PPE/Pictogram Logic
+                    {processingResults && (
+                      <Badge 
+                        variant={processingResults.confidence >= 80 ? "default" : "secondary"}
+                        className="ml-2"
+                      >
+                        {processingResults.confidence}% Confidence
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 overflow-y-auto h-[calc(100%-4rem)]">
+                  {processingResults ? (
+                    <div className="space-y-4">
+                      {/* HMIS Codes */}
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">HMIS Codes</h4>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>Health: <Badge variant="outline">{processingResults.hmis_codes?.health || 'N/A'}</Badge></div>
+                          <div>Flammability: <Badge variant="outline">{processingResults.hmis_codes?.flammability || 'N/A'}</Badge></div>
+                          <div>Physical: <Badge variant="outline">{processingResults.hmis_codes?.physical || 'N/A'}</Badge></div>
+                          <div>PPE: <Badge variant="outline">{processingResults.hmis_codes?.ppe || 'N/A'}</Badge></div>
                         </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                          <div className="text-center">
-                            <Zap className="h-12 w-12 mx-auto mb-4" />
-                            <p>Select a document to view processing results</p>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </ResizablePanel>
-
-                <ResizableHandle withHandle />
-
-                {/* Bottom Right Panel - Extracted Text */}
-                <ResizablePanel defaultSize={40} minSize={20}>
-                  <Card className="h-full">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Code className="h-5 w-5" />
-                        Extracted Text
-                        <Badge variant="outline" className="ml-2">
-                          {extractedText.length} characters
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 h-[calc(100%-4rem)]">
-                      <div className="h-full bg-gray-900 text-green-400 p-4 overflow-y-auto font-mono text-xs">
-                        <pre className="whitespace-pre-wrap">
-                          {extractedText || 'No text extracted yet...'}
-                        </pre>
                       </div>
-                    </CardContent>
-                  </Card>
-                </ResizablePanel>
-              </ResizablePanelGroup>
+
+                      {/* Pictograms */}
+                      <div className="p-3 bg-orange-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">GHS Pictograms</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {Array.isArray(processingResults.pictograms) && processingResults.pictograms.length > 0 ? (
+                            processingResults.pictograms.map((pic: any, idx: number) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {typeof pic === 'string' ? pic : pic.name || pic.ghs_code}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-gray-500">None identified</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* H-Codes */}
+                      <div className="p-3 bg-red-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">Hazard Codes</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {Array.isArray(processingResults.h_codes) && processingResults.h_codes.length > 0 ? (
+                            processingResults.h_codes.map((code: any, idx: number) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {typeof code === 'string' ? code : code.code}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-gray-500">None identified</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Metadata */}
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">Processing Metadata</h4>
+                        <div className="text-sm space-y-1">
+                          <div>Status: <Badge variant="outline">{processingResults.extraction_status}</Badge></div>
+                          <div>Quality Score: <Badge variant="outline">{processingResults.quality_score}/100</Badge></div>
+                          {processingResults.signal_word && (
+                            <div>Signal Word: <Badge variant="outline">{processingResults.signal_word}</Badge></div>
+                          )}
+                          {processingResults.manufacturer && (
+                            <div>Manufacturer: <Badge variant="outline">{processingResults.manufacturer}</Badge></div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <Zap className="h-12 w-12 mx-auto mb-4" />
+                        <p>Select a document to view processing results</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (
