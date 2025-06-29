@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Search, Zap, Shield, Clock } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 
 interface EnhancedSDSSearchCardProps {
   children: React.ReactNode;
@@ -39,39 +39,6 @@ const EnhancedSDSSearchCard = ({ children }: EnhancedSDSSearchCardProps) => {
         
         <CardContent className="space-y-8 p-8">
           {children}
-          
-          {/* Enhanced Feature highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-8 border-t-4 border-orange-200">
-            <div className="text-center bg-yellow-50 p-6 rounded-xl border-2 border-yellow-300 transform hover:scale-105 transition-all">
-              <div className="flex justify-center mb-3">
-                <div className="bg-yellow-500 p-3 rounded-full">
-                  <Zap className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <h4 className="font-black text-gray-900 text-lg">INSTANT PROCESSING</h4>
-              <p className="text-sm text-gray-700 font-semibold">AI-powered extraction in seconds</p>
-            </div>
-            
-            <div className="text-center bg-green-50 p-6 rounded-xl border-2 border-green-300 transform hover:scale-105 transition-all">
-              <div className="flex justify-center mb-3">
-                <div className="bg-green-500 p-3 rounded-full">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <h4 className="font-black text-gray-900 text-lg">OSHA COMPLIANT</h4>
-              <p className="text-sm text-gray-700 font-semibold">Meets all safety standards</p>
-            </div>
-            
-            <div className="text-center bg-blue-50 p-6 rounded-xl border-2 border-blue-300 transform hover:scale-105 transition-all">
-              <div className="flex justify-center mb-3">
-                <div className="bg-blue-500 p-3 rounded-full">
-                  <Clock className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <h4 className="font-black text-gray-900 text-lg">SAVE HOURS</h4>
-              <p className="text-sm text-gray-700 font-semibold">No more manual label creation</p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

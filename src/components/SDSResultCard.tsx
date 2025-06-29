@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Eye, ExternalLink, Bot, Loader2 } from 'lucide-react';
+import { FileText, Eye, ExternalLink, Bot, Loader2, Printer } from 'lucide-react';
 import { RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface SDSResultCardProps {
   document: {
@@ -25,6 +26,7 @@ interface SDSResultCardProps {
   isSelected: boolean;
   onSelect: (document: any) => void;
   showSelection: boolean;
+  facilityId?: string;
 }
 
 const SDSResultCard: React.FC<SDSResultCardProps> = ({
@@ -33,11 +35,13 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
   onDownload,
   isSelected,
   onSelect,
-  showSelection
+  showSelection,
+  facilityId
 }) => {
+  const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [labelData, setLabelData] = useState<any>(null);
-  const [showLabelData, setShowLabelData] = useState(false);
+  const [hasExtractedData, setHasExtractedData] = useState(false);
+  const [savedDocumentId, setSavedDocumentId] = useState<string | null>(null);
 
   const handleLabelAnalysis = async () => {
     try {
@@ -60,9 +64,14 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
 
       if (data.success && data.data) {
         console.log('✅ OpenAI analysis complete:', data.data);
-        setLabelData(data.data);
-        setShowLabelData(true);
-        toast.success(`Label data extracted for ${document.product_name}`);
+        
+        // Save the extracted data to sds_documents table
+        const savedDoc = await saveToDatabase(data.data, pdfUrl);
+        if (savedDoc) {
+          setSavedDocumentId(savedDoc.id);
+          setHasExtractedData(true);
+          toast.success(`Label data extracted and saved for ${document.product_name}`);
+        }
       } else {
         throw new Error(data.error || 'Analysis failed');
       }
@@ -75,113 +84,76 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
     }
   };
 
-  const renderLabelData = () => {
-    if (!labelData) return null;
+  const saveToDatabase = async (labelData: any, pdfUrl: string) => {
+    try {
+      console.log('💾 Saving extracted data to database...');
+      
+      // Create or update the SDS document record
+      const documentData = {
+        product_name: labelData.product_name || document.product_name,
+        manufacturer: labelData.manufacturer || document.manufacturer,
+        cas_number: labelData.cas_number,
+        signal_word: labelData.signal_word,
+        source_url: document.source_url,
+        bucket_url: document.bucket_url || pdfUrl,
+        file_name: `${document.product_name}_SDS.pdf`,
+        file_type: 'application/pdf',
+        
+        // HMIS codes as JSON
+        hmis_codes: labelData.hmis_codes || {},
+        
+        // H-codes as array of objects
+        h_codes: labelData.h_codes ? labelData.h_codes.map((code: string) => ({
+          code: code,
+          description: `Hazard statement ${code}`
+        })) : [],
+        
+        // GHS pictograms as array of strings
+        pictograms: labelData.ghs_pictograms || [],
+        
+        // Set extraction metadata
+        ai_extraction_confidence: labelData.confidence_score || 85,
+        extraction_quality_score: labelData.confidence_score || 85,
+        extraction_status: 'ai_enhanced',
+        ai_extraction_date: new Date().toISOString(),
+        is_readable: true,
+        document_type: 'sds',
+        
+        // Additional extracted data
+        revision_date: labelData.revision_date,
+        
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-    return (
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-blue-900">Label Data Analysis</h4>
-          <div className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded">
-            {labelData.confidence_score}% confidence
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <label className="font-medium text-gray-700">Product Name:</label>
-            <p className="text-gray-900">{labelData.product_name || 'N/A'}</p>
-          </div>
-          
-          <div>
-            <label className="font-medium text-gray-700">Manufacturer:</label>
-            <p className="text-gray-900">{labelData.manufacturer || 'N/A'}</p>
-          </div>
-          
-          <div>
-            <label className="font-medium text-gray-700">CAS Number:</label>
-            <p className="text-gray-900">{labelData.cas_number || 'N/A'}</p>
-          </div>
-          
-          <div>
-            <label className="font-medium text-gray-700">Signal Word:</label>
-            <p className={`font-semibold ${labelData.signal_word === 'DANGER' ? 'text-red-600' : 'text-orange-600'}`}>
-              {labelData.signal_word || 'N/A'}
-            </p>
-          </div>
-          
-          {labelData.hmis_codes && (
-            <div className="md:col-span-2">
-              <label className="font-medium text-gray-700">HMIS Codes:</label>
-              <div className="flex space-x-4 mt-1">
-                <span className="text-xs bg-blue-100 px-2 py-1 rounded">
-                  Health: {labelData.hmis_codes.health || 'N/A'}
-                </span>
-                <span className="text-xs bg-red-100 px-2 py-1 rounded">
-                  Flammability: {labelData.hmis_codes.flammability || 'N/A'}
-                </span>
-                <span className="text-xs bg-yellow-100 px-2 py-1 rounded">
-                  Physical: {labelData.hmis_codes.physical_hazard || 'N/A'}
-                </span>
-                <span className="text-xs bg-purple-100 px-2 py-1 rounded">
-                  PPE: {labelData.hmis_codes.ppe || 'N/A'}
-                </span>
-              </div>
-            </div>
-          )}
-          
-          {labelData.h_codes && labelData.h_codes.length > 0 && (
-            <div className="md:col-span-2">
-              <label className="font-medium text-gray-700">H-Codes:</label>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {labelData.h_codes.slice(0, 8).map((hCode: string, index: number) => (
-                  <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded border">
-                    {hCode}
-                  </span>
-                ))}
-                {labelData.h_codes.length > 8 && (
-                  <span className="text-xs text-gray-500">+{labelData.h_codes.length - 8} more</span>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {labelData.ghs_pictograms && labelData.ghs_pictograms.length > 0 && (
-            <div className="md:col-span-2">
-              <label className="font-medium text-gray-700">GHS Pictograms:</label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {labelData.ghs_pictograms.map((pictogram: string, index: number) => (
-                  <span key={index} className="text-xs bg-orange-100 px-2 py-1 rounded border border-orange-200">
-                    {pictogram}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {labelData.revision_date && (
-            <div>
-              <label className="font-medium text-gray-700">Revision Date:</label>
-              <p className="text-gray-900">{labelData.revision_date}</p>
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-3 pt-3 border-t border-blue-200">
-          <div className="flex items-center justify-between text-xs text-blue-600">
-            <span>Processing time: {labelData.processing_time_ms}ms</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowLabelData(false)}
-              className="text-xs h-6 px-2"
-            >
-              Hide
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+      const { data: savedDoc, error: saveError } = await supabase
+        .from('sds_documents')
+        .insert([documentData])
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error('❌ Database save error:', saveError);
+        throw saveError;
+      }
+
+      console.log('✅ Document saved to database:', savedDoc.id);
+      return savedDoc;
+
+    } catch (error) {
+      console.error('❌ Failed to save to database:', error);
+      toast.error('Failed to save label data to database');
+      return null;
+    }
+  };
+
+  const handlePrintLabel = () => {
+    if (savedDocumentId) {
+      // Navigate to label printer with the saved document ID
+      navigate(`/facility/${facilityId}/label-printer?documentId=${savedDocumentId}`);
+    } else {
+      toast.error('Please extract label data first');
+    }
   };
 
   return (
@@ -260,13 +232,23 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
             ) : (
               <>
                 <Bot className="h-4 w-4" />
-                <span>Label Data</span>
+                <span>Extract Data</span>
               </>
             )}
           </Button>
+
+          {hasExtractedData && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handlePrintLabel}
+              className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Printer className="h-4 w-4" />
+              <span>Print Label</span>
+            </Button>
+          )}
         </div>
-        
-        {showLabelData && renderLabelData()}
       </CardContent>
     </Card>
   );

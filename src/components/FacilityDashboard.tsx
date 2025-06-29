@@ -60,22 +60,6 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
           <div className="max-w-6xl mx-auto">
             <SDSSearch facilityId={facility.id} />
           </div>
-          
-          {/* Status Elements */}
-          <div className="flex justify-center items-center mt-8 space-x-8">
-            <div className="flex items-center bg-green-100 px-4 py-2 rounded-full border-2 border-green-300">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse"></div>
-              <span className="font-bold text-green-800">OSHA COMPLIANT</span>
-            </div>
-            <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full border-2 border-blue-300">
-              <div className="w-3 h-3 bg-blue-500 rounded-full mr-3 animate-pulse"></div>
-              <span className="font-bold text-blue-800">INSTANT RESULTS</span>
-            </div>
-            <div className="flex items-center bg-purple-100 px-4 py-2 rounded-full border-2 border-purple-300">
-              <div className="w-3 h-3 bg-purple-500 rounded-full mr-3 animate-pulse"></div>
-              <span className="font-bold text-purple-800">LABEL READY</span>
-            </div>
-          </div>
         </div>
 
         {/* Dashboard Cards Section */}
