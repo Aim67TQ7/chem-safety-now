@@ -9,6 +9,44 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
+// Helper function to resolve URL based on different formats
+function resolveDownloadUrl(url: string): string {
+  console.log('🔗 Resolving URL:', url);
+  
+  // If it's already a full HTTP/HTTPS URL, use it directly
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    console.log('✅ Using full URL as-is');
+    return url;
+  }
+  
+  // If it's a supabase:// protocol URL, convert to HTTP
+  if (url.startsWith('supabase://')) {
+    const path = url.replace('supabase://', '');
+    const fullUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/${path}`;
+    console.log('🔄 Converted supabase:// URL to:', fullUrl);
+    return fullUrl;
+  }
+  
+  // If it's a relative storage path (starts with bucket name), construct full URL
+  if (url.includes('/') && !url.startsWith('/')) {
+    const fullUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/${url}`;
+    console.log('🔄 Constructed storage URL:', fullUrl);
+    return fullUrl;
+  }
+  
+  // If it starts with a slash, it might be an absolute path on the server
+  if (url.startsWith('/')) {
+    const fullUrl = `${Deno.env.get('SUPABASE_URL')}${url}`;
+    console.log('🔄 Constructed absolute path URL:', fullUrl);
+    return fullUrl;
+  }
+  
+  // Default fallback - assume it's a storage object path
+  const fullUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/sds-documents/${url}`;
+  console.log('🔄 Fallback storage URL:', fullUrl);
+  return fullUrl;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -39,21 +77,26 @@ Deno.serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: 'Document already has high-quality extracted data',
-          quality_score: document.extraction_quality_score
+          quality_score: document.extraction_quality_score,
+          confidence: document.ai_extraction_confidence || 0
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Use bucket_url if provided, otherwise use source_url
-    const extractionUrl = bucket_url || document.source_url;
+    const rawUrl = bucket_url || document.source_url;
     
-    if (!extractionUrl) {
+    if (!rawUrl) {
       throw new Error('No URL available for extraction');
     }
 
+    // Resolve the URL to a proper downloadable format
+    const extractionUrl = resolveDownloadUrl(rawUrl);
+    console.log('📥 Final download URL:', extractionUrl);
+
     // Download and process PDF
-    console.log('📥 Downloading PDF from:', extractionUrl);
+    console.log('📥 Downloading PDF...');
     const response = await fetch(extractionUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; SDS-Extractor/2.0)',
@@ -62,7 +105,7 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to download PDF: ${response.status}`);
+      throw new Error(`Failed to download PDF: ${response.status} ${response.statusText} from ${extractionUrl}`);
     }
 
     const pdfBuffer = await response.arrayBuffer();
@@ -139,12 +182,16 @@ Deno.serve(async (req) => {
       
       // Quality metrics
       extraction_quality_score: extractedData.extraction_quality_score || 0,
+      ai_extraction_confidence: processingResult.confidence || 0,
       is_readable: extractedData.is_readable || false,
       
-      // Document classification
+      // Document classification and status
       document_type: extractedData.extraction_quality_score > 50 ? 'sds' : 'unknown_document',
+      extraction_status: processingResult.confidence >= 98 ? 'osha_compliant' : 
+                        processingResult.confidence >= 80 ? 'ai_enhanced' : 'manual_review_required',
       
-      // Update timestamp
+      // Timestamp
+      ai_extraction_date: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
@@ -162,6 +209,7 @@ Deno.serve(async (req) => {
     console.log('✅ Successfully extracted and stored enhanced SDS data');
     console.log(`📊 Quality score: ${extractedData.extraction_quality_score}`);
     console.log(`🔍 Confidence: ${processingResult.confidence}%`);
+    console.log(`📋 Status: ${updateData.extraction_status}`);
 
     // Log warnings if any
     if (processingResult.warnings.length > 0) {
@@ -174,6 +222,7 @@ Deno.serve(async (req) => {
         extracted_data: updateData,
         quality_score: extractedData.extraction_quality_score,
         confidence: processingResult.confidence,
+        extraction_status: updateData.extraction_status,
         warnings: processingResult.warnings,
         message: `Successfully extracted enhanced SDS data with ${extractedData.extraction_quality_score}% quality score`
       }),
