@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -276,21 +275,6 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
           </CardContent>
         </Card>
       )}
-
-      {/* Information Section */}
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border-2 border-gray-300">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 text-gray-800">
-            <FileText className="w-5 h-5 text-blue-600" />
-            <span className="font-bold text-lg">We search official Safety Data Sheets (SDS/MSDS) only</span>
-          </div>
-          <ul className="text-sm text-gray-700 space-y-2 ml-8 font-semibold">
-            <li>• Use specific product names or include manufacturer when known</li>
-            <li>• Try chemical names or CAS numbers for better results</li>
-            <li>• We don't search product catalogs or general information</li>
-          </ul>
-        </div>
-      </div>
     </div>
   );
 };
