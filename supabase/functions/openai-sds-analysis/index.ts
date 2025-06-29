@@ -32,6 +32,21 @@ interface OpenAISSDResponse {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
+// Helper function to convert Supabase storage path to public URL
+const getPublicStorageUrl = (path: string): string => {
+  // Remove 'supabase://' prefix if present
+  const cleanPath = path.replace('supabase://', '');
+  
+  // If it's already a full HTTP URL, return as is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Construct the public Supabase storage URL
+  const supabaseUrl = 'https://fwzgsiysdwsmmkgqmbsd.supabase.co';
+  return `${supabaseUrl}/storage/v1/object/public/${cleanPath}`;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -43,11 +58,15 @@ serve(async (req) => {
     const { document_id, pdf_url }: OpenAISSDRequest = await req.json();
     
     console.log('🤖 OpenAI SDS Analysis for document:', document_id);
-    console.log('📄 PDF URL:', pdf_url);
+    console.log('📄 Original PDF URL:', pdf_url);
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
+
+    // Convert to public URL that OpenAI can access
+    const publicPdfUrl = getPublicStorageUrl(pdf_url);
+    console.log('🔗 Public PDF URL:', publicPdfUrl);
 
     // Create the analysis prompt
     const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer. Please analyze this SDS document and extract the following information in the exact JSON format specified:
@@ -101,7 +120,7 @@ Please analyze this SDS document thoroughly and provide the requested informatio
               {
                 type: 'image_url',
                 image_url: {
-                  url: pdf_url,
+                  url: publicPdfUrl,
                   detail: 'high'
                 }
               }
