@@ -12,7 +12,7 @@ interface Facility {
   contact_name: string;
   email: string;
   address: string;
-  logo_url?: string;
+  logo_url: string;
   created_at: string;
   updated_at: string;
 }
@@ -44,7 +44,13 @@ const FacilityPageWrapper = () => {
           throw new Error(`Failed to fetch facility: ${error.message}`);
         }
 
-        setFacility(data);
+        // Ensure logo_url has a default value if null
+        const facilityData = {
+          ...data,
+          logo_url: data.logo_url || ''
+        };
+
+        setFacility(facilityData);
       } catch (err: any) {
         setError(err.message || 'Failed to load facility data.');
         console.error(err);
