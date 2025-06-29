@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import ExtractedDataPopup from './popups/ExtractedDataPopup';
 
 interface SDSResultCardProps {
   document: {
@@ -40,7 +41,8 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hasExtractedData, setHasExtractedData] = useState(false);
+  const [extractedDataPopupOpen, setExtractedDataPopupOpen] = useState(false);
+  const [extractedData, setExtractedData] = useState<any>(null);
   const [savedDocumentId, setSavedDocumentId] = useState<string | null>(null);
 
   const handleLabelAnalysis = async () => {
@@ -69,8 +71,9 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
         const savedDoc = await saveToDatabase(data.data, pdfUrl);
         if (savedDoc) {
           setSavedDocumentId(savedDoc.id);
-          setHasExtractedData(true);
-          toast.success(`Label data extracted and saved for ${document.product_name}`);
+          setExtractedData(data.data);
+          setExtractedDataPopupOpen(true);
+          toast.success(`Label data extracted for ${document.product_name}`);
         }
       } else {
         throw new Error(data.error || 'Analysis failed');
@@ -148,109 +151,115 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
   };
 
   const handlePrintLabel = () => {
-    if (savedDocumentId) {
+    if (savedDocumentId && facilityId) {
       // Navigate to label printer with the saved document ID
-      navigate(`/facility/${facilityId}/label-printer?documentId=${savedDocumentId}`);
+      const facilitySlug = facilityId; // You might need to get the actual slug
+      navigate(`/facility/${facilitySlug}/label-printer?documentId=${savedDocumentId}`);
+      setExtractedDataPopupOpen(false);
     } else {
       toast.error('Please extract label data first');
     }
   };
 
-  return (
-    <Card className={`border-gray-200 hover:shadow-lg transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-2 flex-1">
-            {showSelection && (
-              <div className="flex items-center space-x-2 mr-3">
-                <RadioGroupItem 
-                  value={document.id || document.source_url}
-                  id={document.id || document.source_url}
-                  checked={isSelected}
-                  onClick={() => onSelect(document)}
-                />
-                <Label htmlFor={document.id || document.source_url} className="sr-only">
-                  Select {document.product_name}
-                </Label>
-              </div>
-            )}
-            <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
-            <CardTitle className="text-lg cursor-pointer" onClick={() => onSelect(document)}>
-              {document.product_name}
-            </CardTitle>
-          </div>
-          {document.confidence && (
-            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-              {(document.confidence.score * 100).toFixed(0)}% match
-            </span>
-          )}
-        </div>
-        {document.manufacturer && (
-          <p className="text-sm text-gray-600">
-            <strong>Manufacturer:</strong> {document.manufacturer}
-          </p>
-        )}
-        <div className="flex items-center space-x-1 text-xs text-gray-500">
-          <ExternalLink className="h-3 w-3" />
-          <span className="truncate">{document.source_url}</span>
-        </div>
-        
-        {/* Confidence reasons if available */}
-        {document.confidence?.reasons && document.confidence.reasons.length > 0 && (
-          <div className="mt-2">
-            <span className="text-xs font-medium text-green-600">
-              Matched on: {document.confidence.reasons.join(', ')}
-            </span>
-          </div>
-        )}
-      </CardHeader>
-      
-      <CardContent className="pt-0">
-        <div className="flex justify-center space-x-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => onDownload(document)}
-            className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Eye className="h-4 w-4" />
-            <span>View</span>
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLabelAnalysis}
-            disabled={isAnalyzing}
-            className="flex items-center space-x-1 border-purple-300 text-purple-700 hover:bg-purple-50"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Analyzing...</span>
-              </>
-            ) : (
-              <>
-                <Bot className="h-4 w-4" />
-                <span>Extract Data</span>
-              </>
-            )}
-          </Button>
+  const handleViewDocument = () => {
+    onView(document);
+    setExtractedDataPopupOpen(false);
+  };
 
-          {hasExtractedData && (
+  return (
+    <>
+      <Card className={`border-gray-200 hover:shadow-lg transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-2 flex-1">
+              {showSelection && (
+                <div className="flex items-center space-x-2 mr-3">
+                  <RadioGroupItem 
+                    value={document.id || document.source_url}
+                    id={document.id || document.source_url}
+                    checked={isSelected}
+                    onClick={() => onSelect(document)}
+                  />
+                  <Label htmlFor={document.id || document.source_url} className="sr-only">
+                    Select {document.product_name}
+                  </Label>
+                </div>
+              )}
+              <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              <CardTitle className="text-lg cursor-pointer" onClick={() => onSelect(document)}>
+                {document.product_name}
+              </CardTitle>
+            </div>
+            {document.confidence && (
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                {(document.confidence.score * 100).toFixed(0)}% match
+              </span>
+            )}
+          </div>
+          {document.manufacturer && (
+            <p className="text-sm text-gray-600">
+              <strong>Manufacturer:</strong> {document.manufacturer}
+            </p>
+          )}
+          <div className="flex items-center space-x-1 text-xs text-gray-500">
+            <ExternalLink className="h-3 w-3" />
+            <span className="truncate">{document.source_url}</span>
+          </div>
+          
+          {/* Confidence reasons if available */}
+          {document.confidence?.reasons && document.confidence.reasons.length > 0 && (
+            <div className="mt-2">
+              <span className="text-xs font-medium text-green-600">
+                Matched on: {document.confidence.reasons.join(', ')}
+              </span>
+            </div>
+          )}
+        </CardHeader>
+        
+        <CardContent className="pt-0">
+          <div className="flex justify-center space-x-2">
             <Button
               variant="default"
               size="sm"
-              onClick={handlePrintLabel}
-              className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => onDownload(document)}
+              className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
-              <Printer className="h-4 w-4" />
-              <span>Print Label</span>
+              <Eye className="h-4 w-4" />
+              <span>View</span>
             </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLabelAnalysis}
+              disabled={isAnalyzing}
+              className="flex items-center space-x-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <Bot className="h-4 w-4" />
+                  <span>Extract Data</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Extracted Data Popup */}
+      <ExtractedDataPopup
+        isOpen={extractedDataPopupOpen}
+        onClose={() => setExtractedDataPopupOpen(false)}
+        extractedData={extractedData || {}}
+        onPrintLabel={handlePrintLabel}
+        onViewDocument={handleViewDocument}
+      />
+    </>
   );
 };
 

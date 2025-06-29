@@ -31,11 +31,17 @@ const LabelPrinterPage = () => {
           .from('facilities')
           .select('*')
           .eq('slug', facilitySlug)
-          .single();
+          .maybeSingle();
 
         if (facilityError) {
           console.error('Failed to load facility:', facilityError);
           setError('Failed to load facility information');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!facilityData) {
+          setError('Facility not found');
           setIsLoading(false);
           return;
         }
@@ -47,11 +53,17 @@ const LabelPrinterPage = () => {
           .from('sds_documents')
           .select('*')
           .eq('id', documentId)
-          .single();
+          .maybeSingle();
 
         if (documentError) {
           console.error('Failed to load document:', documentError);
           setError('Failed to load document information');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!documentData) {
+          setError('Document not found');
           setIsLoading(false);
           return;
         }
