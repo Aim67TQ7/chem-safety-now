@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -177,7 +178,7 @@ const SignupPage = () => {
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
               <div className="w-10 h-10">
                 <img 
-                  src="/lovable-uploads/7cb0a20-15f0-43f7-9877-126cab0c631c.png" 
+                  src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
                   alt="ChemLabel-GPT Logo" 
                   className="w-full h-full object-contain"
                 />
