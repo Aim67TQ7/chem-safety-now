@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, RefreshCw, FileText, TestTube, Eye, Code, Zap } from "lucide-react";
+import { ArrowLeft, RefreshCw, FileText, TestTube, Eye, Code, Zap, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Json } from "@/integrations/supabase/types";
 
@@ -26,6 +27,7 @@ interface SDSDocument {
   nfpa_codes?: Json;
   signal_word?: string | null;
   manufacturer?: string | null;
+  cas_number?: string | null;
 }
 
 const PDFParserTestPage = () => {
@@ -68,6 +70,7 @@ const PDFParserTestPage = () => {
         nfpa_codes: doc.nfpa_codes || {},
         signal_word: doc.signal_word,
         manufacturer: doc.manufacturer,
+        cas_number: doc.cas_number,
         extraction_status: doc.extraction_status,
         confidence: doc.ai_extraction_confidence,
         quality_score: doc.extraction_quality_score
@@ -108,6 +111,7 @@ const PDFParserTestPage = () => {
           nfpa_codes: updatedDoc.nfpa_codes || {},
           signal_word: updatedDoc.signal_word,
           manufacturer: updatedDoc.manufacturer,
+          cas_number: updatedDoc.cas_number,
           extraction_status: updatedDoc.extraction_status,
           confidence: updatedDoc.ai_extraction_confidence,
           quality_score: updatedDoc.extraction_quality_score
@@ -118,6 +122,12 @@ const PDFParserTestPage = () => {
       toast.error('Failed to process document');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const openPDFInNewWindow = () => {
+    if (selectedDocument?.source_url) {
+      window.open(selectedDocument.source_url, '_blank');
     }
   };
 
@@ -182,12 +192,25 @@ const PDFParserTestPage = () => {
             <ResizablePanel defaultSize={40} minSize={25}>
               <Card className="h-full">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Code className="h-5 w-5" />
-                    Extracted Text
-                    <Badge variant="outline" className="ml-2">
-                      {extractedText.length} characters
-                    </Badge>
+                  <CardTitle className="flex items-center justify-between text-lg">
+                    <div className="flex items-center gap-2">
+                      <Code className="h-5 w-5" />
+                      Extracted Text
+                      <Badge variant="outline" className="ml-2">
+                        {extractedText.length} characters
+                      </Badge>
+                    </div>
+                    {selectedDocument.source_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={openPDFInNewWindow}
+                        className="flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Open PDF
+                      </Button>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 h-[calc(100%-4rem)]">
@@ -202,13 +225,13 @@ const PDFParserTestPage = () => {
 
             <ResizableHandle withHandle />
 
-            {/* Right Panel - Processing Logic */}
+            {/* Right Panel - HMIS Analysis & Rules */}
             <ResizablePanel defaultSize={60} minSize={35}>
               <Card className="h-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Zap className="h-5 w-5" />
-                    HMIS/PPE/Pictogram Logic
+                    HMIS Analysis & Rules
                     {processingResults && (
                       <Badge 
                         variant={processingResults.confidence >= 80 ? "default" : "secondary"}
@@ -222,25 +245,85 @@ const PDFParserTestPage = () => {
                 <CardContent className="space-y-4 overflow-y-auto h-[calc(100%-4rem)]">
                   {processingResults ? (
                     <div className="space-y-4">
-                      {/* HMIS Codes */}
+                      {/* Product Information */}
                       <div className="p-3 bg-blue-50 rounded-lg">
-                        <h4 className="font-semibold mb-2">HMIS Codes</h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>Health: <Badge variant="outline">{processingResults.hmis_codes?.health || 'N/A'}</Badge></div>
-                          <div>Flammability: <Badge variant="outline">{processingResults.hmis_codes?.flammability || 'N/A'}</Badge></div>
-                          <div>Physical: <Badge variant="outline">{processingResults.hmis_codes?.physical || 'N/A'}</Badge></div>
-                          <div>PPE: <Badge variant="outline">{processingResults.hmis_codes?.ppe || 'N/A'}</Badge></div>
+                        <h4 className="font-semibold mb-2">Product Information</h4>
+                        <div className="space-y-1 text-sm">
+                          <div>Product: <Badge variant="outline">{selectedDocument.product_name}</Badge></div>
+                          <div>CAS Number: <Badge variant="outline">{processingResults.cas_number || 'N/A'}</Badge></div>
+                          <div>Manufacturer: <Badge variant="outline">{processingResults.manufacturer || 'N/A'}</Badge></div>
                         </div>
                       </div>
 
-                      {/* Pictograms */}
+                      {/* HMIS Codes & Rules */}
+                      <div className="p-3 bg-green-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">HMIS Codes & Calculation Rules</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <div className="font-medium mb-1">Health: <Badge variant="outline">{processingResults.hmis_codes?.health || 'N/A'}</Badge></div>
+                            <div className="text-xs text-gray-600">
+                              • 0: No significant risk<br/>
+                              • 1: Slight hazard<br/>
+                              • 2: Moderate hazard<br/>
+                              • 3: Serious hazard<br/>
+                              • 4: Severe hazard
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-medium mb-1">Flammability: <Badge variant="outline">{processingResults.hmis_codes?.flammability || 'N/A'}</Badge></div>
+                            <div className="text-xs text-gray-600">
+                              • 0: Will not burn<br/>
+                              • 1: Above 200°F<br/>
+                              • 2: Above 100°F to 200°F<br/>
+                              • 3: Below 100°F<br/>
+                              • 4: Below 73°F
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-medium mb-1">Physical: <Badge variant="outline">{processingResults.hmis_codes?.physical || 'N/A'}</Badge></div>
+                            <div className="text-xs text-gray-600">
+                              • 0: Stable<br/>
+                              • 1: Unstable if heated<br/>
+                              • 2: Violent change<br/>
+                              • 3: Shock/heat may detonate<br/>
+                              • 4: May detonate
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-medium mb-1">PPE: <Badge variant="outline">{processingResults.hmis_codes?.special || processingResults.hmis_codes?.ppe || 'N/A'}</Badge></div>
+                            <div className="text-xs text-gray-600">
+                              • A-K: Specific PPE combinations<br/>
+                              • X: Special precautions<br/>
+                              • Based on Section 8 requirements
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* H-Codes */}
+                      <div className="p-3 bg-red-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">Hazard Codes (H-Codes)</h4>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {Array.isArray(processingResults.h_codes) && processingResults.h_codes.length > 0 ? (
+                            processingResults.h_codes.map((code: any, idx: number) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {typeof code === 'string' ? code : code.code || code}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-gray-500">None identified</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* GHS Pictograms */}
                       <div className="p-3 bg-orange-50 rounded-lg">
                         <h4 className="font-semibold mb-2">GHS Pictograms</h4>
                         <div className="flex flex-wrap gap-1">
                           {Array.isArray(processingResults.pictograms) && processingResults.pictograms.length > 0 ? (
                             processingResults.pictograms.map((pic: any, idx: number) => (
                               <Badge key={idx} variant="outline" className="text-xs">
-                                {typeof pic === 'string' ? pic : pic.name || pic.ghs_code}
+                                {typeof pic === 'string' ? pic : pic.name || pic.ghs_code || pic}
                               </Badge>
                             ))
                           ) : (
@@ -249,23 +332,7 @@ const PDFParserTestPage = () => {
                         </div>
                       </div>
 
-                      {/* H-Codes */}
-                      <div className="p-3 bg-red-50 rounded-lg">
-                        <h4 className="font-semibold mb-2">Hazard Codes</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {Array.isArray(processingResults.h_codes) && processingResults.h_codes.length > 0 ? (
-                            processingResults.h_codes.map((code: any, idx: number) => (
-                              <Badge key={idx} variant="outline" className="text-xs">
-                                {typeof code === 'string' ? code : code.code}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-gray-500">None identified</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Metadata */}
+                      {/* Processing Metadata */}
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <h4 className="font-semibold mb-2">Processing Metadata</h4>
                         <div className="text-sm space-y-1">
@@ -274,9 +341,6 @@ const PDFParserTestPage = () => {
                           {processingResults.signal_word && (
                             <div>Signal Word: <Badge variant="outline">{processingResults.signal_word}</Badge></div>
                           )}
-                          {processingResults.manufacturer && (
-                            <div>Manufacturer: <Badge variant="outline">{processingResults.manufacturer}</Badge></div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -284,7 +348,7 @@ const PDFParserTestPage = () => {
                     <div className="flex items-center justify-center h-full text-gray-500">
                       <div className="text-center">
                         <Zap className="h-12 w-12 mx-auto mb-4" />
-                        <p>Select a document to view processing results</p>
+                        <p>Select a document to view HMIS analysis and rules</p>
                       </div>
                     </div>
                   )}
