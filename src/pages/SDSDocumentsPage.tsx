@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +13,8 @@ import { toast } from 'sonner';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import LabelPrinterPopup from '@/components/popups/LabelPrinterPopup';
 import SDSViewerPopup from '@/components/popups/SDSViewerPopup';
+import SDSEvaluationButton from '@/components/SDSEvaluationButton';
+import { getSDSDocumentStatus, getComplianceStatusBadge } from '@/utils/sdsStatusUtils';
 
 interface SDSDocument {
   id: string;
@@ -109,17 +110,9 @@ const SDSDocumentsPage = () => {
     return 'Poor';
   };
 
-  const getComplianceStatus = (doc: SDSDocument) => {
-    if (doc.extraction_status === 'osha_compliant' && doc.ai_extraction_confidence >= 98) {
-      return { status: 'osha_compliant', label: 'OSHA Compliant', icon: Shield, color: 'bg-green-600' };
-    }
-    if (doc.extraction_status === 'manual_review_required') {
-      return { status: 'manual_review', label: 'Manual Review Required', icon: AlertTriangle, color: 'bg-orange-600' };
-    }
-    if (doc.ai_extraction_confidence >= 80) {
-      return { status: 'high_quality', label: 'High Quality', icon: CheckCircle, color: 'bg-blue-600' };
-    }
-    return { status: 'basic', label: 'Basic Extraction', icon: AlertCircle, color: 'bg-gray-600' };
+  const handleEvaluationComplete = () => {
+    console.log('🔄 Refreshing document list after evaluation');
+    refetch();
   };
 
   const handleSearch = () => {
@@ -232,15 +225,29 @@ const SDSDocumentsPage = () => {
   const readableDocs = documents?.filter((doc: SDSDocument) => doc.is_readable) || [];
 
   const DocumentCard = ({ doc }: { doc: SDSDocument }) => {
-    const compliance = getComplianceStatus(doc);
-    const ComplianceIcon = compliance.icon;
+    const statusInfo = getSDSDocumentStatus(doc);
+    const badgeInfo = getComplianceStatusBadge(doc);
+    
+    // Get icon component dynamically
+    const getIconComponent = (iconName: string) => {
+      const icons = {
+        Shield,
+        AlertTriangle,
+        CheckCircle,
+        AlertCircle,
+        FileText
+      };
+      return icons[iconName as keyof typeof icons] || FileText;
+    };
+    
+    const BadgeIcon = getIconComponent(badgeInfo.icon);
     
     return (
-      <Card className="mb-3">
+      <Card className={`mb-3 ${statusInfo.backgroundColor} ${statusInfo.borderColor} border-2`}>
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-base font-semibold text-gray-900 truncate">
+              <CardTitle className={`text-base font-semibold truncate ${statusInfo.textColor}`}>
                 {doc.product_name}
               </CardTitle>
               {doc.manufacturer && (
@@ -254,26 +261,28 @@ const SDSDocumentsPage = () => {
             </div>
             <div className="flex flex-col items-end space-y-1 ml-2">
               <Badge 
-                variant="outline"
-                className={`text-xs px-2 py-0 text-white ${compliance.color}`}
+                variant={badgeInfo.variant}
+                className={`text-xs px-2 py-0 ${badgeInfo.className}`}
               >
-                <ComplianceIcon className="h-2 w-2 mr-1" />
-                {compliance.label}
+                <BadgeIcon className="h-2 w-2 mr-1" />
+                {badgeInfo.label}
               </Badge>
-              <div className="text-right">
-                <div className="flex items-center space-x-1">
-                  <Progress 
-                    value={doc.ai_extraction_confidence || doc.extraction_quality_score || 0} 
-                    className="w-12 h-1"
-                  />
-                  <span className="text-xs font-medium">
-                    {Math.round(doc.ai_extraction_confidence || doc.extraction_quality_score || 0)}%
-                  </span>
+              {statusInfo.isEvaluated && (
+                <div className="text-right">
+                  <div className="flex items-center space-x-1">
+                    <Progress 
+                      value={statusInfo.confidence} 
+                      className="w-12 h-1"
+                    />
+                    <span className="text-xs font-medium">
+                      {Math.round(statusInfo.confidence)}%
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {getQualityLabel(statusInfo.confidence)}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500">
-                  {getQualityLabel(doc.ai_extraction_confidence || doc.extraction_quality_score)}
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -300,8 +309,8 @@ const SDSDocumentsPage = () => {
               </div>
             )}
 
-            {compliance.status === 'manual_review' && (
-              <div className="text-xs text-orange-700 bg-orange-50 p-2 rounded border border-orange-200">
+            {doc.extraction_status === 'manual_review_required' && (
+              <div className="text-xs text-orange-700 bg-orange-100 p-2 rounded border border-orange-200">
                 <AlertTriangle className="h-3 w-3 inline mr-1" />
                 This document requires manual review by an EHS specialist before use for labeling.
               </div>
@@ -311,31 +320,37 @@ const SDSDocumentsPage = () => {
               <div className="text-xs text-gray-400">
                 {new Date(doc.created_at).toLocaleDateString()}
               </div>
-              <div className="flex space-x-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleViewDocument(doc)}
-                  className="text-xs h-6 px-2"
-                >
-                  <ExternalLink className="h-2 w-2 mr-1" />
-                  View
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => handlePrintLabel(doc)}
-                  className={`text-xs h-6 px-2 text-white ${
-                    compliance.status === 'osha_compliant' 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : compliance.status === 'manual_review'
-                      ? 'bg-orange-600 hover:bg-orange-700'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  <Printer className="h-2 w-2 mr-1" />
-                  Print Label
-                </Button>
+              <div className="flex flex-col space-y-1">
+                <div className="flex space-x-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewDocument(doc)}
+                    className="text-xs h-6 px-2"
+                  >
+                    <ExternalLink className="h-2 w-2 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handlePrintLabel(doc)}
+                    className={`text-xs h-6 px-2 text-white ${
+                      doc.extraction_status === 'osha_compliant' 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : doc.extraction_status === 'manual_review_required'
+                        ? 'bg-orange-600 hover:bg-orange-700'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                  >
+                    <Printer className="h-2 w-2 mr-1" />
+                    Print Label
+                  </Button>
+                </div>
+                <SDSEvaluationButton 
+                  document={doc} 
+                  onEvaluationComplete={handleEvaluationComplete}
+                />
               </div>
             </div>
           </div>
