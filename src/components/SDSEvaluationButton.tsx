@@ -30,9 +30,9 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
       };
     }
     
-    if (status === 'osha_compliant' && confidence >= 98) {
+    if (status === 'completed' && confidence >= 90) {
       return { 
-        label: 'OSHA Compliant', 
+        label: 'High Confidence', 
         action: 'Re-evaluate',
         icon: CheckCircle2,
         variant: 'secondary' as const
@@ -54,42 +54,90 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
     }
 
     setIsEvaluating(true);
-    console.log('🔍 Starting PDF evaluation for:', document.product_name);
+    console.log('🔍 Starting OpenAI PDF evaluation for:', document.product_name);
 
     try {
-      // Call the extract-sds-text edge function with enhanced GHS-to-HMIS conversion
-      const { data: extractionResult, error: extractionError } = await supabase.functions.invoke('extract-sds-text', {
+      // Construct the public PDF URL for OpenAI access
+      let pdfUrl = document.bucket_url || document.source_url;
+      
+      // If it's a bucket URL, convert to public URL
+      if (document.bucket_url && document.bucket_url.startsWith('sds-documents/')) {
+        pdfUrl = `https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/${document.bucket_url}`;
+      }
+
+      console.log('📄 Sending PDF to OpenAI for analysis:', pdfUrl);
+
+      // Call the OpenAI SDS analysis function
+      const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('openai-sds-analysis', {
         body: { 
           document_id: document.id,
-          bucket_url: document.bucket_url || document.source_url
+          pdf_url: pdfUrl
         }
       });
 
-      if (extractionError) {
-        console.error('❌ PDF evaluation error:', extractionError);
-        throw new Error(extractionError.message || 'Evaluation failed');
+      if (analysisError) {
+        console.error('❌ OpenAI analysis error:', analysisError);
+        throw new Error(analysisError.message || 'OpenAI analysis failed');
       }
 
-      console.log('✅ PDF evaluation completed:', extractionResult);
+      if (!analysisResult.success) {
+        throw new Error(analysisResult.error || 'OpenAI analysis failed');
+      }
 
-      // Show success message with quality score
-      const qualityScore = extractionResult.quality_score || 0;
-      const confidence = extractionResult.confidence || 0;
+      console.log('✅ OpenAI analysis completed:', analysisResult.data);
+
+      // Update the document with the analysis results
+      const extractedData = analysisResult.data;
       
-      if (qualityScore >= 90 && confidence >= 98) {
-        toast.success(`✅ OSHA-compliant evaluation completed for ${document.product_name} (${confidence}% confidence)`);
-      } else if (qualityScore >= 70) {
-        toast.success(`🤖 AI-enhanced evaluation completed for ${document.product_name} (${confidence}% confidence)`);
+      const updateData = {
+        ai_extracted_data: {
+          product_name: extractedData.product_name,
+          manufacturer: extractedData.manufacturer,
+          cas_number: extractedData.cas_number,
+          signal_word: extractedData.signal_word,
+          hazard_statements: extractedData.h_codes || [],
+          ghs_pictograms: extractedData.ghs_pictograms || [],
+          hmis_codes: extractedData.hmis_codes || {},
+          confidence_score: extractedData.confidence_score || 0,
+          processing_time_ms: extractedData.processing_time_ms || 0,
+          analysis_method: 'openai_vision'
+        },
+        ai_extraction_confidence: extractedData.confidence_score || 0,
+        ai_extraction_date: new Date().toISOString(),
+        extraction_status: 'completed',
+        hmis_codes: extractedData.hmis_codes || {},
+        signal_word: extractedData.signal_word,
+        pictograms: extractedData.ghs_pictograms || [],
+        h_codes: extractedData.h_codes || []
+      };
+
+      const { error: updateError } = await supabase
+        .from('sds_documents')
+        .update(updateData)
+        .eq('id', document.id);
+
+      if (updateError) {
+        console.error('❌ Error updating document:', updateError);
+        throw updateError;
+      }
+
+      // Show success message based on confidence
+      const confidence = extractedData.confidence_score || 0;
+      
+      if (confidence >= 90) {
+        toast.success(`✅ High-confidence analysis completed for ${document.product_name} (${confidence}% confidence)`);
+      } else if (confidence >= 70) {
+        toast.success(`🤖 Analysis completed for ${document.product_name} (${confidence}% confidence)`);
       } else {
-        toast.warning(`⚠️ ${document.product_name} evaluation completed but may require manual review`);
+        toast.warning(`⚠️ ${document.product_name} analysis completed but may require manual review (${confidence}% confidence)`);
       }
 
       // Refresh the parent component
       onEvaluationComplete();
 
     } catch (error) {
-      console.error('❌ Error during PDF evaluation:', error);
-      toast.error(`Failed to evaluate ${document.product_name}: ${error.message}`);
+      console.error('❌ Error during OpenAI analysis:', error);
+      toast.error(`Failed to analyze ${document.product_name}: ${error.message}`);
     } finally {
       setIsEvaluating(false);
     }
@@ -110,7 +158,7 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
         {isEvaluating ? (
           <>
             <Loader2 className="h-2 w-2 mr-1 animate-spin" />
-            Evaluating...
+            Analyzing...
           </>
         ) : (
           <>
