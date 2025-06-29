@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Calendar, Globe, QrCode, Crown, Zap } from "lucide-react";
+import { Building2, MapPin, Calendar, Globe, QrCode, Crown, Zap, ArrowDown, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 import FacilityActivityCard from "./FacilityActivityCard";
@@ -39,40 +39,63 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Hero SDS Search Section - Primary Feature */}
-        <div className="mb-12">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Find Your Safety Data Sheets
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Search our comprehensive database of Safety Data Sheets to get OSHA-compliant labeling and safety information instantly.
-            </p>
+        {/* ULTRA-PROMINENT SDS Search Section */}
+        <div className="mb-16 relative">
+          {/* Attention-Grabbing Header with Animation */}
+          <div className="text-center mb-8 relative">
+            {/* Animated Background Glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-200 via-yellow-200 to-orange-200 opacity-30 rounded-3xl blur-3xl animate-pulse"></div>
+            
+            <div className="relative z-10">
+              {/* Urgent Action Message */}
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-4 animate-bounce shadow-lg">
+                <Search className="w-4 h-4" />
+                START HERE - SEARCH FOR YOUR CHEMICALS
+                <Search className="w-4 h-4" />
+              </div>
+              
+              <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 mb-4 leading-tight">
+                FIND YOUR SDS
+              </h1>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                Safety Data Sheet Search
+              </h2>
+              <p className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto font-semibold">
+                🚨 <span className="text-red-600">REQUIRED:</span> Search our database to get OSHA-compliant labels instantly
+              </p>
+            </div>
           </div>
           
-          {/* Enhanced SDS Search Component */}
-          <div className="max-w-4xl mx-auto">
+          {/* Animated Arrow Pointing Down */}
+          <div className="flex justify-center mb-6">
+            <div className="animate-bounce">
+              <ArrowDown className="w-8 h-8 text-orange-500" />
+            </div>
+          </div>
+          
+          {/* Ultra-Enhanced SDS Search Component */}
+          <div className="max-w-6xl mx-auto">
             <SDSSearch facilityId={facility.id} />
           </div>
           
-          {/* Visual Emphasis Elements */}
-          <div className="flex justify-center items-center mt-8 space-x-8 text-sm text-gray-500">
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-              <span>OSHA Compliant</span>
+          {/* Enhanced Visual Emphasis Elements */}
+          <div className="flex justify-center items-center mt-8 space-x-8">
+            <div className="flex items-center bg-green-100 px-4 py-2 rounded-full border-2 border-green-300">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse"></div>
+              <span className="font-bold text-green-800">OSHA COMPLIANT</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
-              <span>Instant Results</span>
+            <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full border-2 border-blue-300">
+              <div className="w-3 h-3 bg-blue-500 rounded-full mr-3 animate-pulse"></div>
+              <span className="font-bold text-blue-800">INSTANT RESULTS</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></div>
-              <span>Label Ready</span>
+            <div className="flex items-center bg-purple-100 px-4 py-2 rounded-full border-2 border-purple-300">
+              <div className="w-3 h-3 bg-purple-500 rounded-full mr-3 animate-pulse"></div>
+              <span className="font-bold text-purple-800">LABEL READY</span>
             </div>
           </div>
         </div>
 
-        {/* Dashboard Cards Section */}
+        {/* Dashboard Cards Section - Now Secondary */}
         <div className="grid grid-cols-1 gap-6">
           {/* Facility Activity Card */}
           <FacilityActivityCard facilityId={facility.id} />

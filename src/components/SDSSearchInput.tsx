@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, FileText, Loader2, Lightbulb, CheckCircle } from "lucide-react";
+import { Search, FileText, Loader2, Lightbulb, CheckCircle, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -144,36 +145,53 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
   };
 
   return (
-    <div className="space-y-4">
-      {/* Main Search Input - Enhanced */}
-      <div className="flex gap-3">
-        <Input
-          type="text"
-          placeholder="Search for any chemical, product, or manufacturer (e.g., Acetone, 3M Scotch-Weld, Loctite 242...)"
-          value={searchQuery}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          disabled={isSearching}
-          className="flex-1 text-lg py-6 px-4 border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white shadow-lg"
-        />
-        <Button 
-          onClick={() => handleSearch()}
-          disabled={isSearching || !searchQuery.trim()}
-          size="lg"
-          className="px-8 py-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg transform transition-all hover:scale-105"
-        >
-          {isSearching ? (
-            <>
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Searching...
-            </>
-          ) : (
-            <>
-              <Search className="w-5 h-5 mr-2" />
-              Search SDS
-            </>
-          )}
-        </Button>
+    <div className="space-y-6">
+      {/* ULTRA-PROMINENT Search Input */}
+      <div className="relative">
+        {/* Glowing background for the search area */}
+        <div className="absolute -inset-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-2xl blur opacity-30 animate-pulse"></div>
+        
+        <div className="relative flex gap-4 p-2 bg-white rounded-2xl border-4 border-orange-400 shadow-2xl">
+          <Input
+            type="text"
+            placeholder="🚨 ENTER CHEMICAL NAME, PRODUCT, OR MANUFACTURER (e.g., Acetone, 3M Scotch-Weld, Loctite 242...)"
+            value={searchQuery}
+            onChange={handleInputChange}
+            onKeyPress={handleKeyPress}
+            disabled={isSearching}
+            className="flex-1 text-xl md:text-2xl py-8 px-6 border-3 border-orange-300 focus:border-red-500 focus:ring-4 focus:ring-orange-200 bg-white shadow-lg font-semibold placeholder:text-gray-600 placeholder:font-bold"
+          />
+          <Button 
+            onClick={() => handleSearch()}
+            disabled={isSearching || !searchQuery.trim()}
+            size="lg"
+            className="px-8 md:px-12 py-8 text-xl md:text-2xl bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:to-red-700 text-white font-black shadow-2xl transform transition-all hover:scale-110 border-2 border-white"
+          >
+            {isSearching ? (
+              <>
+                <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                SEARCHING...
+              </>
+            ) : (
+              <>
+                <Search className="w-6 h-6 mr-3" />
+                SEARCH SDS NOW
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mandatory Action Notice */}
+      <div className="bg-gradient-to-r from-red-100 to-orange-100 border-3 border-red-400 rounded-xl p-6">
+        <div className="flex items-center justify-center gap-3 text-red-800 font-black text-lg md:text-xl mb-2">
+          <AlertTriangle className="w-6 h-6" />
+          SAFETY REQUIREMENT
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <p className="text-center text-red-700 font-bold">
+          Federal law requires Safety Data Sheets for all hazardous chemicals. Search now to ensure compliance!
+        </p>
       </div>
 
       {/* AI Search Suggestions */}
@@ -272,13 +290,13 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
       )}
 
       {/* Enhanced Information Section */}
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-lg border border-gray-200">
-        <div className="text-sm space-y-2">
-          <div className="flex items-center gap-2 text-gray-700">
-            <FileText className="w-4 h-4 text-blue-600" />
-            <span className="font-semibold">We search official Safety Data Sheets (SDS/MSDS) only</span>
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border-2 border-gray-300">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-gray-800">
+            <FileText className="w-5 h-5 text-blue-600" />
+            <span className="font-bold text-lg">We search official Safety Data Sheets (SDS/MSDS) only</span>
           </div>
-          <ul className="text-xs text-gray-600 space-y-1 ml-6">
+          <ul className="text-sm text-gray-700 space-y-2 ml-8 font-semibold">
             <li>• Use specific product names or include manufacturer when known</li>
             <li>• Try chemical names or CAS numbers for better results</li>
             <li>• We don't search product catalogs or general information</li>
