@@ -32,21 +32,6 @@ interface OpenAISSDResponse {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-// Helper function to convert Supabase storage path to public URL
-const getPublicStorageUrl = (path: string): string => {
-  // Remove 'supabase://' prefix if present
-  const cleanPath = path.replace('supabase://', '');
-  
-  // If it's already a full HTTP URL, return as is
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-  
-  // Construct the public Supabase storage URL
-  const supabaseUrl = 'https://fwzgsiysdwsmmkgqmbsd.supabase.co';
-  return `${supabaseUrl}/storage/v1/object/public/${cleanPath}`;
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -58,18 +43,16 @@ serve(async (req) => {
     const { document_id, pdf_url }: OpenAISSDRequest = await req.json();
     
     console.log('🤖 OpenAI SDS Analysis for document:', document_id);
-    console.log('📄 Original PDF URL:', pdf_url);
+    console.log('📄 PDF URL:', pdf_url);
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Convert to public URL that OpenAI can access
-    const publicPdfUrl = getPublicStorageUrl(pdf_url);
-    console.log('🔗 Public PDF URL:', publicPdfUrl);
+    // Create the analysis prompt for text-based analysis
+    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer. I will provide you with a PDF document URL containing an SDS. Please analyze this document and extract the following information in the exact JSON format specified.
 
-    // Create the analysis prompt
-    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer. Please analyze this SDS document and extract the following information in the exact JSON format specified:
+Please access the PDF at this URL: ${pdf_url}
 
 REQUIRED OUTPUT FORMAT:
 {
@@ -90,7 +73,7 @@ REQUIRED OUTPUT FORMAT:
 }
 
 IMPORTANT INSTRUCTIONS:
-1. Extract information ONLY from what you can clearly see in the document
+1. Access the PDF document at the provided URL and extract information from its contents
 2. Use "N/A" for any field you cannot determine with confidence
 3. For HMIS codes, follow standard 0-4 scale (0=minimal, 4=severe hazard)
 4. PPE codes: A-K represent specific equipment combinations, X means consult supervisor
@@ -98,9 +81,9 @@ IMPORTANT INSTRUCTIONS:
 6. If multiple products are listed, focus on the primary/main product
 7. Confidence score should reflect how clearly the information was presented in the document
 
-Please analyze this SDS document thoroughly and provide the requested information:`;
+Please analyze the SDS document at the URL provided and return only the requested JSON data.`;
 
-    // Make the OpenAI API call
+    // Make the OpenAI API call using the standard chat completion endpoint
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -108,23 +91,11 @@ Please analyze this SDS document thoroughly and provide the requested informatio
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: analysisPrompt
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: publicPdfUrl,
-                  detail: 'high'
-                }
-              }
-            ]
+            content: analysisPrompt
           }
         ],
         max_tokens: 1500,
@@ -134,6 +105,7 @@ Please analyze this SDS document thoroughly and provide the requested informatio
 
     if (!response.ok) {
       const errorData = await response.text();
+      console.error('❌ OpenAI API error:', response.status, errorData);
       throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
     }
 
@@ -154,6 +126,7 @@ Please analyze this SDS document thoroughly and provide the requested informatio
       }
     } catch (parseError) {
       console.error('❌ Failed to parse OpenAI response as JSON:', parseError);
+      console.error('Raw response:', content);
       throw new Error('Invalid JSON response from OpenAI');
     }
 
