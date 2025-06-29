@@ -4,22 +4,23 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { 
   Building2, 
-  FileText, 
   AlertTriangle, 
   Settings, 
   Menu, 
   X,
   QrCode,
-  MapPin
+  MapPin,
+  Printer
 } from "lucide-react";
 
 interface FacilityNavbarProps {
   facilityName?: string;
   facilityLogo?: string;
   facilityAddress?: string;
+  onPrintLabelClick?: () => void;
 }
 
-const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: FacilityNavbarProps) => {
+const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, onPrintLabelClick }: FacilityNavbarProps) => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,11 +30,6 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
       name: 'Dashboard',
       path: `/facility/${facilitySlug}`,
       icon: <Building2 className="w-4 h-4" />,
-    },
-    {
-      name: 'SDS Documents',
-      path: `/facility/${facilitySlug}/sds-documents`,
-      icon: <FileText className="w-4 h-4" />,
     },
     {
       name: 'Access Tools',
@@ -101,6 +97,16 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
                 <span>{item.name}</span>
               </Link>
             ))}
+            
+            {/* Print Label Button */}
+            <Button
+              onClick={onPrintLabelClick}
+              className="flex items-center space-x-2 ml-2"
+              size="sm"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print Label</span>
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -138,6 +144,19 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
                   <span>{item.name}</span>
                 </Link>
               ))}
+              
+              {/* Mobile Print Label Button */}
+              <Button
+                onClick={() => {
+                  onPrintLabelClick?.();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-2 w-full justify-start mt-2"
+                size="sm"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Label</span>
+              </Button>
             </div>
           </div>
         )}

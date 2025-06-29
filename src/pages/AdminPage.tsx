@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lock } from "lucide-react";
+import { Lock, FileText, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -102,17 +102,35 @@ const AdminPage = () => {
     <div className="container mx-auto py-10 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button 
-          variant="outline" 
-          onClick={() => {
-            sessionStorage.removeItem("adminAuthorized");
-            sessionStorage.removeItem("adminEmail");
-            setAuthorized(false);
-            navigate("/");
-          }}
-        >
-          Exit Admin Mode
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/admin/sds-documents")}
+            className="flex items-center gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            SDS Documents
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/admin/pdf-parser")}
+            className="flex items-center gap-2"
+          >
+            <TestTube className="h-4 w-4" />
+            PDF Parser Test
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              sessionStorage.removeItem("adminAuthorized");
+              sessionStorage.removeItem("adminEmail");
+              setAuthorized(false);
+              navigate("/");
+            }}
+          >
+            Exit Admin Mode
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

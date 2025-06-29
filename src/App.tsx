@@ -12,6 +12,8 @@ import IncidentsPage from "./pages/IncidentsPage";
 import FacilitySettingsPage from "./pages/FacilitySettingsPage";
 import QRCodePrintPage from "./pages/QRCodePrintPage";
 import AdminPage from "./pages/AdminPage";
+import AdminSDSDocumentsPage from "./pages/AdminSDSDocumentsPage";
+import PDFParserTestPage from "./pages/PDFParserTestPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import SalesPartnerPage from "./pages/SalesPartnerPage";
@@ -40,6 +42,8 @@ const App = () => (
           <Route path="/facility/:facilitySlug/settings" element={<FacilitySettingsPage />} />
           <Route path="/qr-print/:facilitySlug" element={<QRCodePrintPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/sds-documents" element={<AdminSDSDocumentsPage />} />
+          <Route path="/admin/pdf-parser" element={<PDFParserTestPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/sales-partner" element={<SalesPartnerPage />} />
