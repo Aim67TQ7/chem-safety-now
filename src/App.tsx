@@ -4,28 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
-import Index from "./pages/Index";
-import FacilityDashboard from "./components/FacilityDashboard";
-import SDSDocumentsPage from "./pages/SDSDocumentsPage";
-import AccessToolsPage from "./pages/AccessToolsPage";
-import IncidentsPage from "./pages/IncidentsPage";
-import FacilitySettingsPage from "./pages/FacilitySettingsPage";
-import QRCodePrintPage from "./pages/QRCodePrintPage";
-import AdminPage from "./pages/AdminPage";
-import AdminSDSDocumentsPage from "./pages/AdminSDSDocumentsPage";
-import PDFParserTestPage from "./pages/PDFParserTestPage";
-import PrivacyPage from "./pages/PrivacyPage";
-import TermsPage from "./pages/TermsPage";
-import SalesPartnerPage from "./pages/SalesPartnerPage";
-import SalesPartnerTermsPage from "./pages/SalesPartnerTermsPage";
-import SignupPage from "./pages/SignupPage";
-import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
-import SubscriptionCancelPage from "./pages/SubscriptionCancelPage";
-import SubscriptionRequiredPage from "./pages/SubscriptionRequiredPage";
-import SubscriptionPlansPage from "./pages/SubscriptionPlansPage";
-import UpgradePage from "./pages/UpgradePage";
-import NotFound from "./pages/NotFound";
-import FacilityPageWrapper from "./pages/FacilityPageWrapper";
+import NotFound from "@/pages/NotFound";
+import LabelPrinterPage from "@/pages/LabelPrinterPage";
 
 const queryClient = new QueryClient();
 
@@ -35,26 +15,12 @@ const App = () => (
       <Toaster />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/facility/:facilitySlug" element={<FacilityPageWrapper />} />
-          <Route path="/facility/:facilitySlug/sds-documents" element={<SDSDocumentsPage />} />
-          <Route path="/facility/:facilitySlug/access-tools" element={<AccessToolsPage />} />
-          <Route path="/facility/:facilitySlug/incidents" element={<IncidentsPage />} />
-          <Route path="/facility/:facilitySlug/settings" element={<FacilitySettingsPage />} />
-          <Route path="/qr-print/:facilitySlug" element={<QRCodePrintPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/sds-documents" element={<AdminSDSDocumentsPage />} />
-          <Route path="/admin/pdf-parser" element={<PDFParserTestPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/sales-partner" element={<SalesPartnerPage />} />
-          <Route path="/sales-partner-terms" element={<SalesPartnerTermsPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
-          <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
-          <Route path="/subscription/required" element={<SubscriptionRequiredPage />} />
-          <Route path="/subscription/plans" element={<SubscriptionPlansPage />} />
-          <Route path="/upgrade" element={<UpgradePage />} />
+          {navItems.map(({ to, page }) => (
+            <Route key={to} path={to} element={page} />
+          ))}
+          {/* Label Printer Route */}
+          <Route path="/facility/:facilitySlug/label-printer" element={<LabelPrinterPage />} />
+          {/* 404 Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
