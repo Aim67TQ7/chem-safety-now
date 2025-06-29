@@ -41,21 +41,6 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       <div className="container mx-auto px-4 py-8">
         {/* SDS Search Section */}
         <div className="mb-16 relative">
-          {/* Header */}
-          <div className="text-center mb-8 relative">
-            <div className="relative z-10">
-              <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 mb-4 leading-tight">
-                FIND YOUR SDS
-              </h1>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
-                Safety Data Sheet Search
-              </h2>
-              <p className="text-lg md:text-xl text-gray-700 max-w-4xl mx-auto font-semibold">
-                Search our database to get OSHA-compliant labels instantly
-              </p>
-            </div>
-          </div>
-          
           {/* SDS Search Component */}
           <div className="max-w-6xl mx-auto">
             <SDSSearch facilityId={facility.id} />
