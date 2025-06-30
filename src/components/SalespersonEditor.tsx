@@ -28,7 +28,7 @@ const SalespersonEditor = ({
 }: SalespersonEditorProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
-  const [selectedSalesRepId, setSelectedSalesRepId] = useState(currentSalespersonId || "");
+  const [selectedSalesRepId, setSelectedSalesRepId] = useState(currentSalespersonId || "unassigned");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -90,8 +90,8 @@ const SalespersonEditor = ({
         }
       }
 
-      // Then add new assignment if a salesperson is selected
-      if (selectedSalesRepId) {
+      // Then add new assignment if a salesperson is selected (not "unassigned")
+      if (selectedSalesRepId && selectedSalesRepId !== "unassigned") {
         console.log('Adding new assignment...');
         const { error } = await supabase
           .from('facility_sales_assignments')
@@ -121,7 +121,7 @@ const SalespersonEditor = ({
   };
 
   const handleCancel = () => {
-    setSelectedSalesRepId(currentSalespersonId || "");
+    setSelectedSalesRepId(currentSalespersonId || "unassigned");
     setIsEditing(false);
     setError("");
   };
@@ -158,7 +158,7 @@ const SalespersonEditor = ({
             <SelectValue placeholder="Select rep..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">No assignment</SelectItem>
+            <SelectItem value="unassigned">No assignment</SelectItem>
             {salesReps.map((rep) => (
               <SelectItem key={rep.id} value={rep.id}>
                 {rep.name}
