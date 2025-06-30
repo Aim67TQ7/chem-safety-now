@@ -20,6 +20,7 @@ interface ExtractedDataPopupProps {
     pictograms?: string[];
     confidence_score?: number;
     extraction_status?: string;
+    prioritized_pictograms?: boolean;
   };
   onPrintLabel: () => void;
   onViewDocument?: () => void;
@@ -32,6 +33,19 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
   onPrintLabel,
   onViewDocument
 }) => {
+  // GHS Pictogram mapping to display actual images
+  const pictogramImages: Record<string, { name: string; imageUrl: string }> = {
+    'exclamation': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
+    'health_hazard': { name: 'Health Hazard', imageUrl: '/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png' },
+    'gas_cylinder': { name: 'Gas Cylinder', imageUrl: '/lovable-uploads/8f73c238-da2e-4a6c-bbec-0fda7667459d.png' },
+    'corrosion': { name: 'Corrosion', imageUrl: '/lovable-uploads/a1dff518-a5ad-4880-b8ee-8a036fbfe0c4.png' },
+    'skull_crossbones': { name: 'Skull and Crossbones', imageUrl: '/lovable-uploads/9ccb65e8-0bd7-41f0-bd11-2e210d5e370f.png' },
+    'exploding_bomb': { name: 'Exploding Bomb', imageUrl: '/lovable-uploads/0176f010-3f53-485e-8013-37c80276e905.png' },
+    'flame': { name: 'Flame', imageUrl: '/lovable-uploads/615d7b02-13d9-41b9-8319-db0e7e1cc52d.png' },
+    'flame_over_circle': { name: 'Flame Over Circle', imageUrl: '/lovable-uploads/881c9dcf-f0ac-4fe5-98e5-1f64a3fa6f8d.png' },
+    'environment': { name: 'Environment', imageUrl: '/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png' }
+  };
+
   const getStatusInfo = () => {
     const status = extractedData.extraction_status;
     const confidence = extractedData.confidence_score || 0;
@@ -76,6 +90,11 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
           <DialogTitle className="flex items-center gap-2 text-xl">
             <CheckCircle className="w-5 h-5 text-green-600" />
             Label Data Successfully Extracted
+            {extractedData.prioritized_pictograms && (
+              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                Pictograms Prioritized
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -155,19 +174,19 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                   <div className="grid grid-cols-2 gap-3">
                     <div className="text-center">
                       <div className="text-xs font-medium text-gray-600 mb-1">Health</div>
-                      <div className="bg-blue-100 text-blue-800 font-bold text-lg py-2 rounded">
+                      <div className="bg-blue-500 text-white font-bold text-lg py-2 rounded">
                         {extractedData.hmis_codes.health || '0'}
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xs font-medium text-gray-600 mb-1">Flammability</div>
-                      <div className="bg-red-100 text-red-800 font-bold text-lg py-2 rounded">
+                      <div className="bg-red-500 text-white font-bold text-lg py-2 rounded">
                         {extractedData.hmis_codes.flammability || '0'}
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xs font-medium text-gray-600 mb-1">Physical</div>
-                      <div className="bg-yellow-100 text-yellow-800 font-bold text-lg py-2 rounded">
+                      <div className="bg-yellow-500 text-black font-bold text-lg py-2 rounded">
                         {extractedData.hmis_codes.physical || '0'}
                       </div>
                     </div>
@@ -183,6 +202,45 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
             )}
           </div>
 
+          {/* GHS Pictograms - Prioritized Display */}
+          {extractedData.pictograms && extractedData.pictograms.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  GHS Pictograms
+                  {extractedData.prioritized_pictograms && (
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                      Prioritized from SDS
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                  {extractedData.pictograms.map((pictogramId, index) => {
+                    const pictogramData = pictogramImages[pictogramId];
+                    return (
+                      <div key={index} className="text-center">
+                        {pictogramData && (
+                          <>
+                            <div className="w-16 h-16 mx-auto mb-2 flex items-center justify-center border border-gray-200 rounded">
+                              <img 
+                                src={pictogramData.imageUrl} 
+                                alt={pictogramData.name}
+                                className="w-12 h-12 object-contain"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-600">{pictogramData.name}</p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Hazard Codes */}
           {extractedData.h_codes && extractedData.h_codes.length > 0 && (
             <Card>
@@ -194,24 +252,6 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                   {extractedData.h_codes.map((hCode, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {hCode.code}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* GHS Pictograms */}
-          {extractedData.pictograms && extractedData.pictograms.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">GHS Pictograms</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.pictograms.map((pictogram, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {pictogram.replace(/_/g, ' ')}
                     </Badge>
                   ))}
                 </div>

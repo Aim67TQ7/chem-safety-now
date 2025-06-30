@@ -1,5 +1,5 @@
 
-import { HomeIcon, Building2, FileText, AlertTriangle, Settings, Users, BarChart3, HelpCircle, ShieldCheck, UserCheck, Phone, Crown, Wrench } from "lucide-react";
+import { HomeIcon, Building2, FileText, AlertTriangle, Settings, Users, BarChart3, HelpCircle, ShieldCheck, UserCheck, Phone, Crown, Wrench, Printer } from "lucide-react";
 import Index from "@/pages/Index";
 import FacilityPageWrapper from "@/pages/FacilityPageWrapper";
 import FacilitySettingsPage from "@/pages/FacilitySettingsPage";
@@ -14,6 +14,7 @@ import SalesPartnerPage from "@/pages/SalesPartnerPage";
 import SalesPartnerTermsPage from "@/pages/SalesPartnerTermsPage";
 import SignupPage from "@/pages/SignupPage";
 import AccessToolsPage from "@/pages/AccessToolsPage";
+import LabelPrinterPage from "@/pages/LabelPrinterPage";
 
 export const navItems = [
   {
@@ -51,6 +52,12 @@ export const navItems = [
     to: "/facility/:facilitySlug/access-tools",
     icon: <Wrench className="h-4 w-4" />,
     page: <AccessToolsPage />,
+  },
+  {
+    title: "Label Printer",
+    to: "/facility/:facilitySlug/label-printer",
+    icon: <Printer className="h-4 w-4" />,
+    page: <LabelPrinterPage />,
   },
   {
     title: "QR Code Print",

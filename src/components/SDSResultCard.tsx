@@ -44,6 +44,7 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
   const [extractedDataPopupOpen, setExtractedDataPopupOpen] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [savedDocumentId, setSavedDocumentId] = useState<string | null>(null);
+  const [facilitySlug, setFacilitySlug] = useState<string | null>(null);
 
   const handleLabelAnalysis = async () => {
     try {
@@ -71,7 +72,24 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
         const savedDoc = await saveToDatabase(data.data, pdfUrl);
         if (savedDoc) {
           setSavedDocumentId(savedDoc.id);
-          setExtractedData(data.data);
+          
+          // Enhanced pictogram processing - prioritize actual GHS pictograms
+          const processedData = await processPictogramData(data.data);
+          setExtractedData(processedData);
+          
+          // Get facility slug for navigation
+          if (facilityId) {
+            const { data: facility } = await supabase
+              .from('facilities')
+              .select('slug')
+              .eq('id', facilityId)
+              .maybeSingle();
+            
+            if (facility) {
+              setFacilitySlug(facility.slug);
+            }
+          }
+          
           setExtractedDataPopupOpen(true);
           toast.success(`Label data extracted for ${document.product_name}`);
         }
@@ -85,6 +103,65 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const processPictogramData = async (labelData: any) => {
+    // Enhanced pictogram processing - prioritize GHS pictograms over H-codes
+    const pictogramMapping: Record<string, string> = {
+      'ghs01': 'exploding_bomb',
+      'ghs02': 'flame', 
+      'ghs03': 'flame_over_circle',
+      'ghs04': 'gas_cylinder',
+      'ghs05': 'corrosion',
+      'ghs06': 'skull_crossbones',
+      'ghs07': 'exclamation',
+      'ghs08': 'health_hazard',
+      'ghs09': 'environment'
+    };
+
+    let processedPictograms = [];
+
+    // First priority: Direct GHS pictogram codes from extraction
+    if (labelData.ghs_pictograms && Array.isArray(labelData.ghs_pictograms)) {
+      processedPictograms = labelData.ghs_pictograms
+        .map((code: string) => {
+          const normalizedCode = code.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return pictogramMapping[normalizedCode] || null;
+        })
+        .filter(Boolean);
+    }
+
+    // Second priority: Derive pictograms from H-codes if no direct pictograms found
+    if (processedPictograms.length === 0 && labelData.h_codes && Array.isArray(labelData.h_codes)) {
+      const hCodeToPictogram: Record<string, string> = {
+        'h200': 'exploding_bomb', 'h201': 'exploding_bomb', 'h202': 'exploding_bomb',
+        'h220': 'flame', 'h221': 'flame', 'h222': 'flame', 'h223': 'flame', 'h224': 'flame', 'h225': 'flame', 'h226': 'flame',
+        'h270': 'flame_over_circle', 'h271': 'flame_over_circle', 'h272': 'flame_over_circle',
+        'h280': 'gas_cylinder', 'h281': 'gas_cylinder',
+        'h290': 'corrosion', 'h314': 'corrosion', 'h318': 'corrosion',
+        'h300': 'skull_crossbones', 'h301': 'skull_crossbones', 'h302': 'skull_crossbones', 'h310': 'skull_crossbones', 'h311': 'skull_crossbones', 'h330': 'skull_crossbones', 'h331': 'skull_crossbones',
+        'h303': 'exclamation', 'h312': 'exclamation', 'h315': 'exclamation', 'h316': 'exclamation', 'h317': 'exclamation', 'h319': 'exclamation', 'h320': 'exclamation', 'h332': 'exclamation', 'h335': 'exclamation', 'h336': 'exclamation',
+        'h340': 'health_hazard', 'h341': 'health_hazard', 'h350': 'health_hazard', 'h351': 'health_hazard', 'h360': 'health_hazard', 'h361': 'health_hazard', 'h362': 'health_hazard', 'h370': 'health_hazard', 'h371': 'health_hazard', 'h372': 'health_hazard', 'h373': 'health_hazard',
+        'h400': 'environment', 'h401': 'environment', 'h402': 'environment', 'h410': 'environment', 'h411': 'environment', 'h412': 'environment', 'h413': 'environment'
+      };
+
+      const derivedPictograms = new Set<string>();
+      labelData.h_codes.forEach((hCode: string) => {
+        const normalizedHCode = hCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const pictogram = hCodeToPictogram[normalizedHCode];
+        if (pictogram) {
+          derivedPictograms.add(pictogram);
+        }
+      });
+
+      processedPictograms = Array.from(derivedPictograms);
+    }
+
+    return {
+      ...labelData,
+      pictograms: processedPictograms,
+      prioritized_pictograms: true
+    };
   };
 
   const saveToDatabase = async (labelData: any, pdfUrl: string) => {
@@ -151,13 +228,12 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
   };
 
   const handlePrintLabel = () => {
-    if (savedDocumentId && facilityId) {
-      // Navigate to label printer with the saved document ID
-      const facilitySlug = facilityId; // You might need to get the actual slug
+    if (savedDocumentId && facilitySlug) {
+      // Navigate to label printer with the correct facility slug
       navigate(`/facility/${facilitySlug}/label-printer?documentId=${savedDocumentId}`);
       setExtractedDataPopupOpen(false);
     } else {
-      toast.error('Please extract label data first');
+      toast.error('Please extract label data first or facility information is missing');
     }
   };
 
