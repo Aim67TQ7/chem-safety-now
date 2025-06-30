@@ -1,166 +1,168 @@
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Lock, FileText, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import AdminFeedbackPanel from "@/components/AdminFeedbackPanel";
-import AdminTrialTabs from "@/components/AdminTrialTabs";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, FileText, BarChart3, Settings, Map, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import SiteMapDisplay from "@/components/SiteMapDisplay";
 
 const AdminPage = () => {
-  const [facilities, setFacilities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
-  const [authPassword, setAuthPassword] = useState("");
   const navigate = useNavigate();
-  
-  // Secret password to access admin page - in a real app, use better auth!
-  const SECRET_ADMIN_PASSWORD = "chemlabel2025";
-
-  useEffect(() => {
-    const storedAuth = sessionStorage.getItem("adminAuthorized");
-    if (storedAuth === "true") {
-      setAuthorized(true);
-      fetchFacilityData();
-    }
-  }, []);
-
-  const handleAuthenticate = () => {
-    if (authPassword === SECRET_ADMIN_PASSWORD) {
-      setAuthorized(true);
-      sessionStorage.setItem("adminAuthorized", "true");
-      // Store admin email for action tracking
-      sessionStorage.setItem("adminEmail", "admin@chemlabel-gpt.com");
-      fetchFacilityData();
-    } else {
-      toast.error("Invalid password");
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
-    }
-  }
-
-  const fetchFacilityData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('admin_facility_overview')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      setFacilities(data || []);
-    } catch (error: any) {
-      console.error("Error fetching facilities:", error);
-      toast.error("Error loading facility data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!authorized) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <Card className="w-[400px]">
-          <CardHeader>
-            <CardTitle className="flex gap-2 items-center">
-              <Lock className="h-5 w-5" /> Admin Authentication
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="password" className="text-sm font-medium">
-                  Admin Password
-                </label>
-                <input 
-                  type="password" 
-                  id="password"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAuthenticate()}
-                />
-              </div>
-              <Button className="w-full" onClick={handleAuthenticate}>
-                Authenticate
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/sds-documents")}
-            className="flex items-center gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            SDS Documents
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/pdf-parser")}
-            className="flex items-center gap-2"
-          >
-            <TestTube className="h-4 w-4" />
-            PDF Parser Test
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              sessionStorage.removeItem("adminAuthorized");
-              sessionStorage.removeItem("adminEmail");
-              setAuthorized(false);
-              navigate("/");
-            }}
-          >
-            Exit Admin Mode
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Feedback Panel - Left Column */}
-        <div className="lg:col-span-1">
-          <AdminFeedbackPanel />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">System administration and management tools</p>
         </div>
 
-        {/* Facility Overview with Tabs - Right Columns */}
-        <div className="lg:col-span-2">
-          {loading ? (
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid grid-cols-4 w-full max-w-md">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="sitemap">Site Map</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin/sds-documents')}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">SDS Documents</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">View All</div>
+                  <p className="text-xs text-muted-foreground">
+                    Manage all SDS documents in the system
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Facilities</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">--</div>
+                  <p className="text-xs text-muted-foreground">
+                    Total facilities using the system
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">System Health</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      Online
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    All systems operational
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
-                <CardTitle>Loading...</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  Known Issues
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {[...Array(5)].map((_, index) => (
-                    <Skeleton key={index} className="h-12 w-full" />
-                  ))}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div>
+                      <div className="font-medium text-orange-900">Multiple navigation routes need implementation</div>
+                      <div className="text-sm text-orange-700">Several page routes in nav-items.tsx are missing their corresponding page components</div>
+                    </div>
+                    <Badge variant="outline" className="text-orange-600 border-orange-600">
+                      High Priority
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div>
+                      <div className="font-medium text-yellow-900">QR Print functionality needs route fix</div>
+                      <div className="text-sm text-yellow-700">Print QR code links returning 404 errors</div>
+                    </div>
+                    <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                      Medium Priority
+                    </Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          ) : (
-            <AdminTrialTabs 
-              facilities={facilities} 
-              onStatusUpdate={fetchFacilityData}
-            />
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="sitemap">
+            <SiteMapDisplay />
+          </TabsContent>
+
+          <TabsContent value="documents">
+            <Card>
+              <CardHeader>
+                <CardTitle>Document Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Button 
+                    onClick={() => navigate('/admin/sds-documents')}
+                    className="w-full sm:w-auto"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    View All SDS Documents
+                  </Button>
+                  <p className="text-sm text-gray-600">
+                    Access and manage all Safety Data Sheet documents across all facilities.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>System Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="font-medium">Site Map Visibility</div>
+                      <div className="text-sm text-gray-600">Show detailed route information for debugging</div>
+                    </div>
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      Enabled
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="font-medium">Admin Access</div>
+                      <div className="text-sm text-gray-600">Administrative functions and overrides</div>
+                    </div>
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      Active
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

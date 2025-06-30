@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Printer, X } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { useEffect, useState } from "react";
 import QRCodeLib from 'qrcode';
 import { useToast } from "@/hooks/use-toast";
@@ -52,12 +52,12 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
   }, [isOpen, facilityUrl]);
 
   const handlePrint = () => {
-    // Open the full print page in a new window
-    const printUrl = `/qr-print/${facilityData.slug}`;
+    // Fix the print URL to use the correct route structure
+    const printUrl = `/qr-print`;
     window.open(printUrl, '_blank');
     toast({
       title: "Print Page Opened",
-      description: "A new tab with the full print view has been opened.",
+      description: "A new tab with the print-ready poster has been opened.",
     });
   };
 
@@ -192,18 +192,10 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle className="text-xl font-bold">
             QR Code Poster Preview
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
         </DialogHeader>
         
         <div className="space-y-6">
