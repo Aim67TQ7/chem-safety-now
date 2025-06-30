@@ -18,61 +18,25 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [showExtractedData, setShowExtractedData] = useState(false);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
-  const [currentSearchQuery, setCurrentSearchQuery] = useState('');
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const [currentSearchQuery, setCurrentSearchQuery] = useState(''); // Track the search query
 
   const handleSearchStart = () => {
-    console.log('🔍 Search started');
     setIsSearching(true);
     setSearchResults([]);
     setSelectedDocument(null);
-    setSearchError(null);
   };
 
-  const handleSearchResults = (results: any[]) => {
-    console.log('📋 SDSSearch - Received results:', {
-      count: results?.length || 0,
-      results: results
-    });
-    
-    if (!Array.isArray(results)) {
-      console.error('❌ Results is not an array:', results);
-      setSearchResults([]);
-      setSearchError('Invalid search results format');
-    } else {
-      setSearchResults(results);
-      setSearchError(null);
+  const handleSearchResults = (results: any[], searchQuery?: string) => {
+    setSearchResults(results);
+    setIsSearching(false);
+    if (searchQuery) {
+      setCurrentSearchQuery(searchQuery); // Store the search query
     }
-    
-    setIsSearching(false);
-  };
-
-  const handleSearchError = (error: string) => {
-    console.error('❌ Search error:', error);
-    setSearchError(error);
-    setSearchResults([]);
-    setIsSearching(false);
-  };
-
-  const handleSearchQuery = (query: string) => {
-    setCurrentSearchQuery(query);
-    console.log('💾 Stored search query:', query);
   };
 
   const handleDocumentSelect = (document: any) => {
-    console.log('🔍 Selected document for extraction:', {
-      id: document.id,
-      product_name: document.product_name,
-      file_name: document.file_name,
-      search_query: currentSearchQuery
-    });
-    
-    const enhancedDocument = {
-      ...document,
-      original_search_query: currentSearchQuery
-    };
-    
-    setSelectedDocument(enhancedDocument);
+    console.log('🔍 Selected document for extraction:', document.product_name);
+    setSelectedDocument(document);
     setShowExtractedData(true);
   };
 
@@ -104,10 +68,9 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
       {/* Search Input */}
       <SDSSearchInput 
         facilityId={facilityId}
-        onSearchResults={handleSearchResults}
+        onSearchResults={(results) => handleSearchResults(results, currentSearchQuery)}
         onSearchStart={handleSearchStart}
-        onSearchQuery={handleSearchQuery}
-        onSearchError={handleSearchError}
+        onSearchQuery={setCurrentSearchQuery} // Pass callback to capture search query
       />
 
       {/* Loading State */}
@@ -119,16 +82,6 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
               <span className="text-2xl font-bold text-orange-700">Searching SDS Database...</span>
             </div>
             <p className="text-gray-600 text-lg">Finding the best safety data sheets for your search</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Search Error */}
-      {searchError && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-6 text-center">
-            <div className="text-red-700 mb-2">Search Error</div>
-            <p className="text-red-600">{searchError}</p>
           </CardContent>
         </Card>
       )}
@@ -146,13 +99,13 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
           <div className="grid gap-6">
             {searchResults.map((result, index) => (
               <SDSResultCard
-                key={result.id || index}
+                key={index}
                 document={result}
                 onSelect={() => handleDocumentSelect(result)}
                 onView={() => {}}
                 onDownload={() => {}}
                 isSelected={false}
-                showSelection={true}
+                showSelection={false}
               />
             ))}
           </div>
@@ -160,7 +113,7 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
       )}
 
       {/* No Results State */}
-      {!isSearching && searchResults.length === 0 && currentSearchQuery && !searchError && (
+      {!isSearching && searchResults.length === 0 && currentSearchQuery && (
         <Card className="border-gray-200 bg-gray-50">
           <CardContent className="p-8 text-center">
             <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -190,7 +143,7 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
           prioritized_pictograms: extractedData.dataSource === 'osha_compliant'
         }}
         onPrintLabel={handlePrintLabel}
-        searchQuery={currentSearchQuery}
+        searchQuery={currentSearchQuery} // Pass the search query to the popup
       />
 
       {/* Label Printer Popup */}

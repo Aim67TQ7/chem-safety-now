@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +67,7 @@ const QRCodePrintPage = () => {
       const facilityUrl = `https://chemlabel-gpt.com/facility/${facilitySlug}`;
       
       QRCodeLib.toDataURL(facilityUrl, {
-        width: 1200, // Increased from 400 to 1200 for 300x300px display
+        width: 400,
         margin: 3,
         color: {
           dark: '#000000',
@@ -149,42 +150,41 @@ const QRCodePrintPage = () => {
   const facilityDisplayName = facilityData.facility_name || 'Facility';
 
   const PosterContent = () => (
-    <div className="bg-white border-2 border-gray-300 rounded-lg p-8 max-w-2xl mx-auto">
+    <div className="bg-white border-2 border-gray-300 rounded-lg p-6 max-w-md mx-auto">
       {/* Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="text-center mb-4">
+        <h1 className="text-xl font-bold text-gray-900 mb-1">
           Chemical Safety Portal
         </h1>
-        <p className="text-sm text-gray-600">OSHA Compliant • Instant Access • Mobile Ready</p>
+        <p className="text-xs text-gray-600">OSHA Compliant • Instant Access • Mobile Ready</p>
       </div>
 
       {/* Main Content Box */}
-      <div className="bg-white border-2 border-gray-800 rounded-lg p-6">
+      <div className="bg-white border-2 border-gray-800 rounded-lg p-4">
         {/* Company name */}
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="text-center mb-3">
+          <h2 className="text-lg font-bold text-gray-900">
             {facilityDisplayName}
           </h2>
         </div>
 
-        {/* QR Code with logo overlay - Much Larger */}
-        <div className="text-center mb-6">
+        {/* QR Code with logo overlay */}
+        <div className="text-center mb-4">
           <div className="relative inline-block">
             {qrCodeDataUrl && (
               <div className="relative">
                 <img 
                   src={qrCodeDataUrl} 
                   alt="Facility QR Code"
-                  className="w-80 h-80 mx-auto border-2 border-gray-800 rounded" // Increased from w-32 h-32 to w-80 h-80 (320px)
-                  style={{ width: '300px', height: '300px' }} // Force exact 300x300px size
+                  className="w-32 h-32 mx-auto border-2 border-gray-800 rounded"
                 />
                 {/* Company logo overlay */}
                 {facilityData.logo_url && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded border border-gray-800">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-1 rounded border border-gray-800">
                     <img 
                       src={facilityData.logo_url} 
                       alt={`${facilityDisplayName} Logo`}
-                      className="w-12 h-12 object-contain" // Increased logo size proportionally
+                      className="w-6 h-6 object-contain"
                     />
                   </div>
                 )}
@@ -194,25 +194,25 @@ const QRCodePrintPage = () => {
         </div>
 
         {/* Instructions */}
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-bold text-gray-900 mb-3">
+        <div className="text-center mb-3">
+          <h3 className="text-sm font-bold text-gray-900 mb-2">
             Scan for Instant Safety Access
           </h3>
           
-          <div className="bg-gray-100 border border-gray-300 rounded p-4 text-sm">
-            <div className="grid grid-cols-3 gap-4">
+          <div className="bg-gray-100 border border-gray-300 rounded p-3 text-xs">
+            <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
-                <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto mb-2">1</div>
+                <div className="bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mx-auto mb-1">1</div>
                 <p className="font-medium text-gray-900">Open Camera</p>
                 <p className="text-gray-700">Use phone's camera</p>
               </div>
               <div className="text-center">
-                <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto mb-2">2</div>
+                <div className="bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mx-auto mb-1">2</div>
                 <p className="font-medium text-gray-900">Point & Scan</p>
                 <p className="text-gray-700">Aim at QR code</p>
               </div>
               <div className="text-center">
-                <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto mb-2">3</div>
+                <div className="bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mx-1">3</div>
                 <p className="font-medium text-gray-900">Access Data</p>
                 <p className="text-gray-700">Tap to view info</p>
               </div>
@@ -222,9 +222,9 @@ const QRCodePrintPage = () => {
 
         {/* Facility Info */}
         {(facilityData.address || facilityData.contact_name || facilityData.email) && (
-          <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-            <h4 className="text-sm font-bold text-blue-900 mb-2">Facility Information</h4>
-            <div className="space-y-1 text-sm text-blue-800">
+          <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-3">
+            <h4 className="text-xs font-bold text-blue-900 mb-1">Facility Information</h4>
+            <div className="space-y-1 text-xs text-blue-800">
               {facilityData.contact_name && (
                 <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
               )}
@@ -240,15 +240,15 @@ const QRCodePrintPage = () => {
 
         {/* ChemLabel-GPT branding */}
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-2">
+          <div className="flex items-center justify-center space-x-1 mb-1">
             <img 
               src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
               alt="ChemLabel-GPT Logo" 
-              className="w-4 h-4 object-contain"
+              className="w-3 h-3 object-contain"
             />
-            <p className="text-sm text-gray-800 font-bold">ChemLabel-GPT</p>
+            <p className="text-xs text-gray-800 font-bold">ChemLabel-GPT</p>
           </div>
-          <p className="text-sm text-gray-500">No app required • Works with any smartphone</p>
+          <p className="text-xs text-gray-500">No app required • Works with any smartphone</p>
         </div>
       </div>
     </div>
@@ -272,8 +272,6 @@ const QRCodePrintPage = () => {
             background: white !important;
             gap: ${layoutMode === 'dual' ? '1rem' : layoutMode === 'stacked' ? '1rem' : '0'};
             padding: 0.5in;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
           }
           .poster-wrapper {
             width: ${layoutMode === 'dual' ? '48%' : '100%'} !important;
@@ -285,17 +283,10 @@ const QRCodePrintPage = () => {
             ${layoutMode === 'dual' ? 'border-right: none; padding-right: 0; padding-left: 0.5rem;' : ''}
             ${layoutMode === 'stacked' ? 'border-bottom: none; padding-bottom: 0; margin-bottom: 0;' : ''}
           }
-          /* Ensure QR code prints at full size */
-          img[alt="Facility QR Code"] {
-            width: 300px !important;
-            height: 300px !important;
-            max-width: 300px !important;
-            max-height: 300px !important;
-          }
         }
         @page {
           size: ${posterSize === 'letter' ? 'letter' : 'A4'} ${layoutMode === 'dual' ? 'landscape' : 'portrait'};
-          margin: 0.3in;
+          margin: 0.5in;
         }
       `}</style>
 
@@ -305,7 +296,6 @@ const QRCodePrintPage = () => {
           <div>
             <h2 className="text-lg font-bold text-gray-900">Print Preview</h2>
             <p className="text-sm text-gray-600">Professional safety poster for {facilityDisplayName}</p>
-            <p className="text-xs text-green-600 font-medium">QR Code: 300x300px for optimal scanning</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
@@ -347,7 +337,7 @@ const QRCodePrintPage = () => {
         </div>
       </div>
 
-      {/* Print content with larger QR code */}
+      {/* Print content with compact layout */}
       <div className={`print-page min-h-screen bg-white flex justify-center items-center p-8 ${
         layoutMode === 'dual' ? 'flex-row' : layoutMode === 'stacked' ? 'flex-col' : 'flex-col'
       } mx-auto gap-4`}>

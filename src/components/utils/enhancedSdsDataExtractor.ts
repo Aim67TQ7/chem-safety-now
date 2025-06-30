@@ -29,7 +29,6 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
   console.log('🔍 Extracting enhanced SDS data for:', selectedDocument.product_name);
   console.log('📊 Document status:', selectedDocument.extraction_status);
   console.log('🤖 AI confidence:', selectedDocument.ai_extraction_confidence);
-  console.log('🔍 Original search query:', selectedDocument.original_search_query);
 
   // PRIORITY 1: OSHA-compliant data (highest priority for safety compliance)
   if (selectedDocument.extraction_status === 'osha_compliant' && 
@@ -74,15 +73,8 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
 
     console.log('🏥 OSHA HMIS ratings:', hmisRatings);
 
-    // Use original search query if it's more specific than extracted name
-    const productName = determineProductName(
-      oshaData.product_identifier?.value || oshaData.product_title || selectedDocument.product_name,
-      selectedDocument.original_search_query,
-      selectedDocument.file_name
-    );
-
     return {
-      productName,
+      productName: oshaData.product_identifier?.value || oshaData.product_title || selectedDocument.product_name,
       manufacturer: selectedDocument.manufacturer,
       casNumber: selectedDocument.cas_number,
       signalWord: oshaData.signal_word?.value || oshaData.signal_word || 'WARNING',
@@ -94,7 +86,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
         oshaData.precautionary_statements_critical.map((p: any) => typeof p === 'string' ? p : p.value) :
         Array.isArray(oshaData.precautionary_statements) ? oshaData.precautionary_statements : [],
       chemicalFormula: '',
-      chemicalCompound: productName,
+      chemicalCompound: oshaData.product_identifier?.value || oshaData.product_title || selectedDocument.product_name,
       productId: '',
       labelPrintDate: new Date().toISOString().split('T')[0],
       extractionConfidence: selectedDocument.ai_extraction_confidence || 0,
@@ -139,14 +131,8 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
 
     console.log('🔍 Manual review HMIS ratings:', hmisRatings);
 
-    const productName = determineProductName(
-      reviewData?.product_identifier?.value || reviewData?.product_title || selectedDocument.product_name,
-      selectedDocument.original_search_query,
-      selectedDocument.file_name
-    );
-
     return {
-      productName,
+      productName: reviewData?.product_identifier?.value || reviewData?.product_title || selectedDocument.product_name,
       manufacturer: selectedDocument.manufacturer,
       casNumber: selectedDocument.cas_number,
       signalWord: reviewData?.signal_word?.value || reviewData?.signal_word || 'WARNING',
@@ -158,7 +144,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
         reviewData.precautionary_statements_critical.map((p: any) => typeof p === 'string' ? p : p.value) :
         Array.isArray(reviewData?.precautionary_statements) ? reviewData.precautionary_statements : [],
       chemicalFormula: '',
-      chemicalCompound: productName,
+      chemicalCompound: reviewData?.product_identifier?.value || reviewData?.product_title || selectedDocument.product_name,
       productId: '',
       labelPrintDate: new Date().toISOString().split('T')[0],
       extractionConfidence: selectedDocument.ai_extraction_confidence || 0,
@@ -226,14 +212,8 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
 
     console.log('🎯 AI-enhanced HMIS ratings:', hmisRatings);
 
-    const productName = determineProductName(
-      aiData.product_title || selectedDocument.product_name,
-      selectedDocument.original_search_query,
-      selectedDocument.file_name
-    );
-
     return {
-      productName,
+      productName: aiData.product_title || selectedDocument.product_name,
       manufacturer: aiData.manufacturer || selectedDocument.manufacturer,
       casNumber: selectedDocument.cas_number,
       signalWord: selectedDocument.signal_word || 'WARNING',
@@ -254,13 +234,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
 
   // PRIORITY 4: Basic extraction fallback
   console.log('📋 Using basic extraction fallback');
-  
-  const productName = determineProductName(
-    selectedDocument.product_name,
-    selectedDocument.original_search_query,
-    selectedDocument.file_name
-  );
-
+  const productName = selectedDocument.product_name || '';
   const manufacturer = selectedDocument.manufacturer || '';
   const casNumber = selectedDocument.cas_number || '';
   const signalWord = selectedDocument.signal_word || 'WARNING';
@@ -330,82 +304,3 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     requiresManualReview: false
   };
 };
-
-// Helper function to determine the best product name
-function determineProductName(
-  extractedName?: string, 
-  searchQuery?: string, 
-  fileName?: string
-): string {
-  console.log('🔍 Determining product name:', {
-    extractedName,
-    searchQuery,
-    fileName
-  });
-
-  // List of generic chemical names that should be replaced
-  const genericNames = [
-    'acetone', 'methanol', 'ethanol', 'toluene', 'xylene', 'benzene',
-    'chemical', 'product', 'solution', 'compound', 'mixture', 'substance',
-    'solvent', 'cleaner', 'degreaser', 'thinner', 'adhesive', 'coating'
-  ];
-
-  // If we have a search query, prioritize it over generic extracted names
-  if (searchQuery && searchQuery.trim().length > 2) {
-    const lowerSearch = searchQuery.toLowerCase().trim();
-    
-    // If extracted name is generic or contains "acetone", prefer search query
-    if (extractedName) {
-      const lowerExtracted = extractedName.toLowerCase().trim();
-      
-      // Check if extracted name is generic or the problematic "acetone"
-      const isGeneric = genericNames.some(generic => 
-        lowerExtracted === generic || 
-        lowerExtracted.includes(generic) && lowerExtracted.length < generic.length + 10
-      );
-      
-      if (isGeneric || lowerExtracted.includes('acetone')) {
-        console.log('🔄 Using search query instead of generic extracted name:', searchQuery);
-        return searchQuery;
-      }
-      
-      // Check if search query contains more specific product information
-      const hasProductCode = /[A-Z]{1,3}[-\s]?\d{2,4}/.test(searchQuery);
-      if (hasProductCode && !lowerExtracted.includes(lowerSearch.split(/[-\s]/)[0])) {
-        console.log('🔄 Using search query due to product code pattern:', searchQuery);
-        return searchQuery;
-      }
-    } else {
-      // No extracted name, use search query
-      console.log('✅ Using search query (no extracted name):', searchQuery);
-      return searchQuery;
-    }
-  }
-
-  // Fallback to extracted name or search query or filename-based name
-  const finalName = extractedName || searchQuery || extractProductNameFromFileName(fileName) || 'Unknown Product';
-  console.log('✅ Final product name decision:', finalName);
-  return finalName;
-}
-
-// Helper to extract product name from filename
-function extractProductNameFromFileName(fileName?: string): string | null {
-  if (!fileName) return null;
-  
-  // Remove file extension and clean up
-  const baseName = fileName.replace(/\.(pdf|PDF)$/, '');
-  
-  // Look for product codes or meaningful names
-  const productCodeMatch = baseName.match(/([A-Z]{1,3}[-\s]?\d{2,4})/);
-  if (productCodeMatch) {
-    return productCodeMatch[1];
-  }
-  
-  // Clean up and return if it looks meaningful
-  const cleaned = baseName.replace(/[_-]/g, ' ').trim();
-  if (cleaned.length > 3 && cleaned.length < 50) {
-    return cleaned;
-  }
-  
-  return null;
-}

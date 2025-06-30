@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,17 +19,10 @@ interface SDSSearchInputProps {
   facilityId: string;
   onSearchResults: (results: any[]) => void;
   onSearchStart: () => void;
-  onSearchQuery?: (query: string) => void;
-  onSearchError?: (error: string) => void;
+  onSearchQuery?: (query: string) => void; // Add callback for search query
 }
 
-const SDSSearchInput = ({ 
-  facilityId, 
-  onSearchResults, 
-  onSearchStart, 
-  onSearchQuery,
-  onSearchError 
-}: SDSSearchInputProps) => {
+const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart, onSearchQuery }: SDSSearchInputProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
@@ -97,24 +89,28 @@ const SDSSearchInput = ({
     onSearchStart();
     setShowSuggestions(false);
 
+    // Notify parent of the final search query
     if (onSearchQuery) {
       onSearchQuery(finalQuery);
     }
 
+    // Create a timeout promise that rejects after 15 seconds
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
         reject(new Error('Search timed out after 15 seconds'));
       }, 15000);
     });
 
+    // Create the search promise
     const searchPromise = supabase.functions.invoke('sds-search', {
       body: {
         product_name: finalQuery.trim(),
-        max_results: 5
+        max_results: 3
       }
     });
 
     try {
+      // Race the search against the timeout
       const { data, error } = await Promise.race([searchPromise, timeoutPromise]) as any;
 
       if (error) {
@@ -122,82 +118,24 @@ const SDSSearchInput = ({
         throw error;
       }
 
-      console.log('✅ SDS search response received:', {
-        hasData: !!data,
-        documentsCount: data?.documents?.length || 0,
-        totalCount: data?.total || 0,
-        source: data?.source
-      });
+      console.log('✅ SDS search response:', data);
 
-      // Enhanced result validation
-      if (data?.documents && Array.isArray(data.documents)) {
-        // Filter out obvious non-SDS documents
-        const validDocuments = data.documents.filter((doc: any) => {
-          const title = (doc.product_name || doc.title || '').toLowerCase();
-          const url = (doc.source_url || doc.url || '').toLowerCase();
-          
-          // Check for SDS indicators
-          const hasSDSIndicators = title.includes('safety data sheet') || 
-                                 title.includes('sds') || 
-                                 title.includes('msds') ||
-                                 url.includes('sds') ||
-                                 url.includes('msds');
-          
-          // Filter out obvious non-SDS domains
-          const isValidDomain = !url.includes('irs.gov') && 
-                               !url.includes('sec.gov') && 
-                               !url.includes('wikipedia.org') &&
-                               !url.includes('investopedia.com');
-          
-          console.log('📋 Document validation:', {
-            title: title.substring(0, 50),
-            hasSDSIndicators,
-            isValidDomain,
-            isValid: hasSDSIndicators && isValidDomain
-          });
-          
-          return hasSDSIndicators && isValidDomain;
-        });
-
-        console.log('✅ Filtered results:', {
-          original: data.documents.length,
-          filtered: validDocuments.length
-        });
-
-        if (validDocuments.length > 0) {
-          onSearchResults(validDocuments);
-          toast.success(`Found ${validDocuments.length} SDS document${validDocuments.length > 1 ? 's' : ''} for "${finalQuery}"`);
-        } else {
-          onSearchResults([]);
-          const message = `No valid SDS documents found for "${finalQuery}". Try a more specific chemical or product name.`;
-          toast.error(message);
-          if (onSearchError) {
-            onSearchError(message);
-          }
-        }
+      if (data.results && data.results.length > 0) {
+        onSearchResults(data.results);
+        toast.success(`Found ${data.results.length} SDS document${data.results.length > 1 ? 's' : ''} for "${finalQuery}"`);
       } else {
         onSearchResults([]);
-        const message = `No SDS documents found for "${finalQuery}". Try a different product name or manufacturer.`;
-        toast.error(message);
-        if (onSearchError) {
-          onSearchError(message);
-        }
+        toast.error(`No SDS documents found for "${finalQuery}". Try a different product name or manufacturer.`);
       }
 
     } catch (error: any) {
       console.error('❌ SDS search failed:', error);
       onSearchResults([]);
       
-      let errorMessage = 'Search failed. Please try again.';
       if (error.message === 'Search timed out after 15 seconds') {
-        errorMessage = 'Search timed out. Please try a more specific search term.';
-      } else if (error.message) {
-        errorMessage = `Search failed: ${error.message}`;
-      }
-      
-      toast.error(errorMessage);
-      if (onSearchError) {
-        onSearchError(errorMessage);
+        toast.error('Search timed out after 15 seconds. Please try a more specific search term.');
+      } else {
+        toast.error(`Search failed: ${error.message || 'Unknown error occurred'}`);
       }
     } finally {
       setIsSearching(false);

@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { ArrowLeft, Search, FileText, Download, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SDSEvaluationButton from "@/components/SDSEvaluationButton";
-import SDSDocumentDeleteButton from "@/components/SDSDocumentDeleteButton";
 import { getSDSDocumentStatus } from "@/utils/sdsStatusUtils";
 
 interface SDSDocument {
@@ -84,11 +83,6 @@ const AdminSDSDocumentsPage = () => {
     if (!bytes) return 'N/A';
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(2)} MB`;
-  };
-
-  const handleDeleteSuccess = () => {
-    // Refresh the documents list after successful deletion
-    fetchDocuments();
   };
 
   if (loading) {
@@ -218,11 +212,6 @@ const AdminSDSDocumentsPage = () => {
                           <SDSEvaluationButton
                             document={document}
                             onEvaluationComplete={fetchDocuments}
-                          />
-
-                          <SDSDocumentDeleteButton
-                            document={document}
-                            onDeleteSuccess={handleDeleteSuccess}
                           />
                         </div>
                       </div>

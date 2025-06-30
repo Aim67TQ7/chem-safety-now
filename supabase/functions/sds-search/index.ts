@@ -1,290 +1,360 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import ConfidenceScorer from '../_shared/confidence-scorer.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY');
-const GOOGLE_CSE_ID = Deno.env.get('GOOGLE_CSE_ID');
+const confidenceScorer = new ConfidenceScorer();
 
 interface SearchRequest {
   product_name: string;
   max_results?: number;
 }
 
+interface ScrapedSDSDocument {
+  product_name: string;
+  manufacturer?: string;
+  cas_number?: string;
+  source_url: string;
+  file_name: string;
+  document_type: string;
+  h_codes?: Array<{ code: string; description: string }>;
+  pictograms?: Array<{ ghs_code: string; name: string; description?: string }>;
+  signal_word?: string;
+  hazard_statements?: string[];
+  precautionary_statements?: string[];
+}
+
+interface GoogleSearchResult {
+  title: string;
+  link: string;
+  snippet: string;
+  fileFormat?: string;
+}
+
+interface SearchVariation {
+  query: string;
+  description: string;
+}
+
+function createSearchVariations(productName: string): SearchVariation[] {
+  const variations: SearchVariation[] = [];
+  
+  // Clean and normalize the product name
+  const cleanName = productName.trim();
+  
+  // Extract potential manufacturer (first word if it looks like a brand)
+  const words = cleanName.split(/\s+/);
+  const potentialManufacturer = words[0];
+  const restOfName = words.slice(1).join(' ');
+  
+  // Common prefixes/suffixes to handle
+  const commonPrefixes = ['AA', 'LC', 'HV', 'LV'];
+  const commonSuffixes = ['LC', 'HV', 'LV', 'PLUS', 'PRO'];
+  
+  // 1. Exact search with quotes (most restrictive)
+  variations.push({
+    query: `"${cleanName}" "safety data sheet" filetype:pdf`,
+    description: 'Exact product name with SDS'
+  });
+  
+  // 2. Exact search with MSDS variation
+  variations.push({
+    query: `"${cleanName}" "MSDS" filetype:pdf`,
+    description: 'Exact product name with MSDS'
+  });
+  
+  // 3. Flexible search without quotes
+  variations.push({
+    query: `${cleanName} "safety data sheet" filetype:pdf`,
+    description: 'Flexible product name with SDS'
+  });
+  
+  // 4. Flexible search with MSDS
+  variations.push({
+    query: `${cleanName} "MSDS" filetype:pdf`,
+    description: 'Flexible product name with MSDS'
+  });
+  
+  // 5. If we have a potential manufacturer, search with manufacturer separately
+  if (words.length > 1 && potentialManufacturer.length > 2) {
+    variations.push({
+      query: `${potentialManufacturer} ${restOfName} "safety data sheet" filetype:pdf`,
+      description: 'Manufacturer and product separate'
+    });
+    
+    // 6. Just the product part without manufacturer
+    if (restOfName.length > 2) {
+      variations.push({
+        query: `"${restOfName}" "safety data sheet" filetype:pdf`,
+        description: 'Product name without manufacturer'
+      });
+    }
+  }
+  
+  // 7. Remove common prefixes/suffixes for broader search
+  let simplifiedName = cleanName;
+  
+  // Remove common prefixes
+  for (const prefix of commonPrefixes) {
+    const prefixPattern = new RegExp(`\\b${prefix}\\s+`, 'gi');
+    if (prefixPattern.test(simplifiedName)) {
+      const withoutPrefix = simplifiedName.replace(prefixPattern, '').trim();
+      if (withoutPrefix.length > 2) {
+        variations.push({
+          query: `"${withoutPrefix}" "safety data sheet" filetype:pdf`,
+          description: `Without ${prefix} prefix`
+        });
+      }
+    }
+  }
+  
+  // Remove common suffixes
+  for (const suffix of commonSuffixes) {
+    const suffixPattern = new RegExp(`\\s+${suffix}\\b`, 'gi');
+    if (suffixPattern.test(simplifiedName)) {
+      const withoutSuffix = simplifiedName.replace(suffixPattern, '').trim();
+      if (withoutSuffix.length > 2) {
+        variations.push({
+          query: `"${withoutSuffix}" "safety data sheet" filetype:pdf`,
+          description: `Without ${suffix} suffix`
+        });
+      }
+    }
+  }
+  
+  // 8. Handle special characters and numbers
+  const alphanumericOnly = cleanName.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (alphanumericOnly !== cleanName && alphanumericOnly.length > 2) {
+    variations.push({
+      query: `${alphanumericOnly} "safety data sheet" filetype:pdf`,
+      description: 'Alphanumeric characters only'
+    });
+  }
+  
+  // 9. Very broad search as last resort
+  const coreTerms = cleanName.split(/\s+/).filter(word => word.length > 2);
+  if (coreTerms.length > 1) {
+    variations.push({
+      query: `${coreTerms.join(' ')} safety data sheet filetype:pdf`,
+      description: 'Core terms broad search'
+    });
+  }
+  
+  return variations;
+}
+
+async function searchGoogleCSEWithVariations(productName: string, maxResults: number = 10): Promise<{ results: GoogleSearchResult[], usedQuery: string }> {
+  const apiKey = Deno.env.get('GOOGLE_API_KEY');
+  const cseId = Deno.env.get('GOOGLE_CSE_ID');
+  
+  if (!apiKey || !cseId) {
+    console.error('❌ Missing Google API credentials');
+    throw new Error('Google API credentials not configured');
+  }
+
+  const searchVariations = createSearchVariations(productName);
+  
+  console.log(`🔍 Created ${searchVariations.length} search variations for: ${productName}`);
+  
+  // Try each search variation until we get results
+  for (let i = 0; i < searchVariations.length; i++) {
+    const variation = searchVariations[i];
+    const encodedQuery = encodeURIComponent(variation.query);
+    const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodedQuery}&num=${Math.min(maxResults, 10)}`;
+    
+    console.log(`🔍 Trying search variation ${i + 1}/${searchVariations.length}: ${variation.description}`);
+    console.log(`📝 Query: ${variation.query}`);
+    
+    try {
+      const response = await fetch(searchUrl);
+      if (!response.ok) {
+        console.error(`❌ Google CSE API error for variation ${i + 1}: ${response.status} ${response.statusText}`);
+        continue; // Try next variation
+      }
+      
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        console.log(`✅ Found ${data.items.length} results with variation: ${variation.description}`);
+        
+        const results = data.items.map((item: any): GoogleSearchResult => ({
+          title: item.title,
+          link: item.link,
+          snippet: item.snippet,
+          fileFormat: item.fileFormat
+        }));
+        
+        return { results, usedQuery: variation.query };
+      } else {
+        console.log(`📄 No results for variation ${i + 1}: ${variation.description}`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error with search variation ${i + 1}:`, error);
+      continue; // Try next variation
+    }
+  }
+  
+  console.log('📄 No results found with any search variation');
+  return { results: [], usedQuery: searchVariations[0]?.query || productName };
+}
+
+function isPDFDocument(url: string, title: string, fileFormat?: string): boolean {
+  // Check if it's explicitly marked as PDF
+  if (fileFormat === 'PDF') return true;
+  
+  // Check URL for PDF extension
+  if (url.toLowerCase().includes('.pdf')) return true;
+  
+  // Check title for PDF indicators
+  if (title.toLowerCase().includes('.pdf')) return true;
+  
+  // Reject common web page patterns
+  const webPagePatterns = [
+    'wikipedia.org',
+    'google.com',
+    'facebook.com',
+    'twitter.com',
+    'linkedin.com',
+    'youtube.com',
+    '/search',
+    '/products',
+    '/catalog',
+    '/category'
+  ];
+  
+  const urlLower = url.toLowerCase();
+  return !webPagePatterns.some(pattern => urlLower.includes(pattern));
+}
+
+async function scrapeSDSDocuments(productName: string, maxResults: number = 3): Promise<ScrapedSDSDocument[]> {
+  console.log('🔍 Starting enhanced Google CSE SDS document search for:', productName);
+  
+  try {
+    // Step 1: Search using Google CSE with progressive search variations
+    const { results: searchResults, usedQuery } = await searchGoogleCSEWithVariations(productName, maxResults * 2);
+    
+    if (searchResults.length === 0) {
+      console.log('📄 No Google CSE results found with any search variation');
+      return [];
+    }
+    
+    console.log(`✅ Found results using query: ${usedQuery}`);
+    
+    // Step 2: Filter results for actual PDF documents only
+    const pdfResults = searchResults.filter(result => {
+      const isPDF = isPDFDocument(result.link, result.title, result.fileFormat);
+      
+      if (!isPDF) {
+        console.log(`⚠️ Filtering out non-PDF result: ${result.title} - ${result.link}`);
+      }
+      
+      return isPDF;
+    });
+    
+    console.log(`📋 Filtered to ${pdfResults.length} PDF documents from ${searchResults.length} total results`);
+    
+    if (pdfResults.length === 0) {
+      console.log('❌ No PDF documents found in search results');
+      return [];
+    }
+    
+    // Step 3: Create document records for found PDFs (DON'T auto-download here)
+    const documents: ScrapedSDSDocument[] = pdfResults.slice(0, maxResults).map(result => ({
+      product_name: productName,
+      source_url: result.link,
+      file_name: `${productName.replace(/[^a-zA-Z0-9]/g, '_')}_SDS.pdf`,
+      document_type: 'safety_data_sheet'
+    }));
+    
+    console.log(`✅ Created ${documents.length} document records from enhanced CSE search`);
+    return documents;
+    
+  } catch (error) {
+    console.error('❌ Enhanced SDS document search process error:', error);
+    throw error;
+  }
+}
+
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { product_name, max_results = 5 }: SearchRequest = await req.json();
+    const { product_name, max_results = 3 }: SearchRequest = await req.json();
     
     console.log('🔍 Enhanced SDS document search request:', { product_name, max_results });
 
-    // Check for existing documents first
-    const { data: existingDocs, error: existingError } = await supabase
+    // Step 1: Search existing documents in database
+    const { data: existingDocs, error: searchError } = await supabase
       .from('sds_documents')
       .select('*')
-      .ilike('product_name', `%${product_name}%`)
-      .order('ai_extraction_confidence', { ascending: false })
-      .limit(3);
+      .or(`product_name.ilike.%${product_name}%,manufacturer.ilike.%${product_name}%,cas_number.ilike.%${product_name}%`)
+      .limit(max_results);
 
-    if (existingError) {
-      console.error('❌ Error checking existing documents:', existingError);
+    if (searchError) {
+      console.error('❌ Database search error:', searchError);
+      throw searchError;
     }
 
-    console.log('📊 Found existing documents:', {
-      count: existingDocs?.length || 0,
-      documents: existingDocs?.map(doc => ({
-        name: doc.product_name,
-        confidence: doc.ai_extraction_confidence
-      }))
-    });
+    console.log('📊 Found existing documents:', existingDocs?.length || 0);
 
-    if (!GOOGLE_API_KEY || !GOOGLE_CSE_ID) {
-      console.error('❌ Google API credentials not configured');
+    // Step 2: Get web search results (without auto-saving)
+    const webResults = await scrapeSDSDocuments(product_name, Math.max(1, max_results - (existingDocs?.length || 0)));
+    
+    // Step 3: Combine and rank all results
+    const allResults = [...(existingDocs || []), ...webResults];
+    
+    if (allResults.length === 0) {
       return new Response(
         JSON.stringify({ 
-          documents: existingDocs || [],
-          total: existingDocs?.length || 0,
-          source: 'database_only',
-          message: 'Google Search not configured - showing database results only'
+          results: [],
+          source: 'combined_search',
+          auto_selected: false,
+          message: 'No SDS documents found - try a different product name'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
       );
     }
 
-    console.log('🔍 Starting enhanced Google CSE SDS document search for:', product_name);
-
-    // Enhanced search variations with better targeting
-    const searchVariations = [
-      `"${product_name}" "safety data sheet" filetype:pdf`,
-      `"${product_name}" "SDS" filetype:pdf`,
-      `"${product_name}" "MSDS" filetype:pdf`,
-      `${product_name} "safety data sheet" site:fastenal.com`,
-      `${product_name} "SDS" site:grainger.com`,
-      `${product_name} "safety data sheet" site:fishersci.com`,
-      `${product_name} "SDS" site:sigmaaldrich.com`,
-      `${product_name} "safety data sheet" site:3m.com`,
-      `"${product_name}" "safety data sheet" -site:irs.gov -site:sec.gov -site:wikipedia.org`
-    ];
-
-    console.log('🔍 Created', searchVariations.length, 'enhanced search variations');
-
-    const allResults: any[] = [];
-    const seenUrls = new Set<string>();
-
-    // Try each search variation
-    for (let i = 0; i < searchVariations.length && allResults.length < max_results; i++) {
-      const query = searchVariations[i];
-      console.log(`🔍 Trying search variation ${i + 1}/${searchVariations.length}:`, query.split(' ').slice(0, 4).join(' ') + '...');
-      
-      try {
-        const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CSE_ID}&q=${encodeURIComponent(query)}&num=10`;
-        
-        const response = await fetch(searchUrl);
-        const data = await response.json();
-
-        if (data.items && data.items.length > 0) {
-          console.log('✅ Found', data.items.length, 'results');
-          
-          // Enhanced filtering for SDS documents
-          const validResults = data.items.filter((item: any) => {
-            const title = (item.title || '').toLowerCase();
-            const url = (item.link || '').toLowerCase();
-            const snippet = (item.snippet || '').toLowerCase();
-            
-            // Must be PDF or have PDF indicators
-            const isPdf = url.includes('.pdf') || item.mime === 'application/pdf' || item.fileFormat === 'PDF';
-            
-            // Must have SDS indicators
-            const hasSDSIndicators = title.includes('safety data sheet') || 
-                                   title.includes('sds') || 
-                                   title.includes('msds') ||
-                                   snippet.includes('safety data sheet') ||
-                                   snippet.includes('sds');
-            
-            // Must not be from excluded domains
-            const isValidDomain = !url.includes('irs.gov') && 
-                                !url.includes('sec.gov') && 
-                                !url.includes('wikipedia.org') &&
-                                !url.includes('investopedia.com') &&
-                                !url.includes('reddit.com') &&
-                                !url.includes('facebook.com');
-            
-            // Prefer trusted chemical/industrial domains
-            const isTrustedDomain = url.includes('fastenal.com') ||
-                                  url.includes('grainger.com') ||
-                                  url.includes('fishersci.com') ||
-                                  url.includes('sigmaaldrich.com') ||
-                                  url.includes('3m.com') ||
-                                  url.includes('dupont.com') ||
-                                  url.includes('dow.com') ||
-                                  url.includes('basf.com');
-            
-            const isUnique = !seenUrls.has(url);
-            
-            const isValid = isPdf && hasSDSIndicators && isValidDomain && isUnique;
-            
-            console.log('📋 Document validation:', {
-              title: title.substring(0, 40) + '...',
-              isPdf,
-              hasSDSIndicators,
-              isValidDomain,
-              isTrustedDomain,
-              isValid
-            });
-            
-            if (isValid) {
-              seenUrls.add(url);
-              return true;
-            }
-            return false;
-          });
-
-          console.log('📋 Filtered to', validResults.length, 'valid SDS documents from', data.items.length, 'total results');
-
-          // Add results with enhanced confidence scoring
-          for (const item of validResults) {
-            if (allResults.length >= max_results) break;
-            
-            const confidence = calculateEnhancedConfidence(item.title, item.snippet, item.link, product_name);
-            
-            allResults.push({
-              title: item.title || 'Unknown Document',
-              url: item.link,
-              snippet: item.snippet || '',
-              confidence,
-              source: 'web',
-              search_query: product_name,
-              is_trusted_domain: item.link.includes('fastenal.com') || 
-                               item.link.includes('grainger.com') ||
-                               item.link.includes('fishersci.com') ||
-                               item.link.includes('sigmaaldrich.com')
-            });
-          }
-          
-          // Break early if we found results from trusted domains
-          if (validResults.some(item => item.link.includes('fastenal.com') || item.link.includes('grainger.com'))) {
-            console.log('✅ Found results from trusted domains, stopping early');
-            break;
-          }
-        } else {
-          console.log('📄 No results for variation', i + 1);
-        }
-      } catch (error) {
-        console.error('❌ Search variation', i + 1, 'failed:', error.message);
-        continue;
-      }
-    }
-
-    // Create SDS document records for new web results
-    const newDocuments: any[] = [];
+    // Step 4: Rank by confidence
+    const rankedResults = confidenceScorer.rankDocuments(product_name, allResults);
     
-    for (const result of allResults) {
-      try {
-        // Check if document already exists by URL
-        const { data: duplicate } = await supabase
-          .from('sds_documents')
-          .select('id')
-          .eq('source_url', result.url)
-          .single();
-
-        if (!duplicate) {
-          // Create new document record with enhanced metadata
-          const docData = {
-            product_name: result.search_query,
-            file_name: extractFileName(result.title, result.url),
-            source_url: result.url,
-            document_type: 'sds',
-            extraction_status: 'pending',
-            ai_extraction_confidence: result.confidence,
-            extraction_quality_score: result.confidence,
-            created_at: new Date().toISOString(),
-            ai_extracted_data: {
-              search_metadata: {
-                search_query: product_name,
-                title: result.title,
-                snippet: result.snippet,
-                is_trusted_domain: result.is_trusted_domain,
-                search_confidence: result.confidence
-              }
-            }
-          };
-
-          const { data: newDoc, error: insertError } = await supabase
-            .from('sds_documents')
-            .insert(docData)
-            .select()
-            .single();
-
-          if (insertError) {
-            console.error('❌ Error creating document record:', insertError);
-          } else {
-            console.log('✅ Created new document record:', newDoc.id, newDoc.product_name);
-            newDocuments.push(newDoc);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error processing search result:', error);
-      }
-    }
-
-    console.log('✅ Created', newDocuments.length, 'new document records from enhanced search');
-
-    // Combine and sort results
-    const combinedResults = [
-      ...(existingDocs || []),
-      ...newDocuments
-    ];
-
-    // Sort by relevance/confidence with preference for trusted domains
-    combinedResults.sort((a, b) => {
-      const aConf = a.ai_extraction_confidence || 0;
-      const bConf = b.ai_extraction_confidence || 0;
-      const aIsTrusted = a.source_url?.includes('fastenal.com') || a.source_url?.includes('grainger.com');
-      const bIsTrusted = b.source_url?.includes('fastenal.com') || b.source_url?.includes('grainger.com');
-      
-      if (aIsTrusted && !bIsTrusted) return -1;
-      if (!aIsTrusted && bIsTrusted) return 1;
-      
-      return bConf - aConf;
-    });
-
-    const finalResults = combinedResults.slice(0, max_results);
-
-    // Log results summary
-    finalResults.forEach((result, index) => {
-      const confidence = result.ai_extraction_confidence || 0;
-      const source = existingDocs?.some(doc => doc.id === result.id) ? 'Database' : 'Web';
-      const isTrusted = result.source_url?.includes('fastenal.com') || result.source_url?.includes('grainger.com');
-      console.log(`📋 Result ${index + 1}: ${result.product_name} - Confidence: ${confidence.toFixed(1)}% - Source: ${source}${isTrusted ? ' (Trusted)' : ''}`);
+    // Limit to requested number of results
+    const topResults = rankedResults.slice(0, max_results);
+    
+    // Log confidence scores for debugging
+    topResults.forEach((doc, index) => {
+      console.log(`📋 Result ${index + 1}: ${doc.product_name} - Confidence: ${(doc.confidence.score * 100).toFixed(1)}% - Source: ${doc.id ? 'Database' : 'Web'}`);
     });
 
     return new Response(
       JSON.stringify({ 
-        documents: finalResults,
-        total: finalResults.length,
-        new_documents: newDocuments.length,
-        existing_documents: existingDocs?.length || 0,
-        source: 'enhanced_search',
-        search_query: product_name
+        results: topResults,
+        source: 'combined_search',
+        auto_selected: false,
+        message: `Found ${topResults.length} potential SDS documents. Please select one to process with AI extraction.`
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
 
   } catch (error) {
-    console.error('❌ Enhanced SDS search error:', error);
+    console.error('❌ Enhanced SDS document search error:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Enhanced search failed',
-        details: error.message,
-        documents: [],
-        total: 0
+        error: 'Enhanced document search failed',
+        details: error.message 
       }),
       { 
         status: 500,
@@ -293,50 +363,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-// Enhanced confidence calculation
-function calculateEnhancedConfidence(title: string, snippet: string, url: string, searchTerm: string): number {
-  let confidence = 50; // Base confidence
-  
-  const titleLower = (title || '').toLowerCase();
-  const snippetLower = (snippet || '').toLowerCase();
-  const urlLower = (url || '').toLowerCase();
-  const searchLower = searchTerm.toLowerCase();
-  
-  // Boost for exact matches
-  if (titleLower.includes(searchLower)) confidence += 30;
-  if (snippetLower.includes(searchLower)) confidence += 15;
-  
-  // Boost for SDS indicators
-  if (titleLower.includes('safety data sheet')) confidence += 25;
-  if (titleLower.includes('sds')) confidence += 20;
-  if (titleLower.includes('msds')) confidence += 15;
-  
-  // Boost for trusted domains
-  if (urlLower.includes('fastenal.com') || urlLower.includes('grainger.com')) confidence += 20;
-  if (urlLower.includes('fishersci.com') || urlLower.includes('sigmaaldrich.com')) confidence += 15;
-  if (urlLower.includes('3m.com') || urlLower.includes('dupont.com')) confidence += 10;
-  
-  // Boost for PDF files
-  if (urlLower.includes('.pdf')) confidence += 10;
-  
-  // Penalize for certain indicators
-  if (titleLower.includes('wikipedia') || titleLower.includes('investment')) confidence -= 30;
-  if (urlLower.includes('reddit.com') || urlLower.includes('facebook.com')) confidence -= 25;
-  
-  return Math.min(Math.max(confidence, 0), 95);
-}
-
-function extractFileName(title: string, url: string): string {
-  // Try to extract a meaningful filename
-  const urlParts = url.split('/');
-  const lastPart = urlParts[urlParts.length - 1];
-  
-  if (lastPart && lastPart.includes('.pdf')) {
-    return lastPart;
-  }
-  
-  // Fallback to cleaned title
-  const cleanTitle = (title || 'Unknown').replace(/[^\w\s-]/g, '').trim();
-  return `${cleanTitle.substring(0, 50)}.pdf`;
-}
