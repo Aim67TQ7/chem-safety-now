@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,7 @@ interface SDSResultCardProps {
   isSelected: boolean;
   onSelect: (document: any) => void;
   showSelection: boolean;
-  facilityId?: string;
+  facilitySlug?: string; // Change this to facilitySlug instead of facilityId
 }
 
 const SDSResultCard: React.FC<SDSResultCardProps> = ({
@@ -37,14 +36,13 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
   isSelected,
   onSelect,
   showSelection,
-  facilityId
+  facilitySlug // Use facilitySlug directly
 }) => {
   const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [extractedDataPopupOpen, setExtractedDataPopupOpen] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [savedDocumentId, setSavedDocumentId] = useState<string | null>(null);
-  const [facilitySlug, setFacilitySlug] = useState<string | null>(null);
 
   const handleLabelAnalysis = async () => {
     try {
@@ -76,19 +74,6 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
           // Enhanced pictogram processing - prioritize actual GHS pictograms
           const processedData = await processPictogramData(data.data);
           setExtractedData(processedData);
-          
-          // Get facility slug for navigation
-          if (facilityId) {
-            const { data: facility } = await supabase
-              .from('facilities')
-              .select('slug')
-              .eq('id', facilityId)
-              .maybeSingle();
-            
-            if (facility) {
-              setFacilitySlug(facility.slug);
-            }
-          }
           
           setExtractedDataPopupOpen(true);
           toast.success(`Label data extracted for ${document.product_name}`);
@@ -229,10 +214,12 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
 
   const handlePrintLabel = () => {
     if (savedDocumentId && facilitySlug) {
-      // Navigate to label printer with the correct facility slug
+      // Navigate to label printer with the facility slug (not ID)
+      console.log('🖨️ Navigating to label printer:', `/facility/${facilitySlug}/label-printer?documentId=${savedDocumentId}`);
       navigate(`/facility/${facilitySlug}/label-printer?documentId=${savedDocumentId}`);
       setExtractedDataPopupOpen(false);
     } else {
+      console.error('❌ Missing data for label printing:', { savedDocumentId, facilitySlug });
       toast.error('Please extract label data first or facility information is missing');
     }
   };
