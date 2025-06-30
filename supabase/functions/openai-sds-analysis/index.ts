@@ -49,10 +49,25 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Create the analysis prompt for text-based analysis
-    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer. I will provide you with a PDF document URL containing an SDS. Please analyze this document and extract the following information in the exact JSON format specified.
+    // Enhanced analysis prompt specifically for pictogram extraction
+    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer with special focus on GHS pictogram identification. I will provide you with a PDF document URL containing an SDS. Please analyze this document thoroughly and extract the following information.
 
 Please access the PDF at this URL: ${pdf_url}
+
+CRITICAL PICTOGRAM EXTRACTION INSTRUCTIONS:
+1. Look carefully at Section 2 (Hazards Identification) for ALL pictogram symbols
+2. Examine both visual pictograms AND text descriptions of hazards
+3. Each pictogram may be described by name (e.g., "Flame", "Corrosion") or GHS code (e.g., "GHS02", "GHS05")
+4. Common pictograms to look for:
+   - GHS01/Exploding Bomb (explosives)
+   - GHS02/Flame (flammable liquids/solids)
+   - GHS03/Flame Over Circle (oxidizers)
+   - GHS04/Gas Cylinder (compressed gases)
+   - GHS05/Corrosion (corrosive to metals/skin)
+   - GHS06/Skull and Crossbones (acute toxicity)
+   - GHS07/Exclamation Mark (irritant, harmful)
+   - GHS08/Health Hazard (carcinogen, mutagen)
+   - GHS09/Environment (aquatic toxicity)
 
 REQUIRED OUTPUT FORMAT:
 {
@@ -65,7 +80,7 @@ REQUIRED OUTPUT FORMAT:
     "physical_hazard": "number - Physical hazard rating (0-4)", 
     "ppe": "string - Personal protective equipment code (A-K or X)"
   },
-  "ghs_pictograms": ["array of GHS pictogram names like Flame, Skull-and-Crossbones, etc."],
+  "ghs_pictograms": ["array of ALL GHS pictogram names - be thorough, look for ALL 4+ pictograms"],
   "revision_date": "string - Date when SDS was last revised (YYYY-MM-DD format if possible)",
   "signal_word": "string - DANGER or WARNING",
   "h_codes": ["array of H-codes like H225, H319, etc."],
@@ -78,12 +93,14 @@ IMPORTANT INSTRUCTIONS:
 3. For HMIS codes, follow standard 0-4 scale (0=minimal, 4=severe hazard)
 4. PPE codes: A-K represent specific equipment combinations, X means consult supervisor
 5. Be precise with CAS numbers and H-codes - these are critical safety identifiers
-6. If multiple products are listed, focus on the primary/main product
-7. Confidence score should reflect how clearly the information was presented in the document
+6. **CRITICAL**: Look for ALL pictograms - don't stop at 3, there may be 4 or more
+7. Check Section 2.2 (Label Elements) thoroughly for complete pictogram list
+8. If multiple products are listed, focus on the primary/main product
+9. Confidence score should reflect how clearly the information was presented in the document
 
-Please analyze the SDS document at the URL provided and return only the requested JSON data.`;
+Please analyze the SDS document at the URL provided and return only the requested JSON data. Pay special attention to capturing ALL pictograms present in the document.`;
 
-    // Make the OpenAI API call using the standard chat completion endpoint
+    // Make the OpenAI API call using GPT-4 for better analysis
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -98,7 +115,7 @@ Please analyze the SDS document at the URL provided and return only the requeste
             content: analysisPrompt
           }
         ],
-        max_tokens: 1500,
+        max_tokens: 2000,
         temperature: 0.1
       }),
     });
@@ -134,6 +151,10 @@ Please analyze the SDS document at the URL provided and return only the requeste
     
     // Add processing metadata
     analysisData.processing_time_ms = processingTime;
+    
+    // Log detailed pictogram extraction results
+    console.log('🎯 Pictograms extracted:', analysisData.ghs_pictograms);
+    console.log('📊 Total pictograms found:', analysisData.ghs_pictograms?.length || 0);
     
     console.log('✅ OpenAI SDS Analysis complete');
     console.log('📊 Extracted Data:', analysisData);
