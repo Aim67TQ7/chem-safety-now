@@ -19,17 +19,38 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
   const [showExtractedData, setShowExtractedData] = useState(false);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
   const [currentSearchQuery, setCurrentSearchQuery] = useState('');
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const handleSearchStart = () => {
+    console.log('🔍 Search started');
     setIsSearching(true);
     setSearchResults([]);
     setSelectedDocument(null);
+    setSearchError(null);
   };
 
-  // Fix: Properly handle the search results from the corrected search function
   const handleSearchResults = (results: any[]) => {
-    console.log('🔍 Search results received:', results.length);
-    setSearchResults(results);
+    console.log('📋 SDSSearch - Received results:', {
+      count: results?.length || 0,
+      results: results
+    });
+    
+    if (!Array.isArray(results)) {
+      console.error('❌ Results is not an array:', results);
+      setSearchResults([]);
+      setSearchError('Invalid search results format');
+    } else {
+      setSearchResults(results);
+      setSearchError(null);
+    }
+    
+    setIsSearching(false);
+  };
+
+  const handleSearchError = (error: string) => {
+    console.error('❌ Search error:', error);
+    setSearchError(error);
+    setSearchResults([]);
     setIsSearching(false);
   };
 
@@ -46,7 +67,6 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
       search_query: currentSearchQuery
     });
     
-    // Enhance document with search context
     const enhancedDocument = {
       ...document,
       original_search_query: currentSearchQuery
@@ -87,6 +107,7 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
         onSearchResults={handleSearchResults}
         onSearchStart={handleSearchStart}
         onSearchQuery={handleSearchQuery}
+        onSearchError={handleSearchError}
       />
 
       {/* Loading State */}
@@ -98,6 +119,16 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
               <span className="text-2xl font-bold text-orange-700">Searching SDS Database...</span>
             </div>
             <p className="text-gray-600 text-lg">Finding the best safety data sheets for your search</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Search Error */}
+      {searchError && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6 text-center">
+            <div className="text-red-700 mb-2">Search Error</div>
+            <p className="text-red-600">{searchError}</p>
           </CardContent>
         </Card>
       )}
@@ -129,7 +160,7 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
       )}
 
       {/* No Results State */}
-      {!isSearching && searchResults.length === 0 && currentSearchQuery && (
+      {!isSearching && searchResults.length === 0 && currentSearchQuery && !searchError && (
         <Card className="border-gray-200 bg-gray-50">
           <CardContent className="p-8 text-center">
             <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
