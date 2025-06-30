@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +7,69 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, FileText, BarChart3, Settings, Map, AlertTriangle, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SiteMapDisplay from "@/components/SiteMapDisplay";
+import AdminTrialTabs from "@/components/AdminTrialTabs";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminPage = () => {
   const navigate = useNavigate();
+  const [facilities, setFacilities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchFacilities = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('facilities')
+        .select(`
+          id,
+          facility_name,
+          contact_name,
+          email,
+          address,
+          subscription_status,
+          trial_end_date,
+          subscription_start_date,
+          billing_period,
+          stripe_customer_id,
+          stripe_subscription_id,
+          created_at,
+          slug
+        `);
+
+      if (error) throw error;
+
+      // Process the data to add calculated fields
+      const processedFacilities = data?.map(facility => {
+        const trialEndDate = facility.trial_end_date ? new Date(facility.trial_end_date) : null;
+        const now = new Date();
+        
+        let trial_days_remaining = null;
+        let subscription_days_remaining = null;
+        
+        if (trialEndDate) {
+          const diffTime = trialEndDate.getTime() - now.getTime();
+          trial_days_remaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        return {
+          ...facility,
+          trial_days_remaining,
+          subscription_days_remaining,
+          facility_url: `https://chemlabel-gpt.lovable.app/facility/${facility.slug}`
+        };
+      }) || [];
+
+      setFacilities(processedFacilities);
+    } catch (error) {
+      console.error('Error fetching facilities:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFacilities();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
@@ -108,55 +168,21 @@ const AdminPage = () => {
           </TabsContent>
 
           <TabsContent value="facilities">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5" />
-                  Facility Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <Card className="border-green-200 bg-green-50">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg text-green-800">Active Facilities</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-green-900 mb-2">--</div>
-                        <p className="text-sm text-green-700">Facilities with active subscriptions</p>
-                        <Button variant="outline" className="mt-3 w-full">
-                          View Active Facilities
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="border-orange-200 bg-orange-50">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg text-orange-800">Expired Facilities</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-orange-900 mb-2">--</div>
-                        <p className="text-sm text-orange-700">Facilities with expired subscriptions</p>
-                        <Button variant="outline" className="mt-3 w-full">
-                          View Expired Facilities
-                        </Button>
-                      </CardContent>
-                    </Card>
+            {loading ? (
+              <Card>
+                <CardContent className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading facilities...</p>
                   </div>
-                  
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-900 mb-2">Facility Management Tools</h4>
-                    <div className="space-y-2 text-sm text-blue-800">
-                      <p>• Monitor subscription status across all facilities</p>
-                      <p>• Track usage and analytics</p>
-                      <p>• Manage facility settings and permissions</p>
-                      <p>• Generate reports and exports</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <AdminTrialTabs 
+                facilities={facilities} 
+                onStatusUpdate={fetchFacilities}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="sitemap">
