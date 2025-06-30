@@ -1,14 +1,64 @@
+
+# ChemLabel-GPT Robots.txt - Optimized for Chemical Safety SEO
+User-agent: *
+Allow: /
+Allow: /signup
+Allow: /privacy
+Allow: /terms
+Allow: /sales-partner
+Allow: /sales-partner-terms
+
+# Block all admin, facility, and customer-specific areas
+Disallow: /admin*
+Disallow: /facility/*
+Disallow: /qr-print/*
+Disallow: /sales-rep/*
+Disallow: /upgrade
+Disallow: /subscription*
+
+# Allow specific search engine bots full access to public pages
 User-agent: Googlebot
 Allow: /
+Allow: /signup
+Allow: /privacy
+Allow: /terms
+Allow: /sales-partner
+Allow: /sales-partner-terms
+Disallow: /admin*
+Disallow: /facility/*
+Disallow: /qr-print/*
+Disallow: /sales-rep/*
 
 User-agent: Bingbot
 Allow: /
+Allow: /signup
+Allow: /privacy
+Allow: /terms
+Allow: /sales-partner
+Allow: /sales-partner-terms
+Disallow: /admin*
+Disallow: /facility/*
+Disallow: /qr-print/*
+Disallow: /sales-rep/*
 
-User-agent: Twitterbot
-Allow: /
+# Block AI training bots from accessing any content
+User-agent: GPTBot
+Disallow: /
 
-User-agent: facebookexternalhit
-Allow: /
+User-agent: ChatGPT-User
+Disallow: /
 
-User-agent: *
-Allow: /
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+# Sitemap location
+Sitemap: https://chemlabel-gpt.com/sitemap.xml
+
+# Crawl delay for respectful bots
+Crawl-delay: 1
