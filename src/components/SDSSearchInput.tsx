@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,9 +121,10 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart, onSearchQu
 
       console.log('✅ SDS search response:', data);
 
-      if (data.results && data.results.length > 0) {
-        onSearchResults(data.results);
-        toast.success(`Found ${data.results.length} SDS document${data.results.length > 1 ? 's' : ''} for "${finalQuery}"`);
+      // Fix: Use data.documents instead of data.results
+      if (data.documents && data.documents.length > 0) {
+        onSearchResults(data.documents);
+        toast.success(`Found ${data.documents.length} SDS document${data.documents.length > 1 ? 's' : ''} for "${finalQuery}"`);
       } else {
         onSearchResults([]);
         toast.error(`No SDS documents found for "${finalQuery}". Try a different product name or manufacturer.`);
