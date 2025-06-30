@@ -1,11 +1,12 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Eye, AlertTriangle, Clock, Calendar } from "lucide-react";
 import AdminActionButtons from "@/components/AdminActionButtons";
+import SalespersonEditor from "@/components/SalespersonEditor";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Facility {
   id: string;
@@ -24,6 +25,12 @@ interface Facility {
   created_at: string;
 }
 
+interface FacilitySalesperson {
+  facility_id: string;
+  sales_rep_id: string;
+  sales_rep_name: string;
+}
+
 interface AdminTrialTabsProps {
   facilities: Facility[];
   onStatusUpdate: () => void;
@@ -31,6 +38,40 @@ interface AdminTrialTabsProps {
 
 const AdminTrialTabs = ({ facilities, onStatusUpdate }: AdminTrialTabsProps) => {
   const [activeTab, setActiveTab] = useState("active");
+  const [facilitySalespeople, setFacilitySalespeople] = useState<FacilitySalesperson[]>([]);
+
+  useEffect(() => {
+    fetchFacilitySalespeople();
+  }, [facilities]);
+
+  const fetchFacilitySalespeople = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('facility_sales_assignments')
+        .select(`
+          facility_id,
+          sales_rep_id,
+          sales_reps(name)
+        `)
+        .eq('is_primary', true);
+
+      if (error) throw error;
+
+      const salespeople = data?.map(assignment => ({
+        facility_id: assignment.facility_id,
+        sales_rep_id: assignment.sales_rep_id,
+        sales_rep_name: (assignment.sales_reps as any)?.name || 'Unknown'
+      })) || [];
+
+      setFacilitySalespeople(salespeople);
+    } catch (error) {
+      console.error('Error fetching facility salespeople:', error);
+    }
+  };
+
+  const getSalespersonForFacility = (facilityId: string) => {
+    return facilitySalespeople.find(sp => sp.facility_id === facilityId);
+  };
 
   // Filter facilities into active and expired trials
   const activeFacilities = facilities.filter(facility => {
@@ -71,6 +112,7 @@ const AdminTrialTabs = ({ facilities, onStatusUpdate }: AdminTrialTabsProps) => 
             <TableHead>Facility</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Status & Renewal</TableHead>
+            <TableHead>Salesperson</TableHead>
             <TableHead>Stripe IDs</TableHead>
             <TableHead>Actions</TableHead>
             <TableHead>Created</TableHead>
@@ -79,6 +121,8 @@ const AdminTrialTabs = ({ facilities, onStatusUpdate }: AdminTrialTabsProps) => 
         <TableBody>
           {facilityList.map((facility) => {
             const subscriptionInfo = formatSubscriptionInfo(facility);
+            const salesperson = getSalespersonForFacility(facility.id);
+            
             return (
               <TableRow key={facility.id} className={showExpiredBadge ? "bg-red-50" : ""}>
                 <TableCell>
@@ -143,6 +187,17 @@ const AdminTrialTabs = ({ facilities, onStatusUpdate }: AdminTrialTabsProps) => 
                       </div>
                     )}
                   </div>
+                </TableCell>
+                <TableCell>
+                  <SalespersonEditor
+                    facilityId={facility.id}
+                    currentSalespersonId={salesperson?.sales_rep_id}
+                    currentSalespersonName={salesperson?.sales_rep_name}
+                    onUpdate={() => {
+                      fetchFacilitySalespeople();
+                      onStatusUpdate();
+                    }}
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="text-xs space-y-1">

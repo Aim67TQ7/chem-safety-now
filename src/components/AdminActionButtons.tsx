@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Crown, Clock, RotateCcw, Gift } from "lucide-react";
+import { Gift, Clock, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AdminSubscriptionService } from "@/services/adminSubscriptionService";
 
@@ -99,9 +99,9 @@ const AdminActionButtons = ({
               setActionType('grant_free');
               setDialogOpen(true);
             }}
+            title="Grant Free Access"
           >
-            <Gift className="w-3 h-3 mr-1" />
-            Grant Free
+            <Gift className="w-3 h-3" />
           </Button>
         </DialogTrigger>
         
@@ -201,9 +201,9 @@ const AdminActionButtons = ({
           setActionType('extend_trial');
           setDialogOpen(true);
         }}
+        title="Extend Trial"
       >
-        <Clock className="w-3 h-3 mr-1" />
-        Extend
+        <Clock className="w-3 h-3" />
       </Button>
 
       <Button 
@@ -213,9 +213,9 @@ const AdminActionButtons = ({
           setActionType('reset_subscription');
           setDialogOpen(true);
         }}
+        title="Reset to Trial"
       >
-        <RotateCcw className="w-3 h-3 mr-1" />
-        Reset
+        <RotateCcw className="w-3 h-3" />
       </Button>
     </div>
   );
