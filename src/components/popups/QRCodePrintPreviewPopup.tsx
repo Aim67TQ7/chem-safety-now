@@ -25,7 +25,7 @@ interface QRCodePrintPreviewPopupProps {
 const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintPreviewPopupProps) => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const [posterSize, setPosterSize] = useState<'letter' | 'a4'>('letter');
-  const [layoutMode, setLayoutMode] = useState<'single' | 'dual'>('single');
+  const [layoutMode, setLayoutMode] = useState<'single' | 'dual' | 'stacked'>('single');
   const { toast } = useToast();
   
   const facilityDisplayName = facilityData.facility_name || 'Facility';
@@ -215,7 +215,8 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
                   className="border border-gray-300 rounded px-2 py-1 text-sm"
                 >
                   <option value="single">Single Poster</option>
-                  <option value="dual">Two Posters</option>
+                  <option value="dual">Two Side-by-Side</option>
+                  <option value="stacked">Two Stacked</option>
                 </select>
               </div>
 
@@ -237,13 +238,19 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
           <div className="bg-gray-100 p-6 rounded-lg">
             <div className="text-center mb-4">
               <Badge variant="outline" className="bg-white">
-                Preview - {posterSize.toUpperCase()} {layoutMode === 'dual' ? 'Landscape (2 posters)' : 'Portrait'}
+                Preview - {posterSize.toUpperCase()} {
+                  layoutMode === 'dual' ? 'Landscape (2 side-by-side)' : 
+                  layoutMode === 'stacked' ? 'Portrait (2 stacked)' : 
+                  'Portrait'
+                }
               </Badge>
             </div>
             
-            <div className={`flex justify-center gap-4 ${layoutMode === 'dual' ? 'flex-row' : 'flex-col'}`}>
+            <div className={`flex justify-center gap-4 ${
+              layoutMode === 'dual' ? 'flex-row' : 'flex-col'
+            }`}>
               <PosterPreview />
-              {layoutMode === 'dual' && <PosterPreview />}
+              {(layoutMode === 'dual' || layoutMode === 'stacked') && <PosterPreview />}
             </div>
           </div>
 
@@ -272,6 +279,7 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• Click "Open Full Print View" for the complete poster with proper sizing</li>
               <li>• The preview shows how your poster will look when printed</li>
+              <li>• "Stacked" layout places two posters vertically for easy cutting</li>
               <li>• QR code will work with any smartphone camera</li>
               <li>• No special app required for scanning</li>
             </ul>

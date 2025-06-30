@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +25,7 @@ const QRCodePrintPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [posterSize, setPosterSize] = useState<'letter' | 'a4'>('letter');
-  const [layoutMode, setLayoutMode] = useState<'single' | 'dual'>('single');
+  const [layoutMode, setLayoutMode] = useState<'single' | 'dual' | 'stacked'>('single');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -277,22 +278,22 @@ const QRCodePrintPage = () => {
             justify-content: center;
             align-items: center;
             background: white !important;
-            gap: ${layoutMode === 'dual' ? '0.5rem' : '0'};
-            padding: ${layoutMode === 'dual' ? '0.25in' : '0.5in'};
+            gap: ${layoutMode === 'dual' ? '0.5rem' : layoutMode === 'stacked' ? '1rem' : '0'};
+            padding: ${layoutMode === 'dual' ? '0.25in' : layoutMode === 'stacked' ? '0.5in' : '0.5in'};
           }
           .poster-content {
             max-width: none !important;
             width: ${layoutMode === 'dual' ? '48%' : '100%'} !important;
-            height: 100% !important;
+            height: ${layoutMode === 'stacked' ? '45%' : '100%'} !important;
             ${layoutMode === 'dual' ? 'border-right: 2px dashed #ccc; padding-right: 0.25rem;' : ''}
+            ${layoutMode === 'stacked' ? 'border-bottom: 2px dashed #ccc; padding-bottom: 0.5rem; margin-bottom: 0.5rem;' : ''}
             display: flex;
             flex-direction: column;
             justify-content: space-between;
           }
           .poster-content:last-child {
-            border-right: none;
-            padding-right: 0;
-            padding-left: 0.25rem;
+            ${layoutMode === 'dual' ? 'border-right: none; padding-right: 0; padding-left: 0.25rem;' : ''}
+            ${layoutMode === 'stacked' ? 'border-bottom: none; padding-bottom: 0; margin-bottom: 0;' : ''}
           }
         }
         @page {
@@ -318,7 +319,8 @@ const QRCodePrintPage = () => {
                 className="border border-gray-300 rounded px-2 py-1 text-sm"
               >
                 <option value="single">Single Poster</option>
-                <option value="dual">Two Posters (Cut in Half)</option>
+                <option value="dual">Two Side-by-Side</option>
+                <option value="stacked">Two Stacked</option>
               </select>
             </div>
 
@@ -351,14 +353,18 @@ const QRCodePrintPage = () => {
       <div className={`print-page min-h-screen bg-white flex justify-center items-center p-8 ${
         layoutMode === 'dual' 
           ? posterSize === 'letter' 
-            ? 'max-w-[11in] max-h-[8.5in]' 
-            : 'max-w-[29.7cm] max-h-[21cm]'
-          : posterSize === 'letter'
-            ? 'max-w-[8.5in] max-h-[11in]'
-            : 'max-w-[21cm] max-h-[29.7cm]'
-      } mx-auto border border-gray-300 shadow-lg`}>
+            ? 'max-w-[11in] max-h-[8.5in] flex-row' 
+            : 'max-w-[29.7cm] max-h-[21cm] flex-row'
+          : layoutMode === 'stacked'
+            ? posterSize === 'letter'
+              ? 'max-w-[8.5in] max-h-[11in] flex-col'
+              : 'max-w-[21cm] max-h-[29.7cm] flex-col'
+            : posterSize === 'letter'
+              ? 'max-w-[8.5in] max-h-[11in] flex-col'
+              : 'max-w-[21cm] max-h-[29.7cm] flex-col'
+      } mx-auto border border-gray-300 shadow-lg gap-4`}>
         <PosterContent />
-        {layoutMode === 'dual' && <PosterContent />}
+        {(layoutMode === 'dual' || layoutMode === 'stacked') && <PosterContent />}
       </div>
     </>
   );
