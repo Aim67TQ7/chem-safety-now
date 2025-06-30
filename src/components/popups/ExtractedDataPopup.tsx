@@ -24,7 +24,6 @@ interface ExtractedDataPopupProps {
   };
   onPrintLabel: () => void;
   onViewDocument?: () => void;
-  searchQuery?: string;
 }
 
 const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
@@ -32,10 +31,9 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
   onClose,
   extractedData,
   onPrintLabel,
-  onViewDocument,
-  searchQuery
+  onViewDocument
 }) => {
-  // Official OSHA pictogram mapping to uploaded images
+  // GHS Pictogram mapping to display actual images
   const pictogramImages: Record<string, { name: string; imageUrl: string }> = {
     'exclamation': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
     'health_hazard': { name: 'Health Hazard', imageUrl: '/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png' },
@@ -84,60 +82,6 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
 
   const statusInfo = getStatusInfo();
   const StatusIcon = statusInfo.icon;
-
-  // Enhanced product name detection with better generic name filtering
-  const displayProductName = () => {
-    const extractedName = extractedData.product_name;
-    
-    console.log('🔍 Product name analysis:', {
-      extractedName,
-      searchQuery,
-      extractionStatus: extractedData.extraction_status,
-      confidence: extractedData.confidence_score
-    });
-    
-    // List of generic chemical names that should be replaced with search query
-    const genericNames = [
-      'acetone', 'methanol', 'ethanol', 'toluene', 'xylene', 'benzene',
-      'chemical', 'product', 'solution', 'compound', 'mixture', 'substance',
-      'solvent', 'cleaner', 'degreaser', 'thinner', 'adhesive', 'coating'
-    ];
-    
-    if (extractedName && searchQuery) {
-      const lowerExtracted = extractedName.toLowerCase().trim();
-      const lowerQuery = searchQuery.toLowerCase().trim();
-      
-      // Check if extracted name is too generic
-      const isGeneric = genericNames.some(generic => 
-        lowerExtracted === generic || 
-        lowerExtracted.includes(generic) && lowerExtracted.length < generic.length + 5
-      );
-      
-      // Check if search query contains more specific product information
-      const hasProductCode = /[A-Z]{1,3}[-\s]?\d{2,4}/.test(searchQuery); // Matches patterns like "AA 392", "AA-392", "XYZ 123"
-      const hasSpecificTerm = searchQuery.length > 3 && !genericNames.includes(lowerQuery);
-      
-      // Prefer search query if it's more specific or extracted name is generic
-      if (isGeneric || (hasProductCode && !lowerExtracted.includes(lowerQuery.split(/[-\s]/)[0]))) {
-        console.log('🔄 Using search query as product name:', searchQuery);
-        return searchQuery;
-      }
-      
-      // If extracted name doesn't contain key parts of search query, prefer search query
-      const searchWords = lowerQuery.split(/[-\s]+/).filter(word => word.length > 2);
-      const containsSearchTerms = searchWords.some(word => lowerExtracted.includes(word));
-      
-      if (hasSpecificTerm && !containsSearchTerms) {
-        console.log('🔄 Using search query due to mismatch:', searchQuery);
-        return searchQuery;
-      }
-    }
-    
-    // Default to extracted name or search query as fallback
-    const finalName = extractedName || searchQuery || 'Unknown Product';
-    console.log('✅ Final product name:', finalName);
-    return finalName;
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -190,7 +134,7 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                 <div>
                   <label className="text-sm font-medium text-gray-600">Product Name</label>
                   <p className="text-sm bg-gray-50 p-2 rounded">
-                    {displayProductName()}
+                    {extractedData.product_name || 'Not extracted'}
                   </p>
                 </div>
                 {extractedData.manufacturer && (
@@ -258,12 +202,12 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
             )}
           </div>
 
-          {/* GHS Pictograms - Using Official OSHA Images */}
+          {/* GHS Pictograms - Prioritized Display */}
           {extractedData.pictograms && extractedData.pictograms.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  Official OSHA GHS Pictograms
+                  GHS Pictograms
                   {extractedData.prioritized_pictograms && (
                     <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                       Prioritized from SDS
@@ -277,23 +221,16 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                     const pictogramData = pictogramImages[pictogramId];
                     return (
                       <div key={index} className="text-center">
-                        {pictogramData ? (
+                        {pictogramData && (
                           <>
-                            <div className="w-20 h-20 mx-auto mb-2 flex items-center justify-center border-2 border-gray-300 rounded-lg bg-white p-2">
+                            <div className="w-16 h-16 mx-auto mb-2 flex items-center justify-center border border-gray-200 rounded">
                               <img 
                                 src={pictogramData.imageUrl} 
                                 alt={pictogramData.name}
-                                className="w-full h-full object-contain"
+                                className="w-12 h-12 object-contain"
                               />
                             </div>
-                            <p className="text-xs text-gray-600 font-medium">{pictogramData.name}</p>
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-20 h-20 mx-auto mb-2 flex items-center justify-center border-2 border-gray-300 rounded-lg bg-gray-50">
-                              <span className="text-xs text-gray-500">Unknown</span>
-                            </div>
-                            <p className="text-xs text-gray-600">{pictogramId}</p>
+                            <p className="text-xs text-gray-600">{pictogramData.name}</p>
                           </>
                         )}
                       </div>

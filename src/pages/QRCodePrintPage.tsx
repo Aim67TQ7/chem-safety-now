@@ -64,6 +64,7 @@ const QRCodePrintPage = () => {
 
   useEffect(() => {
     if (facilityData) {
+      // Always use production domain for QR codes
       const facilityUrl = `https://chemlabel-gpt.com/facility/${facilitySlug}`;
       
       QRCodeLib.toDataURL(facilityUrl, {
@@ -148,108 +149,115 @@ const QRCodePrintPage = () => {
   }
 
   const facilityDisplayName = facilityData.facility_name || 'Facility';
+  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilitySlug}`;
 
   const PosterContent = () => (
-    <div className="bg-white border-2 border-gray-300 rounded-lg p-6 max-w-md mx-auto">
-      {/* Header */}
-      <div className="text-center mb-4">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">
+    <div className="poster-content w-full h-full flex flex-col justify-between">
+      
+      {/* Header without logo - just main title */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
           Chemical Safety Portal
         </h1>
-        <p className="text-xs text-gray-600">OSHA Compliant • Instant Access • Mobile Ready</p>
+        <p className="text-sm text-gray-600">OSHA Compliant • Instant Access • Mobile Ready</p>
       </div>
 
-      {/* Main Content Box */}
-      <div className="bg-white border-2 border-gray-800 rounded-lg p-4">
-        {/* Company name */}
-        <div className="text-center mb-3">
-          <h2 className="text-lg font-bold text-gray-900">
+      {/* Main QR Code Section */}
+      <div className="bg-white border-4 border-gray-800 rounded-xl p-6 shadow-2xl flex-1 flex flex-col justify-between">
+        
+        {/* Company name at top of outlined box */}
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
             {facilityDisplayName}
           </h2>
         </div>
 
-        {/* QR Code with logo overlay */}
-        <div className="text-center mb-4">
+        <div className="text-center space-y-4 flex-1 flex flex-col justify-center">
+          
+          {/* QR Code with embedded logo */}
           <div className="relative inline-block">
             {qrCodeDataUrl && (
               <div className="relative">
                 <img 
                   src={qrCodeDataUrl} 
                   alt="Facility QR Code"
-                  className="w-32 h-32 mx-auto border-2 border-gray-800 rounded"
+                  className="w-40 h-40 mx-auto border-4 border-gray-800 rounded-lg"
                 />
-                {/* Company logo overlay */}
+                {/* Company logo overlay in center of QR code */}
                 {facilityData.logo_url && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-1 rounded border border-gray-800">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-lg shadow-lg border-2 border-gray-800">
                     <img 
                       src={facilityData.logo_url} 
                       alt={`${facilityDisplayName} Logo`}
-                      className="w-6 h-6 object-contain"
+                      className="w-8 h-8 object-contain"
                     />
                   </div>
                 )}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Instructions */}
-        <div className="text-center mb-3">
-          <h3 className="text-sm font-bold text-gray-900 mb-2">
-            Scan for Instant Safety Access
-          </h3>
-          
-          <div className="bg-gray-100 border border-gray-300 rounded p-3 text-xs">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="text-center">
-                <div className="bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mx-auto mb-1">1</div>
-                <p className="font-medium text-gray-900">Open Camera</p>
-                <p className="text-gray-700">Use phone's camera</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mx-auto mb-1">2</div>
-                <p className="font-medium text-gray-900">Point & Scan</p>
-                <p className="text-gray-700">Aim at QR code</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mx-1">3</div>
-                <p className="font-medium text-gray-900">Access Data</p>
-                <p className="text-gray-700">Tap to view info</p>
+          {/* Instructions */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-gray-900">
+              Scan for Instant Safety Access
+            </h3>
+            
+            <div className="bg-gray-100 border-2 border-gray-300 rounded-lg p-4">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="space-y-2">
+                  <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto">1</div>
+                  <h4 className="text-sm font-bold text-gray-900">Open Camera</h4>
+                  <p className="text-xs text-gray-700">Use your phone's camera app</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto">2</div>
+                  <h4 className="text-sm font-bold text-gray-900">Point & Scan</h4>
+                  <p className="text-xs text-gray-700">Aim at the QR code</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mx-auto">3</div>
+                  <h4 className="text-sm font-bold text-gray-900">Access Data</h4>
+                  <p className="text-xs text-gray-700">Tap to view safety information</p>
+                </div>
               </div>
             </div>
+
+            {/* Facility Information */}
+            {(facilityData.address || facilityData.contact_name || facilityData.email) && (
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-bold text-blue-900 mb-2">Facility Information</h4>
+                <div className="space-y-1 text-xs text-blue-800">
+                  {facilityData.contact_name && (
+                    <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
+                  )}
+                  {facilityData.address && (
+                    <p><span className="font-medium">Address:</span> {facilityData.address}</p>
+                  )}
+                  {facilityData.email && (
+                    <p><span className="font-medium">Email:</span> {facilityData.email}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Facility Info */}
-        {(facilityData.address || facilityData.contact_name || facilityData.email) && (
-          <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-3">
-            <h4 className="text-xs font-bold text-blue-900 mb-1">Facility Information</h4>
-            <div className="space-y-1 text-xs text-blue-800">
-              {facilityData.contact_name && (
-                <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
-              )}
-              {facilityData.address && (
-                <p><span className="font-medium">Address:</span> {facilityData.address}</p>
-              )}
-              {facilityData.email && (
-                <p><span className="font-medium">Email:</span> {facilityData.email}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ChemLabel-GPT branding */}
-        <div className="text-center">
-          <div className="flex items-center justify-center space-x-1 mb-1">
+        {/* ChemLabel-GPT branding in lower center of outlined box */}
+        <div className="text-center mt-4">
+          <div className="flex items-center justify-center space-x-2">
             <img 
               src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
               alt="ChemLabel-GPT Logo" 
-              className="w-3 h-3 object-contain"
+              className="w-5 h-5 object-contain"
             />
-            <p className="text-xs text-gray-800 font-bold">ChemLabel-GPT</p>
+            <div className="text-center">
+              <p className="text-sm text-gray-800 font-bold">ChemLabel-GPT</p>
+            </div>
           </div>
-          <p className="text-xs text-gray-500">No app required • Works with any smartphone</p>
+          <p className="text-xs text-gray-500 mt-1">No app required • Works with any smartphone • Real-time compliance tracking</p>
         </div>
+
       </div>
     </div>
   );
@@ -270,23 +278,27 @@ const QRCodePrintPage = () => {
             justify-content: center;
             align-items: center;
             background: white !important;
-            gap: ${layoutMode === 'dual' ? '1rem' : layoutMode === 'stacked' ? '1rem' : '0'};
-            padding: 0.5in;
+            gap: ${layoutMode === 'dual' ? '0.5rem' : layoutMode === 'stacked' ? '1rem' : '0'};
+            padding: ${layoutMode === 'dual' ? '0.25in' : layoutMode === 'stacked' ? '0.5in' : '0.5in'};
           }
-          .poster-wrapper {
+          .poster-content {
+            max-width: none !important;
             width: ${layoutMode === 'dual' ? '48%' : '100%'} !important;
-            height: ${layoutMode === 'stacked' ? '45%' : 'auto'} !important;
-            ${layoutMode === 'dual' ? 'border-right: 2px dashed #ccc; padding-right: 0.5rem;' : ''}
+            height: ${layoutMode === 'stacked' ? '45%' : '100%'} !important;
+            ${layoutMode === 'dual' ? 'border-right: 2px dashed #ccc; padding-right: 0.25rem;' : ''}
             ${layoutMode === 'stacked' ? 'border-bottom: 2px dashed #ccc; padding-bottom: 0.5rem; margin-bottom: 0.5rem;' : ''}
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
           }
-          .poster-wrapper:last-child {
-            ${layoutMode === 'dual' ? 'border-right: none; padding-right: 0; padding-left: 0.5rem;' : ''}
+          .poster-content:last-child {
+            ${layoutMode === 'dual' ? 'border-right: none; padding-right: 0; padding-left: 0.25rem;' : ''}
             ${layoutMode === 'stacked' ? 'border-bottom: none; padding-bottom: 0; margin-bottom: 0;' : ''}
           }
         }
         @page {
           size: ${posterSize === 'letter' ? 'letter' : 'A4'} ${layoutMode === 'dual' ? 'landscape' : 'portrait'};
-          margin: 0.5in;
+          margin: 0.25in;
         }
       `}</style>
 
@@ -337,18 +349,22 @@ const QRCodePrintPage = () => {
         </div>
       </div>
 
-      {/* Print content with compact layout */}
+      {/* Print content with responsive preview */}
       <div className={`print-page min-h-screen bg-white flex justify-center items-center p-8 ${
-        layoutMode === 'dual' ? 'flex-row' : layoutMode === 'stacked' ? 'flex-col' : 'flex-col'
-      } mx-auto gap-4`}>
-        <div className="poster-wrapper">
-          <PosterContent />
-        </div>
-        {(layoutMode === 'dual' || layoutMode === 'stacked') && (
-          <div className="poster-wrapper">
-            <PosterContent />
-          </div>
-        )}
+        layoutMode === 'dual' 
+          ? posterSize === 'letter' 
+            ? 'max-w-[11in] max-h-[8.5in] flex-row' 
+            : 'max-w-[29.7cm] max-h-[21cm] flex-row'
+          : layoutMode === 'stacked'
+            ? posterSize === 'letter'
+              ? 'max-w-[8.5in] max-h-[11in] flex-col'
+              : 'max-w-[21cm] max-h-[29.7cm] flex-col'
+            : posterSize === 'letter'
+              ? 'max-w-[8.5in] max-h-[11in] flex-col'
+              : 'max-w-[21cm] max-h-[29.7cm] flex-col'
+      } mx-auto border border-gray-300 shadow-lg gap-4`}>
+        <PosterContent />
+        {(layoutMode === 'dual' || layoutMode === 'stacked') && <PosterContent />}
       </div>
     </>
   );

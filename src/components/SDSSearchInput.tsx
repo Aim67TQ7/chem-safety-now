@@ -19,10 +19,9 @@ interface SDSSearchInputProps {
   facilityId: string;
   onSearchResults: (results: any[]) => void;
   onSearchStart: () => void;
-  onSearchQuery?: (query: string) => void; // Add callback for search query
 }
 
-const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart, onSearchQuery }: SDSSearchInputProps) => {
+const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearchInputProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
@@ -63,11 +62,6 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart, onSearchQu
     const value = e.target.value;
     setSearchQuery(value);
     
-    // Notify parent of search query change
-    if (onSearchQuery) {
-      onSearchQuery(value);
-    }
-    
     // Debounce the AI suggestions
     const timeoutId = setTimeout(() => {
       getSearchSuggestions(value);
@@ -88,11 +82,6 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart, onSearchQu
     setIsSearching(true);
     onSearchStart();
     setShowSuggestions(false);
-
-    // Notify parent of the final search query
-    if (onSearchQuery) {
-      onSearchQuery(finalQuery);
-    }
 
     // Create a timeout promise that rejects after 15 seconds
     const timeoutPromise = new Promise((_, reject) => {
@@ -152,11 +141,6 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart, onSearchQu
     setSearchQuery(suggestion);
     setShowSuggestions(false);
     setSuggestions(null);
-    
-    // Notify parent of the suggestion selection
-    if (onSearchQuery) {
-      onSearchQuery(suggestion);
-    }
   };
 
   return (
