@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { SubscriptionService, FacilitySubscription } from "@/services/subscripti
 import FacilityActivityCard from "./FacilityActivityCard";
 import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
+import SDSDocumentSelector from "./SDSDocumentSelector";
 import FacilityNavbar from "./FacilityNavbar";
 
 interface FacilityProps {
@@ -48,10 +48,16 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
         </div>
 
         {/* Dashboard Cards Section */}
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* SDS Document Selector for Label Printing */}
+          <SDSDocumentSelector facilityId={facility.id} />
+          
           {/* Facility Activity Card */}
           <FacilityActivityCard facilityId={facility.id} />
+        </div>
 
+        {/* Full Width Cards */}
+        <div className="grid grid-cols-1 gap-6">
           {/* Audit Trail */}
           <AuditTrail facilityId={facility.id} />
         </div>

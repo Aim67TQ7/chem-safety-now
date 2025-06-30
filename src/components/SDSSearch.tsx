@@ -26,14 +26,16 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
     setSelectedDocument(null);
   };
 
-  const handleSearchResults = (results: any[], searchQuery?: string) => {
-    console.log('🔍 Search results received:', results.length, 'query:', searchQuery);
+  // Fix: Properly handle the search results from the corrected search function
+  const handleSearchResults = (results: any[]) => {
+    console.log('🔍 Search results received:', results.length);
     setSearchResults(results);
     setIsSearching(false);
-    if (searchQuery) {
-      setCurrentSearchQuery(searchQuery);
-      console.log('💾 Stored search query:', searchQuery);
-    }
+  };
+
+  const handleSearchQuery = (query: string) => {
+    setCurrentSearchQuery(query);
+    console.log('💾 Stored search query:', query);
   };
 
   const handleDocumentSelect = (document: any) => {
@@ -84,7 +86,7 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
         facilityId={facilityId}
         onSearchResults={handleSearchResults}
         onSearchStart={handleSearchStart}
-        onSearchQuery={setCurrentSearchQuery}
+        onSearchQuery={handleSearchQuery}
       />
 
       {/* Loading State */}
@@ -113,13 +115,13 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
           <div className="grid gap-6">
             {searchResults.map((result, index) => (
               <SDSResultCard
-                key={index}
+                key={result.id || index}
                 document={result}
                 onSelect={() => handleDocumentSelect(result)}
                 onView={() => {}}
                 onDownload={() => {}}
                 isSelected={false}
-                showSelection={false}
+                showSelection={true}
               />
             ))}
           </div>
