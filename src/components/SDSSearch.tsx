@@ -197,7 +197,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
         isOpen={showPDFViewer}
         onClose={() => setShowPDFViewer(false)}
         pdfUrl={selectedDocument?.bucket_url || selectedDocument?.source_url}
-        title={selectedDocument?.product_name || 'SDS Document'}
+        documentName={selectedDocument?.product_name || 'SDS Document'}
       />
     </div>
   );
