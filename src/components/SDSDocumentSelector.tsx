@@ -23,8 +23,8 @@ interface SDSDocument {
   extraction_quality_score: number;
   created_at: string;
   hmis_codes?: any;
-  h_codes?: any[];
-  pictograms?: string[];
+  h_codes?: any;
+  pictograms?: any;
   signal_word?: string;
   cas_number?: string;
 }
