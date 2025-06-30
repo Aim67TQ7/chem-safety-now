@@ -20,7 +20,7 @@ const App = () => (
             <Route key={to} path={to} element={page} />
           ))}
           <Route path="/admin/sds-documents" element={<AdminSDSDocumentsPage />} />
-          <Route path="/qr-print/:facilitySlug" element={navItems.find(item => item.to === "/qr-print")?.page} />
+          <Route path="/qr-print" element={navItems.find(item => item.to === "/qr-print/:facilitySlug")?.page} />
           <Route path="/sales-rep/:salesRepId" element={navItems.find(item => item.to === "/sales-rep/:salesRepId")?.page} />
         </Routes>
       </BrowserRouter>
