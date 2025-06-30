@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,7 +95,7 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
     const searchPromise = supabase.functions.invoke('sds-search', {
       body: {
         product_name: finalQuery.trim(),
-        max_results: 3
+        max_results: 10
       }
     });
 

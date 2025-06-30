@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,20 +7,21 @@ import { Loader2, Search, FileText, AlertCircle, ExternalLink, CheckCircle, Bot 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import SDSResultCard from './SDSResultCard';
+import SDSSearchInput from './SDSSearchInput';
 import { Badge } from '@/components/ui/badge';
 import PDFViewerPopup from './popups/PDFViewerPopup';
 import { useLocation } from 'react-router-dom';
 
 interface SDSSearchProps {
   facilityId?: string;
-  facilitySlug?: string; // Add facilitySlug prop
+  facilitySlug?: string;
   showOnlyResults?: boolean;
   onSearchComplete?: (hasResults: boolean) => void;
 }
 
 const SDSSearch: React.FC<SDSSearchProps> = ({ 
   facilityId, 
-  facilitySlug, // Use facilitySlug
+  facilitySlug,
   showOnlyResults = false,
   onSearchComplete 
 }) => {
@@ -92,6 +94,20 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
     }
   };
 
+  const handleSearchStart = () => {
+    setIsSearching(true);
+    setHasSearched(true);
+  };
+
+  const handleSearchResults = (results: any[]) => {
+    console.log('📋 Received search results:', results);
+    setSearchResults(results);
+    
+    if (onSearchComplete) {
+      onSearchComplete(results.length > 0);
+    }
+  };
+
   const handleViewDocument = (document: any) => {
     setSelectedDocument(document);
     setShowPDFViewer(true);
@@ -113,36 +129,27 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
   return (
     <div className="space-y-6">
       {!showOnlyResults && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="w-5 h-5" />
-              Search SDS Documents
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter product or chemical name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1"
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="w-5 h-5" />
+                Search SDS Documents
+                <Badge variant="secondary" className="ml-2">
+                  <Bot className="w-3 h-3 mr-1" />
+                  AI-Powered
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SDSSearchInput
+                facilityId={facilityId || ''}
+                onSearchResults={handleSearchResults}
+                onSearchStart={handleSearchStart}
               />
-              <Button 
-                onClick={() => handleSearch()}
-                disabled={isSearching}
-                className="px-6"
-              >
-                {isSearching ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Search Results */}
@@ -167,7 +174,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                 isSelected={false}
                 onSelect={() => {}}
                 showSelection={false}
-                facilitySlug={facilitySlug} // Pass facilitySlug instead of facilityId
+                facilitySlug={facilitySlug}
               />
             ))}
           </div>
@@ -183,7 +190,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
               No SDS Documents Found
             </h3>
             <p className="text-gray-600 mb-4">
-              We couldn't find any Safety Data Sheets for "{searchTerm}".
+              We couldn't find any Safety Data Sheets for your search.
             </p>
             <p className="text-sm text-gray-500">
               Try searching with different keywords or the exact product name.
