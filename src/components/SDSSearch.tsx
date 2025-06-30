@@ -102,7 +102,10 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
                 key={index}
                 document={result}
                 onSelect={() => handleDocumentSelect(result)}
-                rank={index + 1}
+                onView={() => {}}
+                onDownload={() => {}}
+                isSelected={false}
+                showSelection={false}
               />
             ))}
           </div>
@@ -147,7 +150,9 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
       <LabelPrinterPopup
         isOpen={showLabelPrinter}
         onClose={() => setShowLabelPrinter(false)}
-        sdsData={extractedData}
+        selectedDocument={selectedDocument}
+        initialProductName={extractedData.productName}
+        initialManufacturer={extractedData.manufacturer}
       />
     </div>
   );
