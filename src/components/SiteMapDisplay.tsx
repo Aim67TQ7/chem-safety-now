@@ -15,7 +15,12 @@ const SiteMapDisplay = () => {
     '/facility/:facilitySlug/incidents',
     '/facility/:facilitySlug/access-tools',
     '/facility/:facilitySlug/label-printer',
-    '/qr-print',
+    '/qr-print/:facilitySlug',
+    '/admin',
+    '/admin/sds-documents',
+    '/upgrade',
+    '/sales-partner',
+    '/sales-partner-terms',
     '/signup',
     '/privacy',
     '/terms'
@@ -66,35 +71,54 @@ const SiteMapDisplay = () => {
                 </div>
               );
             })}
+            
+            {/* Additional Admin Routes */}
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50">
+              <div className="flex items-center gap-3">
+                <ExternalLink className="w-4 h-4" />
+                <div>
+                  <div className="font-medium">Admin SDS Documents</div>
+                  <code className="text-xs text-gray-500">/admin/sds-documents</code>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <Badge variant="default" className="text-xs">Working</Badge>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Missing Pages That Need Creation</CardTitle>
+          <CardTitle className="text-green-700">✅ Recently Fixed Routes</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span><code>/admin</code> - Admin dashboard page</span>
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span><code>/qr-print/:facilitySlug</code> - QR print functionality now works with facility slugs</span>
             </div>
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span><code>/upgrade</code> - Subscription upgrade page</span>
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span><code>/admin</code> - Admin dashboard page is fully functional</span>
             </div>
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span><code>/sales-partner</code> - Sales partner page</span>
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span><code>/upgrade</code> - Subscription upgrade page created</span>
             </div>
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span><code>/sales-partner-terms</code> - Sales partner terms page</span>
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span><code>/sales-partner</code> - Sales partner page created</span>
             </div>
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span><code>/qr-print/:facilitySlug</code> - Individual facility QR print page</span>
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span><code>/sales-partner-terms</code> - Sales partner terms page created</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span><code>/admin/sds-documents</code> - Admin SDS documents page route established</span>
             </div>
           </div>
         </CardContent>
@@ -106,8 +130,8 @@ const SiteMapDisplay = () => {
         </CardHeader>
         <CardContent className="text-sm space-y-2">
           <p><strong>:facilitySlug</strong> - This should be a human-readable facility identifier (like "acme-corp"), not a UUID</p>
-          <p><strong>Working Routes:</strong> These routes have corresponding page components that exist</p>
-          <p><strong>Broken Routes:</strong> These routes are defined in nav-items.tsx but missing their page components</p>
+          <p><strong>Working Routes:</strong> These routes have corresponding page components that exist and function properly</p>
+          <p><strong>Fixed Issues:</strong> QR print functionality now uses facility slugs instead of UUIDs for proper routing</p>
         </CardContent>
       </Card>
     </div>

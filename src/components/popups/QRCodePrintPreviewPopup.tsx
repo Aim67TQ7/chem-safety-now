@@ -52,8 +52,8 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
   }, [isOpen, facilityUrl]);
 
   const handlePrint = () => {
-    // Fix the print URL to use the correct route structure
-    const printUrl = `/qr-print`;
+    // Fix the print URL to use the correct route structure with facilitySlug
+    const printUrl = `/qr-print/${facilityData.slug}`;
     window.open(printUrl, '_blank');
     toast({
       title: "Print Page Opened",

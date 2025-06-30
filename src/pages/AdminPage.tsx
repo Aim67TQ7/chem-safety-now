@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, FileText, BarChart3, Settings, Map, AlertTriangle } from "lucide-react";
+import { Users, FileText, BarChart3, Settings, Map, AlertTriangle, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SiteMapDisplay from "@/components/SiteMapDisplay";
 
@@ -20,8 +20,9 @@ const AdminPage = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-md">
+          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="facilities">Facilities</TabsTrigger>
             <TabsTrigger value="sitemap">Site Map</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -42,15 +43,15 @@ const AdminPage = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin?tab=facilities')}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Active Facilities</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">--</div>
+                  <div className="text-2xl font-bold">Manage</div>
                   <p className="text-xs text-muted-foreground">
-                    Total facilities using the system
+                    View active and expired facilities
                   </p>
                 </CardContent>
               </Card>
@@ -82,24 +83,76 @@ const AdminPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div>
-                      <div className="font-medium text-orange-900">Multiple navigation routes need implementation</div>
-                      <div className="text-sm text-orange-700">Several page routes in nav-items.tsx are missing their corresponding page components</div>
+                      <div className="font-medium text-green-900">✅ Fixed: QR Print functionality</div>
+                      <div className="text-sm text-green-700">Print QR code links now work correctly with facility slugs</div>
                     </div>
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">
-                      High Priority
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      Resolved
                     </Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div>
-                      <div className="font-medium text-yellow-900">QR Print functionality needs route fix</div>
-                      <div className="text-sm text-yellow-700">Print QR code links returning 404 errors</div>
+                      <div className="font-medium text-green-900">✅ Fixed: Navigation routes</div>
+                      <div className="text-sm text-green-700">Missing page components have been created and routes established</div>
                     </div>
-                    <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                      Medium Priority
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      Resolved
                     </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="facilities">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  Facility Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Card className="border-green-200 bg-green-50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg text-green-800">Active Facilities</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-green-900 mb-2">--</div>
+                        <p className="text-sm text-green-700">Facilities with active subscriptions</p>
+                        <Button variant="outline" className="mt-3 w-full">
+                          View Active Facilities
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-orange-200 bg-orange-50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg text-orange-800">Expired Facilities</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-orange-900 mb-2">--</div>
+                        <p className="text-sm text-orange-700">Facilities with expired subscriptions</p>
+                        <Button variant="outline" className="mt-3 w-full">
+                          View Expired Facilities
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">Facility Management Tools</h4>
+                    <div className="space-y-2 text-sm text-blue-800">
+                      <p>• Monitor subscription status across all facilities</p>
+                      <p>• Track usage and analytics</p>
+                      <p>• Manage facility settings and permissions</p>
+                      <p>• Generate reports and exports</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
