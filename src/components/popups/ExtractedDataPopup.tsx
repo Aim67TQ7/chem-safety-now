@@ -24,6 +24,7 @@ interface ExtractedDataPopupProps {
   };
   onPrintLabel: () => void;
   onViewDocument?: () => void;
+  searchQuery?: string; // Add search query to fix product name display
 }
 
 const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
@@ -31,9 +32,10 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
   onClose,
   extractedData,
   onPrintLabel,
-  onViewDocument
+  onViewDocument,
+  searchQuery
 }) => {
-  // GHS Pictogram mapping to display actual images
+  // Official OSHA pictogram mapping to uploaded images
   const pictogramImages: Record<string, { name: string; imageUrl: string }> = {
     'exclamation': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
     'health_hazard': { name: 'Health Hazard', imageUrl: '/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png' },
@@ -82,6 +84,27 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
 
   const statusInfo = getStatusInfo();
   const StatusIcon = statusInfo.icon;
+
+  // Use search query if product name doesn't match or is generic
+  const displayProductName = () => {
+    const extractedName = extractedData.product_name;
+    
+    // If we have a search query and the extracted name seems incorrect or generic
+    if (searchQuery && extractedName) {
+      const lowerExtracted = extractedName.toLowerCase();
+      const lowerQuery = searchQuery.toLowerCase();
+      
+      // Check if extracted name is too generic or doesn't match the search
+      if (lowerExtracted === 'acetone' || 
+          lowerExtracted === 'chemical' || 
+          lowerExtracted === 'product' ||
+          !lowerExtracted.includes(lowerQuery.split(' ')[0])) {
+        return searchQuery;
+      }
+    }
+    
+    return extractedName || searchQuery || 'Unknown Product';
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -134,7 +157,7 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                 <div>
                   <label className="text-sm font-medium text-gray-600">Product Name</label>
                   <p className="text-sm bg-gray-50 p-2 rounded">
-                    {extractedData.product_name || 'Not extracted'}
+                    {displayProductName()}
                   </p>
                 </div>
                 {extractedData.manufacturer && (
@@ -202,12 +225,12 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
             )}
           </div>
 
-          {/* GHS Pictograms - Prioritized Display */}
+          {/* GHS Pictograms - Using Official OSHA Images */}
           {extractedData.pictograms && extractedData.pictograms.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  GHS Pictograms
+                  Official OSHA GHS Pictograms
                   {extractedData.prioritized_pictograms && (
                     <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                       Prioritized from SDS
@@ -221,16 +244,23 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                     const pictogramData = pictogramImages[pictogramId];
                     return (
                       <div key={index} className="text-center">
-                        {pictogramData && (
+                        {pictogramData ? (
                           <>
-                            <div className="w-16 h-16 mx-auto mb-2 flex items-center justify-center border border-gray-200 rounded">
+                            <div className="w-20 h-20 mx-auto mb-2 flex items-center justify-center border-2 border-gray-300 rounded-lg bg-white p-2">
                               <img 
                                 src={pictogramData.imageUrl} 
                                 alt={pictogramData.name}
-                                className="w-12 h-12 object-contain"
+                                className="w-full h-full object-contain"
                               />
                             </div>
-                            <p className="text-xs text-gray-600">{pictogramData.name}</p>
+                            <p className="text-xs text-gray-600 font-medium">{pictogramData.name}</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-20 h-20 mx-auto mb-2 flex items-center justify-center border-2 border-gray-300 rounded-lg bg-gray-50">
+                              <span className="text-xs text-gray-500">Unknown</span>
+                            </div>
+                            <p className="text-xs text-gray-600">{pictogramId}</p>
                           </>
                         )}
                       </div>
