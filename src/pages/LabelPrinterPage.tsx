@@ -20,13 +20,16 @@ const LabelPrinterPage = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!facilitySlug || !documentId) {
+        console.error('Missing facilitySlug or documentId:', { facilitySlug, documentId });
         setError('Missing facility or document information');
         setIsLoading(false);
         return;
       }
 
       try {
-        // Load facility data
+        console.log('Loading facility with slug:', facilitySlug);
+        
+        // Load facility data - try different query approaches
         const { data: facilityData, error: facilityError } = await supabase
           .from('facilities')
           .select('*')
@@ -35,19 +38,31 @@ const LabelPrinterPage = () => {
 
         if (facilityError) {
           console.error('Failed to load facility:', facilityError);
-          setError('Failed to load facility information');
+          setError(`Failed to load facility information: ${facilityError.message}`);
           setIsLoading(false);
           return;
         }
 
         if (!facilityData) {
-          setError('Facility not found');
+          console.error('Facility not found with slug:', facilitySlug);
+          
+          // Try to find any facilities to debug
+          const { data: allFacilities } = await supabase
+            .from('facilities')
+            .select('id, slug, facility_name')
+            .limit(5);
+          
+          console.log('Available facilities:', allFacilities);
+          setError(`Facility not found with slug: ${facilitySlug}`);
           setIsLoading(false);
           return;
         }
 
+        console.log('Facility loaded successfully:', facilityData);
         setFacility(facilityData);
 
+        console.log('Loading document with ID:', documentId);
+        
         // Load document data
         const { data: documentData, error: documentError } = await supabase
           .from('sds_documents')
@@ -57,21 +72,23 @@ const LabelPrinterPage = () => {
 
         if (documentError) {
           console.error('Failed to load document:', documentError);
-          setError('Failed to load document information');
+          setError(`Failed to load document information: ${documentError.message}`);
           setIsLoading(false);
           return;
         }
 
         if (!documentData) {
-          setError('Document not found');
+          console.error('Document not found with ID:', documentId);
+          setError(`Document not found with ID: ${documentId}`);
           setIsLoading(false);
           return;
         }
 
+        console.log('Document loaded successfully:', documentData);
         setDocument(documentData);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading data:', error);
-        setError('An unexpected error occurred');
+        setError(`An unexpected error occurred: ${error.message}`);
         toast.error('Failed to load label data');
       } finally {
         setIsLoading(false);
@@ -87,6 +104,9 @@ const LabelPrinterPage = () => {
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading label data...</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Facility: {facilitySlug} | Document: {documentId?.slice(0, 8)}...
+          </p>
         </div>
       </div>
     );
@@ -106,7 +126,13 @@ const LabelPrinterPage = () => {
             <p className="text-gray-600 mb-4">
               {error || 'Unable to load the requested label data.'}
             </p>
-            <p className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 space-y-1">
+              <p><strong>Facility Slug:</strong> {facilitySlug}</p>
+              <p><strong>Document ID:</strong> {documentId}</p>
+              <p><strong>Facility Found:</strong> {facility ? 'Yes' : 'No'}</p>
+              <p><strong>Document Found:</strong> {document ? 'Yes' : 'No'}</p>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
               Please try again or contact support if the problem persists.
             </p>
           </CardContent>

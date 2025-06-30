@@ -98,16 +98,16 @@ export function SafetyLabel({
   const smallFontSize = Math.max(4, Math.floor(baseFontSize * 0.8));
   const hmisFontSize = Math.max(6, Math.floor(hmisBoxHeight * 0.8));
 
-  // Map existing pictogram data to the image URLs
+  // Updated pictogram mapping with new uploaded images
   const pictograms = [
-    { id: "exclamation", name: "Exclamation Mark", imageUrl: "/lovable-uploads/c3e43723-722a-4ee7-92e0-9e18aa38e402.png" },
-    { id: "health_hazard", name: "Health Hazard", imageUrl: "/lovable-uploads/c77d1a55-2c1d-48b4-9715-68c6c3249d91.png" },
-    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "/lovable-uploads/0bd57060-18fb-4ad6-8485-e5521c2e7b71.png" },
-    { id: "corrosion", name: "Corrosion", imageUrl: "/lovable-uploads/5146a1d1-bc42-4a39-ae55-cf61a2dc012f.png" },
-    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "/lovable-uploads/4c13f8f5-8a47-4c2d-a5ed-90cdf7a521c0.png" },
-    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "/lovable-uploads/908b3ab5-a4ce-4a8d-a700-8eba7f9f0533.png" },
-    { id: "flame", name: "Flame", imageUrl: "/lovable-uploads/833367f7-138f-4e1f-b4c6-2bfdfd6901b3.png" },
-    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "/lovable-uploads/3c1d4332-95eb-44a9-bfef-207e02156b08.png" },
+    { id: "exclamation", name: "Exclamation Mark", imageUrl: "/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png" },
+    { id: "health_hazard", name: "Health Hazard", imageUrl: "/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png" },
+    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "/lovable-uploads/8f73c238-da2e-4a6c-bbec-0fda7667459d.png" },
+    { id: "corrosion", name: "Corrosion", imageUrl: "/lovable-uploads/a1dff518-a5ad-4880-b8ee-8a036fbfe0c4.png" },
+    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "/lovable-uploads/9ccb65e8-0bd7-41f0-bd11-2e210d5e370f.png" },
+    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "/lovable-uploads/0176f010-3f53-485e-8013-37c80276e905.png" },
+    { id: "flame", name: "Flame", imageUrl: "/lovable-uploads/615d7b02-13d9-41b9-8319-db0e7e1cc52d.png" },
+    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "/lovable-uploads/881c9dcf-f0ac-4fe5-98e5-1f64a3fa6f8d.png" },
     { id: "environment", name: "Environment", imageUrl: "/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png" }
   ];
 
@@ -149,17 +149,18 @@ export function SafetyLabel({
     return ppeItems.join(" • ");
   };
 
+  // Updated HMIS colors - proper red, yellow, blue (not pastels)
   const getHazardColor = (level: string, type: 'health' | 'flammability' | 'reactivity') => {
     const levelNum = parseInt(level);
     if (isNaN(levelNum)) return 'bg-gray-500';
     
     switch (type) {
       case 'health':
-        return levelNum >= 3 ? 'bg-blue-600' : levelNum >= 2 ? 'bg-blue-500' : levelNum >= 1 ? 'bg-blue-400' : 'bg-blue-300';
+        return levelNum >= 3 ? 'bg-blue-700' : levelNum >= 2 ? 'bg-blue-600' : levelNum >= 1 ? 'bg-blue-500' : 'bg-blue-400';
       case 'flammability':
-        return levelNum >= 3 ? 'bg-red-600' : levelNum >= 2 ? 'bg-red-500' : levelNum >= 1 ? 'bg-red-400' : 'bg-red-300';
+        return levelNum >= 3 ? 'bg-red-700' : levelNum >= 2 ? 'bg-red-600' : levelNum >= 1 ? 'bg-red-500' : 'bg-red-400';
       case 'reactivity':
-        return levelNum >= 3 ? 'bg-yellow-600' : levelNum >= 2 ? 'bg-yellow-500' : levelNum >= 1 ? 'bg-yellow-400' : 'bg-yellow-300';
+        return levelNum >= 3 ? 'bg-yellow-500' : levelNum >= 2 ? 'bg-yellow-400' : levelNum >= 1 ? 'bg-yellow-300' : 'bg-yellow-200';
       default:
         return 'bg-gray-500';
     }
