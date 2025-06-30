@@ -342,6 +342,59 @@ export type Database = {
           },
         ]
       }
+      facility_sales_assignments: {
+        Row: {
+          assigned_date: string | null
+          facility_id: string
+          id: string
+          is_primary: boolean | null
+          sales_rep_id: string
+        }
+        Insert: {
+          assigned_date?: string | null
+          facility_id: string
+          id?: string
+          is_primary?: boolean | null
+          sales_rep_id: string
+        }
+        Update: {
+          assigned_date?: string | null
+          facility_id?: string
+          id?: string
+          is_primary?: boolean | null
+          sales_rep_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_sales_assignments_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_sales_assignments_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_sales_assignments_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_rep_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_sales_assignments_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_permissions: {
         Row: {
           created_at: string | null
@@ -783,6 +836,45 @@ export type Database = {
           },
         ]
       }
+      sales_reps: {
+        Row: {
+          commission_rate: number | null
+          created_at: string | null
+          email: string
+          hire_date: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          territory: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          commission_rate?: number | null
+          created_at?: string | null
+          email: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          territory?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          commission_rate?: number | null
+          created_at?: string | null
+          email?: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          territory?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sds_documents: {
         Row: {
           ai_extracted_data: Json | null
@@ -995,6 +1087,77 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      subscription_conversions: {
+        Row: {
+          annual_revenue: number | null
+          conversion_date: string | null
+          conversion_type: string
+          converted_by_admin_email: string | null
+          facility_id: string
+          id: string
+          monthly_revenue: number | null
+          new_status: string
+          notes: string | null
+          previous_status: string
+          sales_rep_id: string | null
+        }
+        Insert: {
+          annual_revenue?: number | null
+          conversion_date?: string | null
+          conversion_type: string
+          converted_by_admin_email?: string | null
+          facility_id: string
+          id?: string
+          monthly_revenue?: number | null
+          new_status: string
+          notes?: string | null
+          previous_status: string
+          sales_rep_id?: string | null
+        }
+        Update: {
+          annual_revenue?: number | null
+          conversion_date?: string | null
+          conversion_type?: string
+          converted_by_admin_email?: string | null
+          facility_id?: string
+          id?: string
+          monthly_revenue?: number | null
+          new_status?: string
+          notes?: string | null
+          previous_status?: string
+          sales_rep_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_conversions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_conversions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_conversions_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_rep_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_conversions_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_payments: {
         Row: {
@@ -1227,10 +1390,35 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_rep_performance: {
+        Row: {
+          annual_revenue: number | null
+          conversion_rate: number | null
+          email: string | null
+          id: string | null
+          monthly_revenue: number | null
+          name: string | null
+          paid_facilities: number | null
+          territory: string | null
+          total_conversions: number | null
+          total_facilities: number | null
+          trial_facilities: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_feature_access: {
         Args: { p_facility_id: string; p_feature_name: string }
+        Returns: boolean
+      }
+      convert_trial_to_paid: {
+        Args: {
+          p_facility_id: string
+          p_sales_rep_id: string
+          p_plan_type?: string
+          p_billing_period?: string
+        }
         Returns: boolean
       }
       extend_trial_period: {

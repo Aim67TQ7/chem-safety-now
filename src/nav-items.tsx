@@ -1,4 +1,3 @@
-
 import { HomeIcon, Building2, FileText, AlertTriangle, Settings, Users, BarChart3, HelpCircle, ShieldCheck, UserCheck, Phone, Crown, Wrench, Printer } from "lucide-react";
 import Index from "@/pages/Index";
 import FacilityPageWrapper from "@/pages/FacilityPageWrapper";
@@ -15,6 +14,7 @@ import SalesPartnerTermsPage from "@/pages/SalesPartnerTermsPage";
 import SignupPage from "@/pages/SignupPage";
 import AccessToolsPage from "@/pages/AccessToolsPage";
 import LabelPrinterPage from "@/pages/LabelPrinterPage";
+import SalesRepPage from "@/pages/SalesRepPage";
 
 export const navItems = [
   {
@@ -106,5 +106,11 @@ export const navItems = [
     to: "/signup",
     icon: <UserCheck className="h-4 w-4" />,
     page: <SignupPage />,
+  },
+  {
+    title: "Sales Rep Dashboard",
+    to: "/sales-rep/:salesRepId",
+    icon: <UserCheck className="h-4 w-4" />,
+    page: <SalesRepPage />,
   },
 ];

@@ -21,6 +21,7 @@ const App = () => (
           ))}
           <Route path="/admin/sds-documents" element={<AdminSDSDocumentsPage />} />
           <Route path="/qr-print/:facilitySlug" element={navItems.find(item => item.to === "/qr-print")?.page} />
+          <Route path="/sales-rep/:salesRepId" element={navItems.find(item => item.to === "/sales-rep/:salesRepId")?.page} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

@@ -13,6 +13,12 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [facilities, setFacilities] = useState([]);
+  const [salesData, setSalesData] = useState({
+    totalRevenue: 0,
+    newSubscriptions: 0,
+    conversionRate: 0,
+    salesReps: []
+  });
   const [loading, setLoading] = useState(true);
   
   // Get the initial tab from URL params, default to "overview"
@@ -26,6 +32,34 @@ const AdminPage = () => {
       setActiveTab(tab);
     }
   }, [searchParams]);
+
+  const fetchSalesData = async () => {
+    try {
+      // Get sales rep performance data
+      const { data: salesRepsData, error: salesError } = await supabase
+        .from('sales_rep_performance')
+        .select('*')
+        .order('monthly_revenue', { ascending: false });
+
+      if (salesError) throw salesError;
+
+      // Calculate totals
+      const totalMonthlyRevenue = salesRepsData?.reduce((sum, rep) => sum + rep.monthly_revenue, 0) || 0;
+      const totalAnnualRevenue = salesRepsData?.reduce((sum, rep) => sum + rep.annual_revenue, 0) || 0;
+      const totalConversions = salesRepsData?.reduce((sum, rep) => sum + rep.total_conversions, 0) || 0;
+      const totalFacilities = salesRepsData?.reduce((sum, rep) => sum + rep.total_facilities, 0) || 0;
+      const avgConversionRate = totalFacilities > 0 ? (totalConversions / totalFacilities) * 100 : 0;
+
+      setSalesData({
+        totalRevenue: totalMonthlyRevenue + totalAnnualRevenue,
+        newSubscriptions: totalConversions,
+        conversionRate: avgConversionRate,
+        salesReps: salesRepsData || []
+      });
+    } catch (error) {
+      console.error('Error fetching sales data:', error);
+    }
+  };
 
   const fetchFacilities = async () => {
     setLoading(true);
@@ -72,6 +106,9 @@ const AdminPage = () => {
       }) || [];
 
       setFacilities(processedFacilities);
+      
+      // Fetch sales data after facilities are loaded
+      await fetchSalesData();
     } catch (error) {
       console.error('Error fetching facilities:', error);
     } finally {
@@ -206,73 +243,69 @@ const AdminPage = () => {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Total Revenue (MTD)</CardTitle>
+                      <CardTitle className="text-sm">Total Revenue</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-green-600">$12,450</div>
-                      <p className="text-xs text-muted-foreground">+15% from last month</p>
+                      <div className="text-2xl font-bold text-green-600">${salesData.totalRevenue.toFixed(2)}</div>
+                      <p className="text-xs text-muted-foreground">Monthly + Annual revenue</p>
                     </CardContent>
                   </Card>
                   
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">New Subscriptions</CardTitle>
+                      <CardTitle className="text-sm">Total Conversions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">23</div>
-                      <p className="text-xs text-muted-foreground">This month</p>
+                      <div className="text-2xl font-bold text-blue-600">{salesData.newSubscriptions}</div>
+                      <p className="text-xs text-muted-foreground">Trial to paid conversions</p>
                     </CardContent>
                   </Card>
                   
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Conversion Rate</CardTitle>
+                      <CardTitle className="text-sm">Avg Conversion Rate</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-purple-600">18.5%</div>
-                      <p className="text-xs text-muted-foreground">Trial to paid</p>
+                      <div className="text-2xl font-bold text-purple-600">{salesData.conversionRate.toFixed(1)}%</div>
+                      <p className="text-xs text-muted-foreground">Across all sales reps</p>
                     </CardContent>
                   </Card>
                 </div>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Top Sales Leaders</CardTitle>
+                    <CardTitle>Sales Representatives Performance</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div>
-                          <div className="font-medium">Sarah Johnson</div>
-                          <div className="text-sm text-gray-600">Regional Sales Manager</div>
+                      {salesData.salesReps.map((rep, index) => (
+                        <div 
+                          key={rep.id}
+                          className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                            index === 0 ? 'bg-green-50 border-green-200' :
+                            index === 1 ? 'bg-blue-50 border-blue-200' : 
+                            'bg-purple-50 border-purple-200'
+                          }`}
+                          onClick={() => navigate(`/sales-rep/${rep.id}`)}
+                        >
+                          <div>
+                            <div className="font-medium">{rep.name}</div>
+                            <div className="text-sm text-gray-600">{rep.territory} • {rep.email}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`font-bold ${
+                              index === 0 ? 'text-green-600' :
+                              index === 1 ? 'text-blue-600' : 
+                              'text-purple-600'
+                            }`}>
+                              ${(rep.monthly_revenue + rep.annual_revenue).toFixed(2)}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {rep.total_conversions} conversions • {rep.conversion_rate}% rate
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold text-green-600">$4,850</div>
-                          <div className="text-xs text-gray-500">8 conversions</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div>
-                          <div className="font-medium">Mike Chen</div>
-                          <div className="text-sm text-gray-600">Enterprise Sales</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-blue-600">$3,200</div>
-                          <div className="text-xs text-gray-500">5 conversions</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                        <div>
-                          <div className="font-medium">Lisa Rodriguez</div>
-                          <div className="text-sm text-gray-600">SMB Sales Specialist</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-purple-600">$2,890</div>
-                          <div className="text-xs text-gray-500">12 conversions</div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
