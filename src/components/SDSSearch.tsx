@@ -18,7 +18,7 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [showExtractedData, setShowExtractedData] = useState(false);
   const [showLabelPrinter, setShowLabelPrinter] = useState(false);
-  const [currentSearchQuery, setCurrentSearchQuery] = useState(''); // Track the search query
+  const [currentSearchQuery, setCurrentSearchQuery] = useState('');
 
   const handleSearchStart = () => {
     setIsSearching(true);
@@ -27,16 +27,30 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
   };
 
   const handleSearchResults = (results: any[], searchQuery?: string) => {
+    console.log('🔍 Search results received:', results.length, 'query:', searchQuery);
     setSearchResults(results);
     setIsSearching(false);
     if (searchQuery) {
-      setCurrentSearchQuery(searchQuery); // Store the search query
+      setCurrentSearchQuery(searchQuery);
+      console.log('💾 Stored search query:', searchQuery);
     }
   };
 
   const handleDocumentSelect = (document: any) => {
-    console.log('🔍 Selected document for extraction:', document.product_name);
-    setSelectedDocument(document);
+    console.log('🔍 Selected document for extraction:', {
+      id: document.id,
+      product_name: document.product_name,
+      file_name: document.file_name,
+      search_query: currentSearchQuery
+    });
+    
+    // Enhance document with search context
+    const enhancedDocument = {
+      ...document,
+      original_search_query: currentSearchQuery
+    };
+    
+    setSelectedDocument(enhancedDocument);
     setShowExtractedData(true);
   };
 
@@ -68,9 +82,9 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
       {/* Search Input */}
       <SDSSearchInput 
         facilityId={facilityId}
-        onSearchResults={(results) => handleSearchResults(results, currentSearchQuery)}
+        onSearchResults={handleSearchResults}
         onSearchStart={handleSearchStart}
-        onSearchQuery={setCurrentSearchQuery} // Pass callback to capture search query
+        onSearchQuery={setCurrentSearchQuery}
       />
 
       {/* Loading State */}
@@ -143,7 +157,7 @@ const SDSSearch = ({ facilityId }: SDSSearchProps) => {
           prioritized_pictograms: extractedData.dataSource === 'osha_compliant'
         }}
         onPrintLabel={handlePrintLabel}
-        searchQuery={currentSearchQuery} // Pass the search query to the popup
+        searchQuery={currentSearchQuery}
       />
 
       {/* Label Printer Popup */}
