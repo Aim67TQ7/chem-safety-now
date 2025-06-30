@@ -24,7 +24,7 @@ interface ExtractedDataPopupProps {
   };
   onPrintLabel: () => void;
   onViewDocument?: () => void;
-  searchQuery?: string; // Add search query to fix product name display
+  searchQuery?: string;
 }
 
 const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
@@ -85,25 +85,58 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
   const statusInfo = getStatusInfo();
   const StatusIcon = statusInfo.icon;
 
-  // Use search query if product name doesn't match or is generic
+  // Enhanced product name detection with better generic name filtering
   const displayProductName = () => {
     const extractedName = extractedData.product_name;
     
-    // If we have a search query and the extracted name seems incorrect or generic
-    if (searchQuery && extractedName) {
-      const lowerExtracted = extractedName.toLowerCase();
-      const lowerQuery = searchQuery.toLowerCase();
+    console.log('🔍 Product name analysis:', {
+      extractedName,
+      searchQuery,
+      extractionStatus: extractedData.extraction_status,
+      confidence: extractedData.confidence_score
+    });
+    
+    // List of generic chemical names that should be replaced with search query
+    const genericNames = [
+      'acetone', 'methanol', 'ethanol', 'toluene', 'xylene', 'benzene',
+      'chemical', 'product', 'solution', 'compound', 'mixture', 'substance',
+      'solvent', 'cleaner', 'degreaser', 'thinner', 'adhesive', 'coating'
+    ];
+    
+    if (extractedName && searchQuery) {
+      const lowerExtracted = extractedName.toLowerCase().trim();
+      const lowerQuery = searchQuery.toLowerCase().trim();
       
-      // Check if extracted name is too generic or doesn't match the search
-      if (lowerExtracted === 'acetone' || 
-          lowerExtracted === 'chemical' || 
-          lowerExtracted === 'product' ||
-          !lowerExtracted.includes(lowerQuery.split(' ')[0])) {
+      // Check if extracted name is too generic
+      const isGeneric = genericNames.some(generic => 
+        lowerExtracted === generic || 
+        lowerExtracted.includes(generic) && lowerExtracted.length < generic.length + 5
+      );
+      
+      // Check if search query contains more specific product information
+      const hasProductCode = /[A-Z]{1,3}[-\s]?\d{2,4}/.test(searchQuery); // Matches patterns like "AA 392", "AA-392", "XYZ 123"
+      const hasSpecificTerm = searchQuery.length > 3 && !genericNames.includes(lowerQuery);
+      
+      // Prefer search query if it's more specific or extracted name is generic
+      if (isGeneric || (hasProductCode && !lowerExtracted.includes(lowerQuery.split(/[-\s]/)[0]))) {
+        console.log('🔄 Using search query as product name:', searchQuery);
+        return searchQuery;
+      }
+      
+      // If extracted name doesn't contain key parts of search query, prefer search query
+      const searchWords = lowerQuery.split(/[-\s]+/).filter(word => word.length > 2);
+      const containsSearchTerms = searchWords.some(word => lowerExtracted.includes(word));
+      
+      if (hasSpecificTerm && !containsSearchTerms) {
+        console.log('🔄 Using search query due to mismatch:', searchQuery);
         return searchQuery;
       }
     }
     
-    return extractedName || searchQuery || 'Unknown Product';
+    // Default to extracted name or search query as fallback
+    const finalName = extractedName || searchQuery || 'Unknown Product';
+    console.log('✅ Final product name:', finalName);
+    return finalName;
   };
 
   return (
