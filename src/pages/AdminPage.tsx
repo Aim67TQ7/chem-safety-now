@@ -1,19 +1,31 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, FileText, BarChart3, Settings, Map, AlertTriangle, Building2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import SiteMapDisplay from "@/components/SiteMapDisplay";
 import AdminTrialTabs from "@/components/AdminTrialTabs";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get the initial tab from URL params, default to "overview"
+  const initialTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Update tab when URL params change
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const fetchFacilities = async () => {
     setLoading(true);
@@ -79,10 +91,11 @@ const AdminPage = () => {
           <p className="text-gray-600">System administration and management tools</p>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="facilities">Facilities</TabsTrigger>
+            <TabsTrigger value="sales">Sales</TabsTrigger>
             <TabsTrigger value="sitemap">Site Map</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -103,7 +116,7 @@ const AdminPage = () => {
                 </CardContent>
               </Card>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin?tab=facilities')}>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setActiveTab('facilities')}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Active Facilities</CardTitle>
                   <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -116,19 +129,15 @@ const AdminPage = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setActiveTab('sales')}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">System Health</CardTitle>
+                  <CardTitle className="text-sm font-medium">Sales Dashboard</CardTitle>
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    <Badge variant="outline" className="text-green-600 border-green-600">
-                      Online
-                    </Badge>
-                  </div>
+                  <div className="text-2xl font-bold">View</div>
                   <p className="text-xs text-muted-foreground">
-                    All systems operational
+                    Sales leaders and revenue tracking
                   </p>
                 </CardContent>
               </Card>
@@ -183,6 +192,92 @@ const AdminPage = () => {
                 onStatusUpdate={fetchFacilities}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="sales">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Sales Dashboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Total Revenue (MTD)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-green-600">$12,450</div>
+                      <p className="text-xs text-muted-foreground">+15% from last month</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">New Subscriptions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-blue-600">23</div>
+                      <p className="text-xs text-muted-foreground">This month</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Conversion Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-purple-600">18.5%</div>
+                      <p className="text-xs text-muted-foreground">Trial to paid</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Top Sales Leaders</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div>
+                          <div className="font-medium">Sarah Johnson</div>
+                          <div className="text-sm text-gray-600">Regional Sales Manager</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-green-600">$4,850</div>
+                          <div className="text-xs text-gray-500">8 conversions</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div>
+                          <div className="font-medium">Mike Chen</div>
+                          <div className="text-sm text-gray-600">Enterprise Sales</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-blue-600">$3,200</div>
+                          <div className="text-xs text-gray-500">5 conversions</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                        <div>
+                          <div className="font-medium">Lisa Rodriguez</div>
+                          <div className="text-sm text-gray-600">SMB Sales Specialist</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-purple-600">$2,890</div>
+                          <div className="text-xs text-gray-500">12 conversions</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="sitemap">
