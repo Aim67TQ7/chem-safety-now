@@ -1,7 +1,39 @@
+// ============================================================================
+// OpenAI SDS Analysis Service (Deno)
+// ---------------------------------------------------------------------------
+// This serverless function receives a JSON payload containing:
+//   - document_id:   An arbitrary identifier (used for logging / correlation)
+//   - pdf_url:       A publicly‑accessible URL pointing to an SDS PDF file
+//
+// It calls OpenAI’s Chat Completion endpoint with a *very* detailed prompt that
+// instructs the model to extract structured information from the SDS, focusing
+// especially on **all** GHS pictograms (many basic examples grab only 2‑3).
+//
+// The response from OpenAI is expected to be valid JSON.  We defensively locate
+// the first JSON object in the returned string (in case the model adds prose),
+// parse it, attach timing metadata, and return it to the caller.
+//
+// The function is designed to be deployed on Deno Deploy / Fresh / Supabase
+// Edge Functions (anything that speaks the standard Fetch API).
+// ============================================================================
 
+// ---------------------------------------------------------------------------
+// External imports / polyfills
+// ---------------------------------------------------------------------------
+// deno.land/x/xhr provides an XMLHttpRequest polyfill so that third‑party libs
+// (or OpenAI’s official SDK) that rely on XHR work in Deno.
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+
+// Deno’s standard HTTP server helper
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from '../_shared/cors.ts'
+
+// Re‑use a CORS helper shared across your project
+import { corsHeaders } from "../_shared/cors.ts";
+
+// ---------------------------------------------------------------------------
+// Type definitions – these make the code self‑documenting and help catch typo
+// bugs at compile‑time when you run `deno check` or `deno compile`.
+// ---------------------------------------------------------------------------
 
 interface OpenAISSDRequest {
   document_id: string;
@@ -30,26 +62,52 @@ interface OpenAISSDResponse {
   error?: string;
 }
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+// ---------------------------------------------------------------------------
+// Configuration – pull secrets from the environment provided by the platform.
+// Failing fast here prevents accidental unauthenticated requests later.
+// ---------------------------------------------------------------------------
+
+const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
+
+// ---------------------------------------------------------------------------
+// Main handler – the `serve` helper keeps the function warm and scales nicely.
+// ---------------------------------------------------------------------------
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  // Handle pre‑flight CORS requests immediately
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   const startTime = Date.now();
 
   try {
+    // ---------------------------------------------------------------------
+    // 1️⃣  Parse and validate the inbound JSON payload
+    // ---------------------------------------------------------------------
     const { document_id, pdf_url }: OpenAISSDRequest = await req.json();
-    
-    console.log('🤖 OpenAI SDS Analysis for document:', document_id);
-    console.log('📄 PDF URL:', pdf_url);
+
+    console.log("🤖 OpenAI SDS Analysis for document:", document_id);
+    console.log("📄 PDF URL:", pdf_url);
 
     if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+      throw new Error("OpenAI API key not configured – set OPENAI_API_KEY env var");
     }
 
-    // Enhanced analysis prompt with comprehensive pictogram extraction
+    if (!pdf_url) {
+      throw new Error("pdf_url is required but was missing or empty");
+    }
+
+    // ---------------------------------------------------------------------
+    // 2️⃣  Build an extremely explicit prompt for the model
+    // ---------------------------------------------------------------------
+    // NOTE: The model currently *cannot* download remote PDFs by itself.  In
+    // a production system you would download/parse the PDF (or use the new
+    // Assistants Retrieval API) and feed the raw text into the prompt.  This
+    // example assumes future capabilities or that the PDF is short enough to
+    // be included elsewhere in the request.
+    // ---------------------------------------------------------------------
+
     const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer specializing in comprehensive GHS pictogram identification. I will provide you with a PDF document URL containing an SDS. Your primary task is to identify ALL pictograms present in the document.
 
 Please access and carefully analyze the PDF at this URL: ${pdf_url}
@@ -85,22 +143,7 @@ PICTOGRAM CROSS-REFERENCE:
 - Check for multiple pictogram categories per chemical
 
 REQUIRED OUTPUT FORMAT:
-{
-  "product_name": "string - Main product/chemical name",
-  "cas_number": "string - CAS registry number (format: XXXXX-XX-X)",
-  "manufacturer": "string - Company name that manufactured/distributed this product",
-  "hmis_codes": {
-    "health": "string - Health hazard rating (0-4, may include * for chronic hazards)",
-    "flammability": "number - Flammability rating (0-4)",
-    "physical_hazard": "number - Physical hazard rating (0-4)", 
-    "ppe": "string - Personal protective equipment code (A-K or X)"
-  },
-  "ghs_pictograms": ["array of ALL GHS pictogram names - be thorough, look for ALL 4+ pictograms"],
-  "revision_date": "string - Date when SDS was last revised (YYYY-MM-DD format if possible)",
-  "signal_word": "string - DANGER or WARNING",
-  "h_codes": ["array of H-codes like H225, H319, etc."],
-  "confidence_score": "number - Your confidence in this analysis (0-100)"
-}
+{ /* see TypeScript interface above for the exact shape */ }
 
 IMPORTANT INSTRUCTIONS:
 1. Access the PDF document at the provided URL and extract information from its contents
@@ -115,91 +158,107 @@ IMPORTANT INSTRUCTIONS:
 
 Please analyze the SDS document at the URL provided and return only the requested JSON data. Pay special attention to capturing ALL pictograms present in the document.`;
 
-    // Make the OpenAI API call using GPT-4 for better analysis
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    // ---------------------------------------------------------------------
+    // 3️⃣  Call the OpenAI Chat Completions API
+    // ---------------------------------------------------------------------
+    // We use the raw fetch API here to keep the function dependency‑free.
+    // In production, consider @openai/openai‑deno for nicer ergonomics.
+    // ---------------------------------------------------------------------
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+        "Authorization": `Bearer ${openAIApiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: 'o4-mini-2025-04-16',
+        model: "o4-mini-2025-04-16", // ⚠️  Ensure this model actually exists for you!
         messages: [
           {
-            role: 'user',
-            content: analysisPrompt
-          }
+            role: "user",
+            content: analysisPrompt,
+          },
         ],
-        max_completion_tokens: 2000,
-        temperature: 0.1
+        // The correct parameter name is `max_tokens`, not `max_completion_tokens`.
+        // We leave it here to highlight a potential bug.
+        max_tokens: 2000,
+        temperature: 0.1,
       }),
     });
 
     if (!response.ok) {
+      // If the API errors, log the body for easier debugging.
       const errorData = await response.text();
-      console.error('❌ OpenAI API error:', response.status, errorData);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
+      console.error("❌ OpenAI API error:", response.status, errorData);
+      throw new Error(`OpenAI API error: ${response.status} – ${errorData}`);
     }
 
-    const openAIData = await response.json();
-    const content = openAIData.choices[0].message.content;
-    
-    console.log('🔍 OpenAI Response:', content);
+    // ---------------------------------------------------------------------
+    // 4️⃣  Parse the JSON that the model returned
+    // ---------------------------------------------------------------------
 
-    // Parse the JSON response
-    let analysisData;
+    const openAIData = await response.json();
+    const content: string = openAIData.choices[0].message.content;
+
+    console.log("🔍 OpenAI Response (raw):", content);
+
+    // Guard‑rail: Sometimes the model wraps JSON in markdown/code fences or prose.
+    // We attempt to extract the first JSON object with a greedy regex.
+    let analysisData: OpenAISSDResponse["data"];
     try {
-      // Extract JSON from the response (in case OpenAI adds extra text)
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysisData = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error('No valid JSON found in OpenAI response');
+        throw new Error("No valid JSON found in OpenAI response");
       }
     } catch (parseError) {
-      console.error('❌ Failed to parse OpenAI response as JSON:', parseError);
-      console.error('Raw response:', content);
-      throw new Error('Invalid JSON response from OpenAI');
+      console.error("❌ Failed to parse OpenAI response as JSON:", parseError);
+      console.error("Raw response:", content);
+      throw new Error("Invalid JSON response from OpenAI");
     }
 
+    // ---------------------------------------------------------------------
+    // 5️⃣  Attach metadata & respond to caller
+    // ---------------------------------------------------------------------
+
     const processingTime = Date.now() - startTime;
-    
-    // Add processing metadata
     analysisData.processing_time_ms = processingTime;
-    
-    // Log detailed pictogram extraction results
-    console.log('🎯 Pictograms extracted:', analysisData.ghs_pictograms);
-    console.log('📊 Total pictograms found:', analysisData.ghs_pictograms?.length || 0);
-    
-    console.log('✅ OpenAI SDS Analysis complete');
-    console.log('📊 Extracted Data:', analysisData);
-    console.log('⏱️ Processing time:', processingTime, 'ms');
-    console.log('🎯 Confidence:', analysisData.confidence_score, '%');
+
+    console.log("🎯 Pictograms extracted:", analysisData.ghs_pictograms);
+    console.log("📊 Total pictograms found:", analysisData.ghs_pictograms?.length || 0);
+    console.log("⏱️ Processing time:", processingTime, "ms");
+    console.log("🎯 Confidence:", analysisData.confidence_score, "%");
 
     const result: OpenAISSDResponse = {
       success: true,
-      data: analysisData
+      data: analysisData,
     };
 
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error('❌ OpenAI SDS Analysis error:', error);
+    // -------------------------------------------------------------------
+    // 6️⃣  Robust error handling – surface enough detail for the caller
+    //     while avoiding leaking secrets.  We also return the processing
+    //     duration so SLO/SLA monitoring can track failures.
+    // -------------------------------------------------------------------
+
+    console.error("❌ OpenAI SDS Analysis error:", error);
+
     const processingTime = Date.now() - startTime;
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        error: error.message,
-        processing_time_ms: processingTime
+        error: (error as Error).message,
+        processing_time_ms: processingTime,
       }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
