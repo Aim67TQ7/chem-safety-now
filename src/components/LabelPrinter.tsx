@@ -178,54 +178,9 @@ const LabelPrinter = ({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 h-full">
-          {/* Label Preview */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Label Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center space-y-4">
-                  <div 
-                    id="safety-label-preview" 
-                    className="border-2 border-dashed border-gray-300 p-4 bg-white"
-                    style={{ 
-                      width: 'fit-content',
-                      transform: 'scale(1.2)',
-                      transformOrigin: 'center'
-                    }}
-                  >
-                    <SafetyLabel
-                      productName={productName}
-                      manufacturer={manufacturer}
-                      chemicalFormula={chemicalFormula}
-                      chemicalCompound={chemicalCompound}
-                      casNumber={casNumber}
-                      productId={productId}
-                      hmisHealth={hmisHealth}
-                      hmisFlammability={hmisFlammability}
-                      hmisPhysical={hmisPhysical}
-                      hmisSpecial={hmisSpecial}
-                      selectedPictograms={selectedPictograms}
-                      selectedHazards={selectedHazards}
-                      ppeRequirements={ppeRequirements}
-                      labelWidth={labelWidth}
-                      labelHeight={labelHeight}
-                    />
-                  </div>
-                  
-                  <div className="text-center text-sm text-gray-600">
-                    <p>Size: {labelWidth} × {labelHeight} pixels</p>
-                    <p className="text-xs mt-1">Scale: 120% (for preview)</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Configuration Panel */}
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 h-full">
+          {/* Configuration Panel - Left Side */}
+          <div className="space-y-4 overflow-y-auto">
             {/* Safety Information (Read-Only) */}
             <Card>
               <CardHeader className="pb-3">
@@ -383,6 +338,51 @@ const LabelPrinter = ({
                 </CardContent>
               </Card>
             )}
+          </div>
+
+          {/* Label Preview - Right Side */}
+          <div className="flex flex-col justify-center items-center space-y-4">
+            <Card className="w-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-center">Label Preview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center space-y-6">
+                  <div 
+                    id="safety-label-preview" 
+                    className="border-2 border-dashed border-gray-300 p-6 bg-white shadow-lg"
+                    style={{ 
+                      width: 'fit-content',
+                      transform: 'scale(1.5)',
+                      transformOrigin: 'center'
+                    }}
+                  >
+                    <SafetyLabel
+                      productName={productName}
+                      manufacturer={manufacturer}
+                      chemicalFormula={chemicalFormula}
+                      chemicalCompound={chemicalCompound}
+                      casNumber={casNumber}
+                      productId={productId}
+                      hmisHealth={hmisHealth}
+                      hmisFlammability={hmisFlammability}
+                      hmisPhysical={hmisPhysical}
+                      hmisSpecial={hmisSpecial}
+                      selectedPictograms={selectedPictograms}
+                      selectedHazards={selectedHazards}
+                      ppeRequirements={ppeRequirements}
+                      labelWidth={labelWidth}
+                      labelHeight={labelHeight}
+                    />
+                  </div>
+                  
+                  <div className="text-center text-sm text-gray-600">
+                    <p className="font-medium">Actual Size: {labelWidth} × {labelHeight} pixels</p>
+                    <p className="text-xs mt-1">Preview Scale: 150% (for visibility)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
