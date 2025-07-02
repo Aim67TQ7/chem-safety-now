@@ -83,6 +83,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
                              'exclamation';
         
         console.log(`🎯 Mapping pictogram - Original: "${pictogramName}" (${pictogramCode}) → Mapped: "${mappedPictogram}"`);
+        console.log(`🔍 Pictogram object:`, p);
         pictograms.push(mappedPictogram);
       });
     }
@@ -108,7 +109,7 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       signalWord: oshaData.signal_word?.value || oshaData.signal_word || 'WARNING',
       hazardCodes: Array.isArray(oshaData.hazard_statements) ? 
         oshaData.hazard_statements.map((h: any) => typeof h === 'string' ? h : h.value) : [],
-      pictograms: [...new Set(pictograms)], // Remove duplicates
+      pictograms: [...new Set(pictograms.filter(Boolean))], // Remove duplicates and empty values
       hmisRatings,
       ppeRequirements: Array.isArray(oshaData.precautionary_statements_critical) ? 
         oshaData.precautionary_statements_critical.map((p: any) => typeof p === 'string' ? p : p.value) :

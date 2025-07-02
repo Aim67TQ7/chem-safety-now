@@ -210,6 +210,47 @@ export class ConfidenceScorer {
   }
 
   /**
+   * Score URL relevance with deductions for missing criteria
+   */
+  private scoreUrlRelevance(searchTerm: string, document: any): { score: number; deductions: string[] } {
+    let score = 0;
+    const deductions: string[] = [];
+    
+    const url = document.source_url || '';
+    const urlLower = url.toLowerCase();
+    
+    // Check if URL contains "sds" - deduct 10 points if missing
+    if (!urlLower.includes('sds')) {
+      score -= 0.1; // 10 point deduction
+      deductions.push('URL missing "sds" (-10%)');
+    }
+    
+    // Check if URL matches product name - deduct 10 points if missing
+    if (searchTerm && searchTerm.length > 2) {
+      const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+      const hasProductMatch = searchWords.some(word => urlLower.includes(word));
+      
+      if (!hasProductMatch) {
+        score -= 0.1; // 10 point deduction
+        deductions.push('URL missing product name (-10%)');
+      }
+    }
+    
+    // Check if URL matches manufacturer - deduct 10 points if missing
+    if (document.manufacturer && document.manufacturer.length > 2) {
+      const manufacturerWords = document.manufacturer.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+      const hasManufacturerMatch = manufacturerWords.some(word => urlLower.includes(word));
+      
+      if (!hasManufacturerMatch) {
+        score -= 0.1; // 10 point deduction
+        deductions.push('URL missing manufacturer (-10%)');
+      }
+    }
+    
+    return { score, deductions };
+  }
+
+  /**
    * Calculate overall confidence score for a document match
    */
   public calculateConfidence(searchTerm: string, document: any): MatchResult {
@@ -217,13 +258,16 @@ export class ConfidenceScorer {
     const casNumberResult = this.scoreCasNumber(searchTerm, document.cas_number);
     const manufacturerResult = this.scoreManufacturer(searchTerm, document.manufacturer);
     const contentResult = this.scoreContentMatch(searchTerm, document);
+    const urlRelevanceResult = this.scoreUrlRelevance(searchTerm, document);
     
     // Special case: If manufacturer + product name both match well, score very high (98%)
     if (manufacturerResult.score >= 0.8 && productNameResult.score >= 0.8) {
+      // Still apply URL deductions even for high confidence matches
+      const finalScore = Math.max(0.88 + urlRelevanceResult.score, 0.1); // Minimum 88% after deductions
       return {
-        score: 0.98,
-        reasons: ['Product + Manufacturer (high confidence)'],
-        autoSelect: true
+        score: finalScore,
+        reasons: ['Product + Manufacturer (high confidence)', ...urlRelevanceResult.deductions],
+        autoSelect: finalScore >= 0.8
       };
     }
     
@@ -240,6 +284,10 @@ export class ConfidenceScorer {
       totalScore = Math.min(totalScore, 1); // Cap at 100%
     }
     
+    // Apply URL relevance deductions
+    totalScore += urlRelevanceResult.score;
+    totalScore = Math.max(totalScore, 0.01); // Minimum 1% score
+    
     // Collect match reasons
     const reasons: string[] = [];
     if (productNameResult.reason) reasons.push(productNameResult.reason);
@@ -247,6 +295,9 @@ export class ConfidenceScorer {
     if (manufacturerResult.reason) reasons.push(manufacturerResult.reason);
     if (contentResult.reason) reasons.push(contentResult.reason);
     if (this.isSdsDocument(document)) reasons.push('SDS document (+10%)');
+    
+    // Add URL deduction reasons
+    reasons.push(...urlRelevanceResult.deductions);
     
     // Auto-selection criteria: 80% or higher confidence
     const autoSelect = totalScore >= 0.8;

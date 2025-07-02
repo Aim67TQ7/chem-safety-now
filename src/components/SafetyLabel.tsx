@@ -91,12 +91,13 @@ export function SafetyLabel({
   const pictogramSize = Math.floor(hmisBoxHeight * 2);
   const padding = Math.floor(labelWidth * 0.02);
 
-  const baseFontSize = Math.max(4, Math.floor(hmisBoxHeight * 0.1));
-  const titleFontSize = Math.max(8, Math.floor(hmisBoxHeight * 0.5));
-  const headerFontSize = Math.max(6, Math.floor(baseFontSize * 1.5));
-  const bodyFontSize = Math.max(5, baseFontSize);
-  const smallFontSize = Math.max(4, Math.floor(baseFontSize * 0.8));
-  const hmisFontSize = Math.max(6, Math.floor(hmisBoxHeight * 0.8));
+  // Increase all font sizes by 150%
+  const baseFontSize = Math.max(6, Math.floor(hmisBoxHeight * 0.15));
+  const titleFontSize = Math.max(12, Math.floor(hmisBoxHeight * 0.75));
+  const headerFontSize = Math.max(9, Math.floor(baseFontSize * 1.5));
+  const bodyFontSize = Math.max(8, Math.floor(baseFontSize * 1.2));
+  const smallFontSize = Math.max(6, Math.floor(baseFontSize * 0.9));
+  const hmisFontSize = Math.max(9, Math.floor(hmisBoxHeight * 1.2));
 
   // OSHA-compliant GHS pictogram mapping
   const pictograms = [
@@ -167,8 +168,55 @@ export function SafetyLabel({
   };
 
   const getHazardIcon = (pictogramId: string, size: number) => {
+    console.log(`🔍 Looking for pictogram ID: "${pictogramId}"`);
+    console.log('📋 Available pictograms:', pictograms.map(p => p.id));
+    
     const pictogram = pictograms.find(p => p.id === pictogramId);
-    if (!pictogram) return null;
+    
+    if (!pictogram) {
+      console.warn(`⚠️ Pictogram not found for ID: "${pictogramId}"`);
+      // Try alternative matching
+      const alternativeMatch = pictograms.find(p => 
+        p.name.toLowerCase().includes(pictogramId.replace(/_/g, ' ')) ||
+        pictogramId.toLowerCase().includes(p.id.replace(/_/g, ' '))
+      );
+      
+      if (alternativeMatch) {
+        console.log(`✅ Found alternative match: ${alternativeMatch.id} for ${pictogramId}`);
+        return (
+          <img 
+            src={alternativeMatch.imageUrl} 
+            alt={alternativeMatch.name}
+            style={{ 
+              width: `${size}px`, 
+              height: `${size}px`, 
+              objectFit: 'contain' as const,
+              aspectRatio: '1 / 1'
+            }}
+          />
+        );
+      }
+      
+      return (
+        <div 
+          style={{ 
+            width: `${size}px`, 
+            height: `${size}px`,
+            backgroundColor: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: `${Math.floor(size * 0.1)}px`,
+            color: '#6b7280'
+          }}
+        >
+          {pictogramId}
+        </div>
+      );
+    }
+    
+    console.log(`✅ Found pictogram: ${pictogram.name} for ID: ${pictogramId}`);
     
     return (
       <img 
@@ -179,6 +227,10 @@ export function SafetyLabel({
           height: `${size}px`, 
           objectFit: 'contain' as const,
           aspectRatio: '1 / 1'
+        }}
+        onError={(e) => {
+          console.error(`❌ Image failed to load: ${pictogram.imageUrl}`);
+          e.currentTarget.style.display = 'none';
         }}
       />
     );

@@ -11,6 +11,7 @@ import { Printer, Download, AlertTriangle, CheckCircle, Shield } from "lucide-re
 import { SafetyLabel } from './SafetyLabel';
 import { extractEnhancedSDSData } from './utils/enhancedSdsDataExtractor';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
 
 interface LabelPrinterProps {
   initialProductName?: string;
@@ -98,57 +99,123 @@ const LabelPrinter = ({
     };
   };
 
-  const handlePrint = () => {
-    // Add print-specific class to isolate label
-    document.body.classList.add('printing-label');
-    
-    setTimeout(() => {
-      window.print();
-      // Remove class after printing
-      setTimeout(() => {
-        document.body.classList.remove('printing-label');
-      }, 100);
-    }, 100);
-    
-    toast.success('Label sent to printer');
-  };
+  const handlePrint = async () => {
+    const labelElement = document.getElementById('safety-label-preview');
+    if (!labelElement) {
+      toast.error('Label element not found');
+      return;
+    }
 
-  const handleDownloadPDF = () => {
-    // Create a new window with isolated label content
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const labelElement = document.getElementById('safety-label-preview');
-      if (labelElement) {
-        // Clone the label element to avoid modifying the original
-        const clonedLabel = labelElement.cloneNode(true) as HTMLElement;
-        
-        // Reset any scaling on the clone for proper PDF sizing
-        clonedLabel.style.transform = 'none';
-        clonedLabel.style.transformOrigin = 'unset';
+    try {
+      toast.info('Generating print image...');
+      
+      // Capture the label as high-quality canvas
+      const canvas = await html2canvas(labelElement, {
+        backgroundColor: 'white',
+        scale: 3, // High resolution for printing
+        logging: false,
+        useCORS: true
+      });
+
+      // Create a new window for printing the image
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const imgData = canvas.toDataURL('image/png');
         
         printWindow.document.write(`
           <html>
             <head>
               <title>Safety Label - ${productName}</title>
               <style>
-                * { box-sizing: border-box; }
                 body { 
                   margin: 0; 
                   padding: 20px; 
-                  font-family: monospace;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  min-height: 100vh;
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  min-height: 100vh; 
                   background: white;
                 }
-                .safety-label {
-                  page-break-inside: avoid;
-                  margin: 0 auto;
+                img { 
+                  max-width: 100%; 
+                  height: auto; 
+                  border: 1px solid #ccc;
                 }
-                @page {
-                  size: letter;
-                  margin: 0.5in;
+                @page { 
+                  size: letter; 
+                  margin: 0.5in; 
+                }
+                @media print { 
+                  body { padding: 0; }
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${imgData}" alt="Safety Label" />
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
+      }
+      
+      toast.success('Label sent to printer');
+    } catch (error) {
+      console.error('Print generation error:', error);
+      toast.error('Failed to generate print image');
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    const labelElement = document.getElementById('safety-label-preview');
+    if (!labelElement) {
+      toast.error('Label element not found');
+      return;
+    }
+
+    try {
+      toast.info('Generating PDF...');
+      
+      // Capture the label as high-quality canvas
+      const canvas = await html2canvas(labelElement, {
+        backgroundColor: 'white',
+        scale: 4, // Very high resolution for PDF
+        logging: false,
+        useCORS: true
+      });
+
+      // Create a new window for PDF download
+      const pdfWindow = window.open('', '_blank');
+      if (pdfWindow) {
+        const imgData = canvas.toDataURL('image/png');
+        
+        pdfWindow.document.write(`
+          <html>
+            <head>
+              <title>Safety Label PDF - ${productName}</title>
+              <style>
+                body { 
+                  margin: 0; 
+                  padding: 20px; 
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  min-height: 100vh; 
+                  background: white;
+                  font-family: monospace;
+                }
+                img { 
+                  max-width: 100%; 
+                  height: auto; 
+                  border: 2px solid #000;
+                  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                @page { 
+                  size: letter; 
+                  margin: 0.5in; 
                 }
                 @media print { 
                   body { 
@@ -159,23 +226,30 @@ const LabelPrinter = ({
                     align-items: center;
                     min-height: 100vh;
                   }
+                  img {
+                    border: none;
+                    box-shadow: none;
+                  }
                 }
               </style>
             </head>
             <body>
-              ${clonedLabel.outerHTML}
+              <img src="${imgData}" alt="Safety Label PDF" />
             </body>
           </html>
         `);
-        printWindow.document.close();
+        pdfWindow.document.close();
         
-        // Trigger print after content loads
         setTimeout(() => {
-          printWindow.print();
+          pdfWindow.print();
         }, 250);
       }
+      
+      toast.success('Label PDF generated');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF');
     }
-    toast.success('Label PDF generated');
   };
 
   const compliance = getComplianceStatus();
