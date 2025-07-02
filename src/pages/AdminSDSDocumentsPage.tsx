@@ -10,7 +10,7 @@ import { ArrowLeft, Search, FileText, Download, Eye, Printer } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import SDSEvaluationButton from "@/components/SDSEvaluationButton";
 import { getSDSDocumentStatus } from "@/utils/sdsStatusUtils";
-import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
+
 
 interface SDSDocument {
   id: string;
@@ -32,8 +32,6 @@ const AdminSDSDocumentsPage = () => {
   const [filteredDocuments, setFilteredDocuments] = useState<SDSDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [labelPrinterOpen, setLabelPrinterOpen] = useState(false);
-  const [selectedDocumentForLabel, setSelectedDocumentForLabel] = useState<SDSDocument | null>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -83,8 +81,8 @@ const AdminSDSDocumentsPage = () => {
   };
 
   const handlePrintLabel = (document: SDSDocument) => {
-    setSelectedDocumentForLabel(document);
-    setLabelPrinterOpen(true);
+    // Navigate to a general label printer page for admin use
+    window.location.href = `/admin/label-printer?documentId=${document.id}`;
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -244,18 +242,6 @@ const AdminSDSDocumentsPage = () => {
         </div>
       </div>
 
-      {selectedDocumentForLabel && (
-        <LabelPrinterPopup
-          isOpen={labelPrinterOpen}
-          onClose={() => {
-            setLabelPrinterOpen(false);
-            setSelectedDocumentForLabel(null);
-          }}
-          initialProductName={selectedDocumentForLabel.product_name}
-          initialManufacturer={selectedDocumentForLabel.manufacturer || ''}
-          selectedDocument={selectedDocumentForLabel}
-        />
-      )}
     </div>
   );
 };

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertCircle, CheckCircle, FileText, ExternalLink, Printer, Shield, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import FacilityNavbar from '@/components/FacilityNavbar';
-import LabelPrinterPopup from '@/components/popups/LabelPrinterPopup';
+
 import SDSViewerPopup from '@/components/popups/SDSViewerPopup';
 import SDSEvaluationButton from '@/components/SDSEvaluationButton';
 import { getSDSDocumentStatus, getComplianceStatusBadge } from '@/utils/sdsStatusUtils';
@@ -37,8 +37,6 @@ interface SDSDocument {
 
 const SDSDocumentsPage = () => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
-  const [labelPrinterOpen, setLabelPrinterOpen] = useState(false);
-  const [selectedDocumentForLabel, setSelectedDocumentForLabel] = useState<SDSDocument | null>(null);
   const [sdsViewerOpen, setSDSViewerOpen] = useState(false);
   const [selectedDocumentForViewer, setSelectedDocumentForViewer] = useState<SDSDocument | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -173,8 +171,8 @@ const SDSDocumentsPage = () => {
   };
 
   const handlePrintLabel = (doc: SDSDocument) => {
-    setSelectedDocumentForLabel(doc);
-    setLabelPrinterOpen(true);
+    const labelPrinterUrl = `/facility/${facilitySlug}/label-printer?documentId=${doc.id}`;
+    window.location.href = labelPrinterUrl;
   };
 
   if (isLoading) {
@@ -487,17 +485,6 @@ const SDSDocumentsPage = () => {
         sdsDocument={selectedDocumentForViewer}
       />
 
-      {/* Label Printer Popup */}
-      <LabelPrinterPopup
-        isOpen={labelPrinterOpen}
-        onClose={() => {
-          setLabelPrinterOpen(false);
-          setSelectedDocumentForLabel(null);
-        }}
-        initialProductName={selectedDocumentForLabel?.product_name}
-        initialManufacturer={selectedDocumentForLabel?.manufacturer}
-        selectedDocument={selectedDocumentForLabel}
-      />
     </div>
   );
 };

@@ -14,6 +14,7 @@ import SalesPartnerTermsPage from "@/pages/SalesPartnerTermsPage";
 import SignupPage from "@/pages/SignupPage";
 import AccessToolsPage from "@/pages/AccessToolsPage";
 import LabelPrinterPage from "@/pages/LabelPrinterPage";
+import AdminLabelPrinterPage from "@/pages/AdminLabelPrinterPage";
 import SalesRepPage from "@/pages/SalesRepPage";
 
 export const navItems = [
@@ -106,6 +107,12 @@ export const navItems = [
     to: "/signup",
     icon: <UserCheck className="h-4 w-4" />,
     page: <SignupPage />,
+  },
+  {
+    title: "Admin Label Printer",
+    to: "/admin/label-printer",
+    icon: <Printer className="h-4 w-4" />,
+    page: <AdminLabelPrinterPage />,
   },
   {
     title: "Sales Rep Dashboard",

@@ -17,10 +17,9 @@ interface FacilityNavbarProps {
   facilityName?: string;
   facilityLogo?: string;
   facilityAddress?: string;
-  onPrintLabelClick?: () => void;
 }
 
-const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, onPrintLabelClick }: FacilityNavbarProps) => {
+const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: FacilityNavbarProps) => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -99,14 +98,15 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, onPrintLa
             ))}
             
             {/* Print Label Button */}
-            <Button
-              onClick={onPrintLabelClick}
+            <Link
+              to={`/facility/${facilitySlug}/label-printer`}
               className="flex items-center space-x-2 ml-2"
-              size="sm"
             >
-              <Printer className="w-4 h-4" />
-              <span>Print Label</span>
-            </Button>
+              <Button size="sm" className="flex items-center space-x-2">
+                <Printer className="w-4 h-4" />
+                <span>Print Label</span>
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -146,17 +146,19 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, onPrintLa
               ))}
               
               {/* Mobile Print Label Button */}
-              <Button
-                onClick={() => {
-                  onPrintLabelClick?.();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="flex items-center space-x-2 w-full justify-start mt-2"
-                size="sm"
+              <Link
+                to={`/facility/${facilitySlug}/label-printer`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full"
               >
-                <Printer className="w-4 h-4" />
-                <span>Print Label</span>
-              </Button>
+                <Button
+                  className="flex items-center space-x-2 w-full justify-start mt-2"
+                  size="sm"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print Label</span>
+                </Button>
+              </Link>
             </div>
           </div>
         )}

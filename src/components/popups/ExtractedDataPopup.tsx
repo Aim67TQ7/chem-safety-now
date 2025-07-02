@@ -24,6 +24,8 @@ interface ExtractedDataPopupProps {
   };
   onPrintLabel: () => void;
   onViewDocument?: () => void;
+  facilitySlug?: string;
+  documentId?: string;
 }
 
 const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
@@ -31,7 +33,9 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
   onClose,
   extractedData,
   onPrintLabel,
-  onViewDocument
+  onViewDocument,
+  facilitySlug,
+  documentId
 }) => {
   // GHS Pictogram mapping to display actual images
   const pictogramImages: Record<string, { name: string; imageUrl: string }> = {
@@ -273,7 +277,16 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                   View Document
                 </Button>
               )}
-              <Button onClick={onPrintLabel} className="bg-green-600 hover:bg-green-700">
+              <Button 
+                onClick={() => {
+                  if (facilitySlug && documentId) {
+                    window.location.href = `/facility/${facilitySlug}/label-printer?documentId=${documentId}`;
+                  } else {
+                    onPrintLabel();
+                  }
+                }} 
+                className="bg-green-600 hover:bg-green-700"
+              >
                 <Printer className="w-4 h-4 mr-2" />
                 Print Label
               </Button>

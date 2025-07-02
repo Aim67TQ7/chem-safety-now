@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building, MapPin, Mail, Phone } from "lucide-react";
 import FacilityNavbar from '@/components/FacilityNavbar';
-import LabelPrinterPopup from '@/components/popups/LabelPrinterPopup';
+
 
 interface Facility {
   id: string;
@@ -24,7 +24,7 @@ const FacilityPage = () => {
   const [facility, setFacility] = useState<Facility | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showLabelPrinter, setShowLabelPrinter] = useState(false);
+  
 
   useEffect(() => {
     const fetchFacility = async () => {
@@ -97,7 +97,6 @@ const FacilityPage = () => {
         facilityName={facility?.facility_name}
         facilityLogo={facility?.logo_url}
         facilityAddress={facility?.address}
-        onPrintLabelClick={() => setShowLabelPrinter(true)}
       />
       
       <div className="container mx-auto py-8">
@@ -130,12 +129,6 @@ const FacilityPage = () => {
         </Card>
       </div>
 
-      {showLabelPrinter && (
-        <LabelPrinterPopup
-          isOpen={showLabelPrinter}
-          onClose={() => setShowLabelPrinter(false)}
-        />
-      )}
     </div>
   );
 };
