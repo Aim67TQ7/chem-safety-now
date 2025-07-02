@@ -102,7 +102,7 @@ const AdminPage = () => {
           ...facility,
           trial_days_remaining,
           subscription_days_remaining,
-          facility_url: `https://chemlabel-gpt.com/facility/${facility.slug}`
+          facility_url: `https://chemlabel-gpt.lovable.app/facility/${facility.slug}`
         };
       }) || [];
 

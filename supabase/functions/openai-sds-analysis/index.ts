@@ -1,22 +1,7 @@
-// ============================================================================
-// OpenAI SDS Analysis Service with Vision (Deno)
-// ---------------------------------------------------------------------------
-// This serverless function receives a JSON payload containing:
-//   - document_id:   An arbitrary identifier (used for logging / correlation)
-//   - pdf_url:       A publicly‑accessible URL pointing to an SDS PDF file
-//
-// It downloads the PDF, converts the first few pages to images, and sends them
-// to GPT-4o-mini with vision capabilities to extract structured SDS information.
-// This approach works reliably since the model can actually see the PDF content.
-// ============================================================================
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
-
-// ---------------------------------------------------------------------------
-// Type definitions
-// ---------------------------------------------------------------------------
+import { corsHeaders } from '../_shared/cors.ts'
 
 interface OpenAISSDRequest {
   document_id: string;
@@ -45,243 +30,140 @@ interface OpenAISSDResponse {
   error?: string;
 }
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
-const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
-
-// ---------------------------------------------------------------------------
-// Helper function to convert PDF to images
-// ---------------------------------------------------------------------------
-
-async function pdfToImages(pdfUrl: string): Promise<string[]> {
-  console.log("📥 Downloading PDF from:", pdfUrl);
-  
-  // Download the PDF
-  const pdfResponse = await fetch(pdfUrl);
-  if (!pdfResponse.ok) {
-    throw new Error(`Failed to download PDF: ${pdfResponse.status}`);
-  }
-  
-  const pdfArrayBuffer = await pdfResponse.arrayBuffer();
-  console.log("📄 PDF downloaded, size:", pdfArrayBuffer.byteLength, "bytes");
-
-  // For now, we'll use a simple approach: convert PDF bytes to base64
-  // In a real implementation, you'd use a PDF-to-image library
-  // For this MVP, we'll assume the PDF is small and readable by GPT-4o-mini
-  const base64Pdf = btoa(String.fromCharCode(...new Uint8Array(pdfArrayBuffer)));
-  
-  // Return as a single "image" - GPT-4o-mini can handle PDF content directly
-  return [`data:application/pdf;base64,${base64Pdf}`];
-}
-
-// ---------------------------------------------------------------------------
-// Main handler
-// ---------------------------------------------------------------------------
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
-  // Handle pre‑flight CORS requests immediately
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   const startTime = Date.now();
 
   try {
-    // ---------------------------------------------------------------------
-    // 1️⃣  Parse and validate the inbound JSON payload
-    // ---------------------------------------------------------------------
     const { document_id, pdf_url }: OpenAISSDRequest = await req.json();
-
-    console.log("🤖 OpenAI Vision SDS Analysis for document:", document_id);
-    console.log("📄 PDF URL:", pdf_url);
+    
+    console.log('🤖 OpenAI SDS Analysis for document:', document_id);
+    console.log('📄 PDF URL:', pdf_url);
 
     if (!openAIApiKey) {
-      throw new Error("OpenAI API key not configured – set OPENAI_API_KEY env var");
+      throw new Error('OpenAI API key not configured');
     }
 
-    if (!pdf_url) {
-      throw new Error("pdf_url is required but was missing or empty");
-    }
+    // Create the analysis prompt for text-based analysis
+    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer. I will provide you with a PDF document URL containing an SDS. Please analyze this document and extract the following information in the exact JSON format specified.
 
-    // ---------------------------------------------------------------------
-    // 2️⃣  Download and process PDF
-    // ---------------------------------------------------------------------
-    console.log("🔄 Converting PDF to processable format...");
-    const pdfData = await pdfToImages(pdf_url);
-    console.log("✅ PDF processed successfully");
+Please access the PDF at this URL: ${pdf_url}
 
-    // ---------------------------------------------------------------------
-    // 3️⃣  Build vision-optimized prompt for the model
-    // ---------------------------------------------------------------------
-    
-    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer specializing in comprehensive GHS pictogram identification. I have provided you with an SDS document. Your primary task is to identify ALL pictograms present in the document.
-
-CRITICAL PICTOGRAM EXTRACTION INSTRUCTIONS:
-🎯 PRIMARY OBJECTIVE: Extract ALL pictograms - documents commonly contain 4-6 pictograms, not just 2-3.
-
-PICTOGRAM IDENTIFICATION STRATEGY:
-1. **Visual Analysis**: Look for diamond-shaped symbols with black pictograms on white backgrounds with red borders
-2. **Section 2 Analysis**: Examine "Hazard Identification" or "Label Elements" sections thoroughly
-3. **Text-Based Detection**: Look for pictogram references in text:
-   - "Pictogram:" followed by descriptions
-   - GHS codes (GHS01, GHS02, etc.)
-   - Signal words linked to specific pictograms
-   - H-codes that correspond to pictograms
-
-COMPREHENSIVE PICTOGRAM LIST - Look for ALL of these:
-   - GHS01: Exploding Bomb (explosives, self-reactive substances) → "exploding_bomb"
-   - GHS02: Flame (flammable liquids/solids/gases) → "flame"
-   - GHS03: Flame Over Circle (oxidizing liquids/solids/gases) → "flame_over_circle"
-   - GHS04: Gas Cylinder (gases under pressure) → "gas_cylinder"
-   - GHS05: Corrosion (corrosive to metals, skin corrosion, eye damage) → "corrosion"
-   - GHS06: Skull and Crossbones (acute toxicity) → "skull_crossbones"
-   - GHS07: Exclamation Mark (skin/eye irritation, acute toxicity) → "exclamation"
-   - GHS08: Health Hazard (carcinogen, mutagen, reproductive toxicity, respiratory sensitizer) → "health_hazard"
-   - GHS09: Environment (aquatic toxicity) → "environment"
-
-PICTOGRAM CROSS-REFERENCE:
-- If you find H-codes, map them to pictograms:
-  * H200-H299 → Physical hazards (GHS01, GHS02, GHS03, GHS04)
-  * H300-H399 → Health hazards (GHS05, GHS06, GHS07, GHS08)
-  * H400-H499 → Environmental hazards (GHS09)
-- Check for multiple pictogram categories per chemical
-
-REQUIRED OUTPUT FORMAT (JSON only):
+REQUIRED OUTPUT FORMAT:
 {
-  "product_name": "string",
-  "cas_number": "string",
-  "manufacturer": "string",
+  "product_name": "string - Main product/chemical name",
+  "cas_number": "string - CAS registry number (format: XXXXX-XX-X)",
+  "manufacturer": "string - Company name that manufactured/distributed this product",
   "hmis_codes": {
-    "health": "0-4 or N/A",
-    "flammability": 0-4,
-    "physical_hazard": 0-4,
-    "ppe": "A-K or X or N/A"
+    "health": "string - Health hazard rating (0-4, may include * for chronic hazards)",
+    "flammability": "number - Flammability rating (0-4)",
+    "physical_hazard": "number - Physical hazard rating (0-4)", 
+    "ppe": "string - Personal protective equipment code (A-K or X)"
   },
-  "ghs_pictograms": ["pictogram_name1", "pictogram_name2"],
-  "revision_date": "string",
-  "signal_word": "DANGER or WARNING or N/A",
-  "h_codes": ["H200", "H301"],
-  "confidence_score": 0.85
+  "ghs_pictograms": ["array of GHS pictogram names like Flame, Skull-and-Crossbones, etc."],
+  "revision_date": "string - Date when SDS was last revised (YYYY-MM-DD format if possible)",
+  "signal_word": "string - DANGER or WARNING",
+  "h_codes": ["array of H-codes like H225, H319, etc."],
+  "confidence_score": "number - Your confidence in this analysis (0-100)"
 }
 
 IMPORTANT INSTRUCTIONS:
-1. Analyze the provided SDS document image(s) thoroughly
+1. Access the PDF document at the provided URL and extract information from its contents
 2. Use "N/A" for any field you cannot determine with confidence
 3. For HMIS codes, follow standard 0-4 scale (0=minimal, 4=severe hazard)
 4. PPE codes: A-K represent specific equipment combinations, X means consult supervisor
 5. Be precise with CAS numbers and H-codes - these are critical safety identifiers
-6. **CRITICAL**: Look for ALL pictograms - don't stop at 3, there may be 4 or more
-7. Check Section 2.2 (Label Elements) thoroughly for complete pictogram list
-8. If multiple products are listed, focus on the primary/main product
-9. Confidence score should reflect how clearly the information was presented in the document
-10. Return ONLY valid JSON, no additional text or explanations
+6. If multiple products are listed, focus on the primary/main product
+7. Confidence score should reflect how clearly the information was presented in the document
 
-Analyze the SDS document and return the requested JSON data.`;
+Please analyze the SDS document at the URL provided and return only the requested JSON data.`;
 
-    // ---------------------------------------------------------------------
-    // 4️⃣  Call the OpenAI Chat Completions API with Vision
-    // ---------------------------------------------------------------------
-
-    const messages = [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: analysisPrompt
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: pdfData[0], // Use the first (and only) PDF data
-              detail: "high"
-            }
-          }
-        ]
-      }
-    ];
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+    // Make the OpenAI API call using the standard chat completion endpoint
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${openAIApiKey}`,
-        "Content-Type": "application/json",
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: messages,
-        max_tokens: 2000,
-        temperature: 0.1,
+        model: 'gpt-4.1-2025-04-14',
+        messages: [
+          {
+            role: 'user',
+            content: analysisPrompt
+          }
+        ],
+        max_tokens: 1500,
+        temperature: 0.1
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error("❌ OpenAI API error:", response.status, errorData);
-      throw new Error(`OpenAI API error: ${response.status} – ${errorData}`);
+      console.error('❌ OpenAI API error:', response.status, errorData);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData}`);
     }
 
-    // ---------------------------------------------------------------------
-    // 5️⃣  Parse the JSON that the model returned
-    // ---------------------------------------------------------------------
-
     const openAIData = await response.json();
-    const content: string = openAIData.choices[0].message.content;
+    const content = openAIData.choices[0].message.content;
+    
+    console.log('🔍 OpenAI Response:', content);
 
-    console.log("🔍 OpenAI Response (raw):", content);
-
-    // Guard‑rail: Sometimes the model wraps JSON in markdown/code fences or prose.
-    let analysisData: OpenAISSDResponse["data"];
+    // Parse the JSON response
+    let analysisData;
     try {
+      // Extract JSON from the response (in case OpenAI adds extra text)
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysisData = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error("No valid JSON found in OpenAI response");
+        throw new Error('No valid JSON found in OpenAI response');
       }
     } catch (parseError) {
-      console.error("❌ Failed to parse OpenAI response as JSON:", parseError);
-      console.error("Raw response:", content);
-      throw new Error("Invalid JSON response from OpenAI");
+      console.error('❌ Failed to parse OpenAI response as JSON:', parseError);
+      console.error('Raw response:', content);
+      throw new Error('Invalid JSON response from OpenAI');
     }
 
-    // ---------------------------------------------------------------------
-    // 6️⃣  Attach metadata & respond to caller
-    // ---------------------------------------------------------------------
-
     const processingTime = Date.now() - startTime;
+    
+    // Add processing metadata
     analysisData.processing_time_ms = processingTime;
-
-    console.log("🎯 Pictograms extracted:", analysisData.ghs_pictograms);
-    console.log("📊 Total pictograms found:", analysisData.ghs_pictograms?.length || 0);
-    console.log("⏱️ Processing time:", processingTime, "ms");
-    console.log("🎯 Confidence:", analysisData.confidence_score);
+    
+    console.log('✅ OpenAI SDS Analysis complete');
+    console.log('📊 Extracted Data:', analysisData);
+    console.log('⏱️ Processing time:', processingTime, 'ms');
+    console.log('🎯 Confidence:', analysisData.confidence_score, '%');
 
     const result: OpenAISSDResponse = {
       success: true,
-      data: analysisData,
+      data: analysisData
     };
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("❌ OpenAI SDS Analysis error:", error);
-
-    const processingTime = Date.now() - startTime;
-
     return new Response(
-      JSON.stringify({
+      JSON.stringify(result),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('❌ OpenAI SDS Analysis error:', error);
+    const processingTime = Date.now() - startTime;
+    
+    return new Response(
+      JSON.stringify({ 
         success: false,
-        error: (error as Error).message,
-        processing_time_ms: processingTime,
+        error: error.message,
+        processing_time_ms: processingTime
       }),
-      {
+      { 
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
   }
 });

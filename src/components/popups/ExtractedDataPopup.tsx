@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -32,72 +33,17 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
   onPrintLabel,
   onViewDocument
 }) => {
-  // Enhanced GHS Pictogram mapping with all 9 standard pictograms
+  // GHS Pictogram mapping to display actual images
   const pictogramImages: Record<string, { name: string; imageUrl: string }> = {
-    'exploding_bomb': { name: 'Exploding Bomb', imageUrl: '/lovable-uploads/0176f010-3f53-485e-8013-37c80276e905.png' },
-    'flame': { name: 'Flame', imageUrl: '/lovable-uploads/615d7b02-13d9-41b9-8319-db0e7e1cc52d.png' },
-    'flame_over_circle': { name: 'Flame Over Circle', imageUrl: '/lovable-uploads/881c9dcf-f0ac-4fe5-98e5-1f64a3fa6f8d.png' },
+    'exclamation': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
+    'health_hazard': { name: 'Health Hazard', imageUrl: '/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png' },
     'gas_cylinder': { name: 'Gas Cylinder', imageUrl: '/lovable-uploads/8f73c238-da2e-4a6c-bbec-0fda7667459d.png' },
     'corrosion': { name: 'Corrosion', imageUrl: '/lovable-uploads/a1dff518-a5ad-4880-b8ee-8a036fbfe0c4.png' },
     'skull_crossbones': { name: 'Skull and Crossbones', imageUrl: '/lovable-uploads/9ccb65e8-0bd7-41f0-bd11-2e210d5e370f.png' },
-    'exclamation': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
-    'health_hazard': { name: 'Health Hazard', imageUrl: '/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png' },
-    'environment': { name: 'Environment', imageUrl: '/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png' },
-    // Add alternative naming patterns that AI might use
-    'ghs01': { name: 'Exploding Bomb', imageUrl: '/lovable-uploads/0176f010-3f53-485e-8013-37c80276e905.png' },
-    'ghs02': { name: 'Flame', imageUrl: '/lovable-uploads/615d7b02-13d9-41b9-8319-db0e7e1cc52d.png' },
-    'ghs03': { name: 'Flame Over Circle', imageUrl: '/lovable-uploads/881c9dcf-f0ac-4fe5-98e5-1f64a3fa6f8d.png' },
-    'ghs04': { name: 'Gas Cylinder', imageUrl: '/lovable-uploads/8f73c238-da2e-4a6c-bbec-0fda7667459d.png' },
-    'ghs05': { name: 'Corrosion', imageUrl: '/lovable-uploads/a1dff518-a5ad-4880-b8ee-8a036fbfe0c4.png' },
-    'ghs06': { name: 'Skull and Crossbones', imageUrl: '/lovable-uploads/9ccb65e8-0bd7-41f0-bd11-2e210d5e370f.png' },
-    'ghs07': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
-    'ghs08': { name: 'Health Hazard', imageUrl: '/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png' },
-    'ghs09': { name: 'Environment', imageUrl: '/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png' },
-    // OpenAI often returns these formats
-    'corros': { name: 'Corrosion', imageUrl: '/lovable-uploads/a1dff518-a5ad-4880-b8ee-8a036fbfe0c4.png' },
-    'exclam': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
-    'health': { name: 'Health Hazard', imageUrl: '/lovable-uploads/29b232e2-4dd4-477e-abe9-4203ff098880.png' }
-  };
-
-  // Enhanced pictogram matching function
-  const getPictogramData = (pictogramId: string) => {
-    const normalizedId = pictogramId.toLowerCase().replace(/[-\s_]/g, '');
-    
-    // Direct match first
-    if (pictogramImages[normalizedId]) {
-      return pictogramImages[normalizedId];
-    }
-    
-    // Pattern matching for common variations
-    if (normalizedId.includes('flame') && !normalizedId.includes('over') && !normalizedId.includes('circle')) {
-      return pictogramImages['flame'];
-    }
-    if (normalizedId.includes('flame') && (normalizedId.includes('over') || normalizedId.includes('circle'))) {
-      return pictogramImages['flame_over_circle'];
-    }
-    if (normalizedId.includes('corros') || normalizedId.includes('acid')) {
-      return pictogramImages['corrosion'];
-    }
-    if (normalizedId.includes('skull') || normalizedId.includes('toxic') || normalizedId.includes('poison')) {
-      return pictogramImages['skull_crossbones'];
-    }
-    if (normalizedId.includes('health') || normalizedId.includes('hazard')) {
-      return pictogramImages['health_hazard'];
-    }
-    if (normalizedId.includes('excla') || normalizedId.includes('irritant') || normalizedId.includes('harmful')) {
-      return pictogramImages['exclamation'];
-    }
-    if (normalizedId.includes('explo') || normalizedId.includes('bomb')) {
-      return pictogramImages['exploding_bomb'];
-    }
-    if (normalizedId.includes('gas') || normalizedId.includes('cylinder') || normalizedId.includes('pressure')) {
-      return pictogramImages['gas_cylinder'];
-    }
-    if (normalizedId.includes('env') || normalizedId.includes('aquatic') || normalizedId.includes('fish')) {
-      return pictogramImages['environment'];
-    }
-    
-    return null;
+    'exploding_bomb': { name: 'Exploding Bomb', imageUrl: '/lovable-uploads/0176f010-3f53-485e-8013-37c80276e905.png' },
+    'flame': { name: 'Flame', imageUrl: '/lovable-uploads/615d7b02-13d9-41b9-8319-db0e7e1cc52d.png' },
+    'flame_over_circle': { name: 'Flame Over Circle', imageUrl: '/lovable-uploads/881c9dcf-f0ac-4fe5-98e5-1f64a3fa6f8d.png' },
+    'environment': { name: 'Environment', imageUrl: '/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png' }
   };
 
   const getStatusInfo = () => {
@@ -256,12 +202,12 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
             )}
           </div>
 
-          {/* Enhanced GHS Pictograms Display */}
+          {/* GHS Pictograms - Prioritized Display */}
           {extractedData.pictograms && extractedData.pictograms.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  GHS Pictograms ({extractedData.pictograms.length} detected)
+                  GHS Pictograms
                   {extractedData.prioritized_pictograms && (
                     <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                       Prioritized from SDS
@@ -270,56 +216,27 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
                   {extractedData.pictograms.map((pictogramId, index) => {
-                    console.log('🎯 Processing pictogram:', pictogramId, 'Index:', index);
-                    console.log('🔍 Available pictogram mappings:', Object.keys(pictogramImages));
-                    const pictogramData = getPictogramData(pictogramId);
-                    console.log('📊 Mapped pictogram data:', pictogramData);
-                    
+                    const pictogramData = pictogramImages[pictogramId];
                     return (
                       <div key={index} className="text-center">
-                        {pictogramData ? (
+                        {pictogramData && (
                           <>
-                            <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center border-2 border-gray-200 rounded-lg bg-white shadow-sm">
-                               <img 
+                            <div className="w-16 h-16 mx-auto mb-2 flex items-center justify-center border border-gray-200 rounded">
+                              <img 
                                 src={pictogramData.imageUrl} 
                                 alt={pictogramData.name}
-                                className="w-16 h-16 object-contain"
-                                onLoad={() => console.log('✅ Pictogram loaded:', pictogramData.name, pictogramData.imageUrl)}
-                                onError={(e) => {
-                                  console.error('❌ Failed to load pictogram image:', pictogramData.imageUrl);
-                                  console.error('❌ Original pictogram ID:', pictogramId);
-                                  e.currentTarget.style.display = 'none';
-                                }}
+                                className="w-12 h-12 object-contain"
                               />
                             </div>
-                            <p className="text-sm font-medium text-gray-700">{pictogramData.name}</p>
-                            <p className="text-xs text-gray-500 mt-1">GHS Standard</p>
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center border-2 border-orange-200 rounded-lg bg-orange-50">
-                              <span className="text-xs text-orange-600 font-medium text-center px-1">
-                                {pictogramId}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium text-orange-600">Unknown Pictogram</p>
-                            <p className="text-xs text-gray-500 mt-1">Needs mapping</p>
+                            <p className="text-xs text-gray-600">{pictogramData.name}</p>
                           </>
                         )}
                       </div>
                     );
                   })}
                 </div>
-                {extractedData.pictograms.some(p => !getPictogramData(p)) && (
-                  <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                    <p className="text-sm text-orange-700">
-                      <strong>Note:</strong> Some pictograms couldn't be matched to standard GHS symbols. 
-                      Please verify the extracted data manually.
-                    </p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}

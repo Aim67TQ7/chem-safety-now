@@ -54,7 +54,7 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
     }
 
     setIsEvaluating(true);
-    console.log('🔍 Starting OpenAI Vision PDF evaluation for:', document.product_name);
+    console.log('🔍 Starting OpenAI PDF evaluation for:', document.product_name);
 
     try {
       // Construct the public PDF URL for OpenAI access
@@ -65,9 +65,9 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
         pdfUrl = `https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/${document.bucket_url}`;
       }
 
-      console.log('📄 Sending PDF to OpenAI Vision for analysis:', pdfUrl);
+      console.log('📄 Sending PDF to OpenAI for analysis:', pdfUrl);
 
-      // Call the OpenAI SDS analysis function with vision
+      // Call the OpenAI SDS analysis function
       const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('openai-sds-analysis', {
         body: { 
           document_id: document.id,
@@ -102,7 +102,7 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
           processing_time_ms: extractedData.processing_time_ms || 0,
           analysis_method: 'openai_vision'
         },
-        ai_extraction_confidence: Math.round((extractedData.confidence_score || 0) * 100),
+        ai_extraction_confidence: extractedData.confidence_score || 0,
         ai_extraction_date: new Date().toISOString(),
         extraction_status: 'completed',
         hmis_codes: extractedData.hmis_codes || {},
