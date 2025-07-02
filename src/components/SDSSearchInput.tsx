@@ -165,17 +165,19 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
             onClick={() => handleSearch()}
             disabled={isSearching || !searchQuery.trim()}
             size="lg"
-            className="px-8 md:px-12 py-8 text-xl md:text-2xl bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:to-red-700 text-white font-black shadow-2xl transform transition-all hover:scale-110 border-2 border-white"
+            className="px-3 md:px-12 py-4 md:py-8 text-sm md:text-2xl bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:to-red-700 text-white font-black shadow-2xl transform transition-all hover:scale-110 border-2 border-white"
           >
             {isSearching ? (
               <>
-                <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-                SEARCHING...
+                <Loader2 className="w-4 md:w-6 h-4 md:h-6 mr-1 md:mr-3 animate-spin" />
+                <span className="hidden sm:inline">SEARCHING...</span>
+                <span className="sm:hidden">SEARCH</span>
               </>
             ) : (
               <>
-                <Search className="w-6 h-6 mr-3" />
-                SEARCH SDS NOW
+                <Search className="w-4 md:w-6 h-4 md:h-6 mr-1 md:mr-3" />
+                <span className="hidden sm:inline">SEARCH SDS NOW</span>
+                <span className="sm:hidden">SEARCH</span>
               </>
             )}
           </Button>
