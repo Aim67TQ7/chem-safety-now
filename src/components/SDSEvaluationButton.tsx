@@ -54,10 +54,10 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
     }
 
     setIsEvaluating(true);
-    console.log('🔍 Starting OpenAI PDF evaluation for:', document.product_name);
+    console.log('🔍 Starting Claude PDF evaluation for:', document.product_name);
 
     try {
-      // Construct the public PDF URL for OpenAI access
+      // Construct the public PDF URL for Claude access
       let pdfUrl = document.bucket_url || document.source_url;
       
       // If it's a bucket URL, convert to public URL
@@ -65,10 +65,10 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
         pdfUrl = `https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/${document.bucket_url}`;
       }
 
-      console.log('📄 Sending PDF to OpenAI for analysis:', pdfUrl);
+      console.log('📄 Sending PDF to Claude for analysis:', pdfUrl);
 
-      // Call the OpenAI SDS analysis function
-      const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('openai-sds-analysis', {
+      // Call the Claude SDS analysis function
+      const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('claude-sds-analysis', {
         body: { 
           document_id: document.id,
           pdf_url: pdfUrl
@@ -76,15 +76,15 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
       });
 
       if (analysisError) {
-        console.error('❌ OpenAI analysis error:', analysisError);
-        throw new Error(analysisError.message || 'OpenAI analysis failed');
+        console.error('❌ Claude analysis error:', analysisError);
+        throw new Error(analysisError.message || 'Claude analysis failed');
       }
 
       if (!analysisResult.success) {
-        throw new Error(analysisResult.error || 'OpenAI analysis failed');
+        throw new Error(analysisResult.error || 'Claude analysis failed');
       }
 
-      console.log('✅ OpenAI analysis completed:', analysisResult.data);
+      console.log('✅ Claude analysis completed:', analysisResult.data);
 
       // Update the document with the analysis results
       const extractedData = analysisResult.data;
@@ -100,7 +100,7 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
           hmis_codes: extractedData.hmis_codes || {},
           confidence_score: extractedData.confidence_score || 0,
           processing_time_ms: extractedData.processing_time_ms || 0,
-          analysis_method: 'openai_vision'
+          analysis_method: 'claude_sonnet'
         },
         ai_extraction_confidence: extractedData.confidence_score || 0,
         ai_extraction_date: new Date().toISOString(),
@@ -136,7 +136,7 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
       onEvaluationComplete();
 
     } catch (error) {
-      console.error('❌ Error during OpenAI analysis:', error);
+      console.error('❌ Error during Claude analysis:', error);
       toast.error(`Failed to analyze ${document.product_name}: ${error.message}`);
     } finally {
       setIsEvaluating(false);
