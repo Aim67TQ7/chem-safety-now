@@ -99,32 +99,80 @@ const LabelPrinter = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    // Add print-specific class to isolate label
+    document.body.classList.add('printing-label');
+    
+    setTimeout(() => {
+      window.print();
+      // Remove class after printing
+      setTimeout(() => {
+        document.body.classList.remove('printing-label');
+      }, 100);
+    }, 100);
+    
     toast.success('Label sent to printer');
   };
 
   const handleDownloadPDF = () => {
-    // Create a new window with just the label for PDF generation
+    // Create a new window with isolated label content
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       const labelElement = document.getElementById('safety-label-preview');
       if (labelElement) {
+        // Clone the label element to avoid modifying the original
+        const clonedLabel = labelElement.cloneNode(true) as HTMLElement;
+        
+        // Reset any scaling on the clone for proper PDF sizing
+        clonedLabel.style.transform = 'none';
+        clonedLabel.style.transformOrigin = 'unset';
+        
         printWindow.document.write(`
           <html>
             <head>
               <title>Safety Label - ${productName}</title>
               <style>
-                body { margin: 0; padding: 20px; font-family: monospace; }
-                @media print { body { margin: 0; padding: 0; } }
+                * { box-sizing: border-box; }
+                body { 
+                  margin: 0; 
+                  padding: 20px; 
+                  font-family: monospace;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  min-height: 100vh;
+                  background: white;
+                }
+                .safety-label {
+                  page-break-inside: avoid;
+                  margin: 0 auto;
+                }
+                @page {
+                  size: letter;
+                  margin: 0.5in;
+                }
+                @media print { 
+                  body { 
+                    margin: 0; 
+                    padding: 0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                  }
+                }
               </style>
             </head>
             <body>
-              ${labelElement.outerHTML}
+              ${clonedLabel.outerHTML}
             </body>
           </html>
         `);
         printWindow.document.close();
-        printWindow.print();
+        
+        // Trigger print after content loads
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
       }
     }
     toast.success('Label PDF generated');

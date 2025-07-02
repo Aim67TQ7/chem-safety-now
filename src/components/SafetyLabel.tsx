@@ -346,7 +346,7 @@ export function SafetyLabel({
                   flexWrap: 'wrap', 
                   gap: `${Math.floor(padding/2)}px`, 
                   justifyContent: 'flex-start', 
-                  alignItems: 'flex-start' 
+                  alignItems: 'center' 
                 }}
               >
                 {selectedPictograms.slice(0, 4).map((pictogramId, index) => (
@@ -357,7 +357,8 @@ export function SafetyLabel({
                       height: `${pictogramSize}px`, 
                       display: 'flex', 
                       alignItems: 'center', 
-                      justifyContent: 'center' 
+                      justifyContent: 'center',
+                      flexShrink: 0
                     }}
                   >
                     {getHazardIcon(pictogramId, pictogramSize)}

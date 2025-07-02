@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Print-specific styles for label isolation */
+@media print {
+  body.printing-label * {
+    visibility: hidden;
+  }
+  
+  body.printing-label #safety-label-preview,
+  body.printing-label #safety-label-preview * {
+    visibility: visible;
+  }
+  
+  body.printing-label #safety-label-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: none !important;
+    transform-origin: unset !important;
+  }
+  
+  body.printing-label {
+    margin: 0;
+    padding: 0;
+  }
+  
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
 
 @layer base {

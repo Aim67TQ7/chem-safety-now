@@ -10,8 +10,9 @@ import {
   X,
   QrCode,
   MapPin,
-  Printer
+  Database
 } from "lucide-react";
+import SDSLabelSearchPopup from './popups/SDSLabelSearchPopup';
 
 interface FacilityNavbarProps {
   facilityName?: string;
@@ -23,6 +24,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showSDSSearchPopup, setShowSDSSearchPopup] = useState(false);
 
   const navItems = [
     {
@@ -97,16 +99,15 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
               </Link>
             ))}
             
-            {/* Print Label Button */}
-            <Link
-              to={`/facility/${facilitySlug}/label-printer`}
+            {/* Print SDS Label Button */}
+            <Button 
+              size="sm" 
+              onClick={() => setShowSDSSearchPopup(true)}
               className="flex items-center space-x-2 ml-2"
             >
-              <Button size="sm" className="flex items-center space-x-2">
-                <Printer className="w-4 h-4" />
-                <span>Print Label</span>
-              </Button>
-            </Link>
+              <Database className="w-4 h-4" />
+              <span>Print SDS Label from Database</span>
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -145,24 +146,28 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
                 </Link>
               ))}
               
-              {/* Mobile Print Label Button */}
-              <Link
-                to={`/facility/${facilitySlug}/label-printer`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full"
+              {/* Mobile Print SDS Label Button */}
+              <Button
+                onClick={() => {
+                  setShowSDSSearchPopup(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-2 w-full justify-start mt-2"
+                size="sm"
               >
-                <Button
-                  className="flex items-center space-x-2 w-full justify-start mt-2"
-                  size="sm"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Print Label</span>
-                </Button>
-              </Link>
+                <Database className="w-4 h-4" />
+                <span>Print SDS Label from Database</span>
+              </Button>
             </div>
           </div>
         )}
       </div>
+      
+      {/* SDS Search Popup */}
+      <SDSLabelSearchPopup
+        isOpen={showSDSSearchPopup}
+        onClose={() => setShowSDSSearchPopup(false)}
+      />
     </nav>
   );
 };

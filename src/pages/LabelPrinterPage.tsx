@@ -19,9 +19,9 @@ const LabelPrinterPage = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!facilitySlug || !documentId) {
-        console.error('Missing facilitySlug or documentId:', { facilitySlug, documentId });
-        setError('Missing facility or document information');
+      if (!facilitySlug) {
+        console.error('Missing facilitySlug:', { facilitySlug });
+        setError('Missing facility information');
         setIsLoading(false);
         return;
       }
@@ -29,7 +29,7 @@ const LabelPrinterPage = () => {
       try {
         console.log('Loading facility with slug:', facilitySlug);
         
-        // Load facility data - try different query approaches
+        // Load facility data
         const { data: facilityData, error: facilityError } = await supabase
           .from('facilities')
           .select('*')
@@ -61,31 +61,34 @@ const LabelPrinterPage = () => {
         console.log('Facility loaded successfully:', facilityData);
         setFacility(facilityData);
 
-        console.log('Loading document with ID:', documentId);
-        
-        // Load document data
-        const { data: documentData, error: documentError } = await supabase
-          .from('sds_documents')
-          .select('*')
-          .eq('id', documentId)
-          .maybeSingle();
+        // Only load document if documentId is provided
+        if (documentId) {
+          console.log('Loading document with ID:', documentId);
+          
+          // Load document data
+          const { data: documentData, error: documentError } = await supabase
+            .from('sds_documents')
+            .select('*')
+            .eq('id', documentId)
+            .maybeSingle();
 
-        if (documentError) {
-          console.error('Failed to load document:', documentError);
-          setError(`Failed to load document information: ${documentError.message}`);
-          setIsLoading(false);
-          return;
+          if (documentError) {
+            console.error('Failed to load document:', documentError);
+            setError(`Failed to load document information: ${documentError.message}`);
+            setIsLoading(false);
+            return;
+          }
+
+          if (!documentData) {
+            console.error('Document not found with ID:', documentId);
+            setError(`Document not found with ID: ${documentId}`);
+            setIsLoading(false);
+            return;
+          }
+
+          console.log('Document loaded successfully:', documentData);
+          setDocument(documentData);
         }
-
-        if (!documentData) {
-          console.error('Document not found with ID:', documentId);
-          setError(`Document not found with ID: ${documentId}`);
-          setIsLoading(false);
-          return;
-        }
-
-        console.log('Document loaded successfully:', documentData);
-        setDocument(documentData);
       } catch (error: any) {
         console.error('Error loading data:', error);
         setError(`An unexpected error occurred: ${error.message}`);
@@ -112,25 +115,24 @@ const LabelPrinterPage = () => {
     );
   }
 
-  if (error || !facility || !document) {
+  if (error || !facility) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
               <AlertCircle className="w-5 h-5" />
-              Error Loading Label
+              Error Loading Page
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">
-              {error || 'Unable to load the requested label data.'}
+              {error || 'Unable to load the requested page.'}
             </p>
             <div className="text-sm text-gray-500 space-y-1">
               <p><strong>Facility Slug:</strong> {facilitySlug}</p>
-              <p><strong>Document ID:</strong> {documentId}</p>
+              <p><strong>Document ID:</strong> {documentId || 'None'}</p>
               <p><strong>Facility Found:</strong> {facility ? 'Yes' : 'No'}</p>
-              <p><strong>Document Found:</strong> {document ? 'Yes' : 'No'}</p>
             </div>
             <p className="text-sm text-gray-500 mt-4">
               Please try again or contact support if the problem persists.
@@ -150,12 +152,14 @@ const LabelPrinterPage = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">GHS Label Printer</h1>
               <p className="text-gray-600">
-                {facility.facility_name} - {document.product_name}
+                {facility.facility_name} {document && `- ${document.product_name}`}
               </p>
             </div>
-            <div className="text-sm text-gray-500">
-              Document ID: {document.id.slice(0, 8)}...
-            </div>
+            {document && (
+              <div className="text-sm text-gray-500">
+                Document ID: {document.id.slice(0, 8)}...
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -163,8 +167,8 @@ const LabelPrinterPage = () => {
       {/* Label Printer Component */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <LabelPrinter
-          initialProductName={document.product_name}
-          initialManufacturer={document.manufacturer}
+          initialProductName={document?.product_name || ''}
+          initialManufacturer={document?.manufacturer || ''}
           selectedDocument={document}
         />
       </div>
