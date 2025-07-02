@@ -99,17 +99,17 @@ export function SafetyLabel({
   const smallFontSize = Math.max(6, Math.floor(baseFontSize * 0.9));
   const hmisFontSize = Math.max(9, Math.floor(hmisBoxHeight * 1.2));
 
-  // OSHA-compliant GHS pictogram mapping
+  // OSHA-compliant GHS pictogram mapping using Supabase storage
   const pictograms = [
-    { id: "exclamation", name: "Exclamation Mark", imageUrl: "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png" },
-    { id: "health_hazard", name: "Health Hazard", imageUrl: "/lovable-uploads/0bd57060-18fb-4ad6-8485-e5521c2e7b71.png" },
-    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "/lovable-uploads/3c1d4332-95eb-44a9-bfef-207e02156b08.png" },
-    { id: "corrosion", name: "Corrosion", imageUrl: "/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" },
-    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "/lovable-uploads/4c13f8f5-8a47-4c2d-a5ed-90cdf7a521c0.png" },
-    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "/lovable-uploads/5146a1d1-bc42-4a39-ae55-cf61a2dc012f.png" },
-    { id: "flame", name: "Flame", imageUrl: "/lovable-uploads/54ad4b94-8ebd-4158-aaf2-03ef75373444.png" },
-    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png" },
-    { id: "environment", name: "Environment", imageUrl: "/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" }
+    { id: "exclamation", name: "Exclamation Mark", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/exclamation.png" },
+    { id: "health_hazard", name: "Health Hazard", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/health_hazard.png" },
+    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/gas_cylinder.png" },
+    { id: "corrosion", name: "Corrosion", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/corrosion.png" },
+    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/skull_crossbones.png" },
+    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/exploding_bomb.png" },
+    { id: "flame", name: "Flame", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/flame.png" },
+    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/flame_over_circle.png" },
+    { id: "environment", name: "Environment", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/environment.png" }
   ];
 
   const getSpecificPPE = () => {
