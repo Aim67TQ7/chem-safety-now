@@ -1,20 +1,23 @@
 
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import LabelPrinter from '@/components/LabelPrinter';
+import ProductSelector from '@/components/ProductSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LabelPrinterPage = () => {
   const { facilitySlug } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const documentId = searchParams.get('documentId');
   
   const [document, setDocument] = useState<any>(null);
   const [facility, setFacility] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDocumentLoading, setIsDocumentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,31 +66,7 @@ const LabelPrinterPage = () => {
 
         // Only load document if documentId is provided
         if (documentId) {
-          console.log('Loading document with ID:', documentId);
-          
-          // Load document data
-          const { data: documentData, error: documentError } = await supabase
-            .from('sds_documents')
-            .select('*')
-            .eq('id', documentId)
-            .maybeSingle();
-
-          if (documentError) {
-            console.error('Failed to load document:', documentError);
-            setError(`Failed to load document information: ${documentError.message}`);
-            setIsLoading(false);
-            return;
-          }
-
-          if (!documentData) {
-            console.error('Document not found with ID:', documentId);
-            setError(`Document not found with ID: ${documentId}`);
-            setIsLoading(false);
-            return;
-          }
-
-          console.log('Document loaded successfully:', documentData);
-          setDocument(documentData);
+          await loadDocument(documentId);
         }
       } catch (error: any) {
         console.error('Error loading data:', error);
@@ -100,6 +79,51 @@ const LabelPrinterPage = () => {
 
     loadData();
   }, [facilitySlug, documentId]);
+
+  const loadDocument = async (docId: string) => {
+    try {
+      setIsDocumentLoading(true);
+      setError(null);
+      
+      const { data: documentData, error: documentError } = await supabase
+        .from('sds_documents')
+        .select('*')
+        .eq('id', docId)
+        .maybeSingle();
+
+      if (documentError) {
+        console.error('Failed to load document:', documentError);
+        setError(`Failed to load document: ${documentError.message}`);
+        return;
+      }
+
+      if (!documentData) {
+        console.error('Document not found with ID:', docId);
+        setError(`Document not found with ID: ${docId}`);
+        return;
+      }
+
+      console.log('Document loaded successfully:', documentData);
+      setDocument(documentData);
+      
+      // Update URL to reflect selected document
+      setSearchParams({ documentId: docId });
+    } catch (error: any) {
+      console.error('Error loading document:', error);
+      setError(`An unexpected error occurred: ${error.message}`);
+    } finally {
+      setIsDocumentLoading(false);
+    }
+  };
+
+  const handleDocumentSelect = (selectedDoc: any) => {
+    if (selectedDoc) {
+      loadDocument(selectedDoc.id);
+    } else {
+      setDocument(null);
+      setSearchParams({});
+    }
+  };
 
   if (isLoading) {
     return (
@@ -164,13 +188,42 @@ const LabelPrinterPage = () => {
         </div>
       </div>
 
-      {/* Label Printer Component */}
+      {/* Product Selection */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <LabelPrinter
-          initialProductName={document?.product_name || ''}
-          initialManufacturer={document?.manufacturer || ''}
-          selectedDocument={document}
-        />
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Select Product for Label Printing
+              {isDocumentLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProductSelector
+              selectedDocumentId={documentId || undefined}
+              onDocumentSelect={handleDocumentSelect}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Label Printer Component */}
+        {document && (
+          <LabelPrinter
+            initialProductName={document.product_name || ''}
+            initialManufacturer={document.manufacturer || ''}
+            selectedDocument={document}
+          />
+        )}
+
+        {!document && !isLoading && !error && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <p className="text-gray-600 mb-4">Select a product from the dropdown above to start printing labels.</p>
+              <p className="text-sm text-gray-500">
+                The label printer will load with all the product information from our SDS database.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
