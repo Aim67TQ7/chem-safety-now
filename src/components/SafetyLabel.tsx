@@ -301,18 +301,30 @@ export function SafetyLabel({
         >
           <div style={{ fontSize: `${bodyFontSize}px`, lineHeight: '1.2' }}>
             {casNumber && (
-              <div><span className="font-bold">CAS:</span> {casNumber}</div>
+              <div style={{ fontSize: `${bodyFontSize}px` }}>
+                <span className="font-bold">CAS:</span> {casNumber}
+              </div>
             )}
             {manufacturer && (
-              <div><span className="font-bold">MFG:</span> {manufacturer}</div>
+              <div style={{ fontSize: `${bodyFontSize}px` }}>
+                <span className="font-bold">MFG:</span> {manufacturer}
+              </div>
             )}
             {productId && (
-              <div><span className="font-bold">ID:</span> {productId}</div>
+              <div style={{ fontSize: `${bodyFontSize}px` }}>
+                <span className="font-bold">ID:</span> {productId}
+              </div>
             )}
             
             {selectedHazards.length > 0 && (
               <div style={{ marginTop: `${padding}px` }}>
-                <div className="font-bold" style={{ marginBottom: `${Math.floor(padding/2)}px` }}>
+                <div 
+                  className="font-bold" 
+                  style={{ 
+                    marginBottom: `${Math.floor(padding/2)}px`,
+                    fontSize: `${bodyFontSize}px`
+                  }}
+                >
                   HAZARDS:
                 </div>
                 <div style={{ fontSize: `${smallFontSize}px`, lineHeight: '1.1' }}>
