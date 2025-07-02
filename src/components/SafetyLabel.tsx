@@ -294,13 +294,12 @@ export function SafetyLabel({
           )}
         </div>
 
-        {/* HMIS - shifted down */}
+        {/* HMIS */}
         <div 
           className="flex justify-between items-center" 
           style={{ 
             height: `${hmisHeight}px`, 
-            padding: `${Math.floor(padding/2)}px 0`, 
-            marginTop: '24px' 
+            padding: `${Math.floor(padding/2)}px 0`
           }}
         >
           <div className="flex" style={{ gap: `${Math.floor(padding/2)}px` }}>
@@ -435,7 +434,7 @@ export function SafetyLabel({
           <div 
             className="font-bold" 
             style={{ 
-              fontSize: `${bodyFontSize}px`, 
+              fontSize: `${smallFontSize}px`, 
               textAlign: 'left', 
               paddingLeft: `${padding}px` 
             }}
