@@ -49,25 +49,40 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Enhanced analysis prompt specifically for pictogram extraction
-    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer with special focus on GHS pictogram identification. I will provide you with a PDF document URL containing an SDS. Please analyze this document thoroughly and extract the following information.
+    // Enhanced analysis prompt with comprehensive pictogram extraction
+    const analysisPrompt = `You are an expert chemical safety data sheet (SDS) analyzer specializing in comprehensive GHS pictogram identification. I will provide you with a PDF document URL containing an SDS. Your primary task is to identify ALL pictograms present in the document.
 
-Please access the PDF at this URL: ${pdf_url}
+Please access and carefully analyze the PDF at this URL: ${pdf_url}
 
 CRITICAL PICTOGRAM EXTRACTION INSTRUCTIONS:
-1. Look carefully at Section 2 (Hazards Identification) for ALL pictogram symbols
-2. Examine both visual pictograms AND text descriptions of hazards
-3. Each pictogram may be described by name (e.g., "Flame", "Corrosion") or GHS code (e.g., "GHS02", "GHS05")
-4. Common pictograms to look for:
-   - GHS01/Exploding Bomb (explosives)
-   - GHS02/Flame (flammable liquids/solids)
-   - GHS03/Flame Over Circle (oxidizers)
-   - GHS04/Gas Cylinder (compressed gases)
-   - GHS05/Corrosion (corrosive to metals/skin)
-   - GHS06/Skull and Crossbones (acute toxicity)
-   - GHS07/Exclamation Mark (irritant, harmful)
-   - GHS08/Health Hazard (carcinogen, mutagen)
-   - GHS09/Environment (aquatic toxicity)
+🎯 PRIMARY OBJECTIVE: Extract ALL pictograms - documents commonly contain 4-6 pictograms, not just 2-3.
+
+PICTOGRAM IDENTIFICATION STRATEGY:
+1. **Visual Analysis**: Look for diamond-shaped symbols with black pictograms on white backgrounds with red borders
+2. **Section 2 Analysis**: Examine "Hazard Identification" or "Label Elements" sections thoroughly
+3. **Text-Based Detection**: Look for pictogram references in text:
+   - "Pictogram:" followed by descriptions
+   - GHS codes (GHS01, GHS02, etc.)
+   - Signal words linked to specific pictograms
+   - H-codes that correspond to pictograms
+
+COMPREHENSIVE PICTOGRAM LIST - Look for ALL of these:
+   - GHS01: Exploding Bomb (explosives, self-reactive substances)
+   - GHS02: Flame (flammable liquids/solids/gases)
+   - GHS03: Flame Over Circle (oxidizing liquids/solids/gases)
+   - GHS04: Gas Cylinder (gases under pressure)
+   - GHS05: Corrosion (corrosive to metals, skin corrosion, eye damage)
+   - GHS06: Skull and Crossbones (acute toxicity)
+   - GHS07: Exclamation Mark (skin/eye irritation, acute toxicity)
+   - GHS08: Health Hazard (carcinogen, mutagen, reproductive toxicity, respiratory sensitizer)
+   - GHS09: Environment (aquatic toxicity)
+
+PICTOGRAM CROSS-REFERENCE:
+- If you find H-codes, map them to pictograms:
+  * H200-H299 → Physical hazards (GHS01, GHS02, GHS03, GHS04)
+  * H300-H399 → Health hazards (GHS05, GHS06, GHS07, GHS08)
+  * H400-H499 → Environmental hazards (GHS09)
+- Check for multiple pictogram categories per chemical
 
 REQUIRED OUTPUT FORMAT:
 {
@@ -108,7 +123,7 @@ Please analyze the SDS document at the URL provided and return only the requeste
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'o4-mini-2025-04-16',
         messages: [
           {
             role: 'user',

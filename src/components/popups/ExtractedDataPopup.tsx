@@ -272,20 +272,24 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {extractedData.pictograms.map((pictogramId, index) => {
-                    console.log('🎯 Processing pictogram:', pictogramId);
+                    console.log('🎯 Processing pictogram:', pictogramId, 'Index:', index);
+                    console.log('🔍 Available pictogram mappings:', Object.keys(pictogramImages));
                     const pictogramData = getPictogramData(pictogramId);
+                    console.log('📊 Mapped pictogram data:', pictogramData);
                     
                     return (
                       <div key={index} className="text-center">
                         {pictogramData ? (
                           <>
                             <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center border-2 border-gray-200 rounded-lg bg-white shadow-sm">
-                              <img 
+                               <img 
                                 src={pictogramData.imageUrl} 
                                 alt={pictogramData.name}
                                 className="w-16 h-16 object-contain"
+                                onLoad={() => console.log('✅ Pictogram loaded:', pictogramData.name, pictogramData.imageUrl)}
                                 onError={(e) => {
-                                  console.error('Failed to load pictogram image:', pictogramData.imageUrl);
+                                  console.error('❌ Failed to load pictogram image:', pictogramData.imageUrl);
+                                  console.error('❌ Original pictogram ID:', pictogramId);
                                   e.currentTarget.style.display = 'none';
                                 }}
                               />
