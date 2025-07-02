@@ -205,65 +205,79 @@ const LabelPrinter = ({
         useCORS: true
       });
 
-      // Create a new window for PDF download
-      const pdfWindow = window.open('', '_blank');
-      if (pdfWindow) {
-        const imgData = canvas.toDataURL('image/png');
-        
-        pdfWindow.document.write(`
-          <html>
-            <head>
-              <title>Safety Label PDF - ${productName}</title>
-              <style>
-                body { 
-                  margin: 0; 
-                  padding: 20px; 
-                  display: flex; 
-                  justify-content: center; 
-                  align-items: center; 
-                  min-height: 100vh; 
-                  background: white;
-                  font-family: monospace;
-                }
-                img { 
-                  max-width: 100%; 
-                  height: auto; 
-                  border: 2px solid #000;
-                  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                }
-                @page { 
-                  size: letter; 
-                  margin: 0.5in; 
-                }
-                @media print { 
-                  body { 
-                    margin: 0; 
-                    padding: 0;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                  }
-                  img {
-                    border: none;
-                    box-shadow: none;
-                  }
-                }
-              </style>
-            </head>
-            <body>
-              <img src="${imgData}" alt="Safety Label PDF" />
-            </body>
-          </html>
-        `);
-        pdfWindow.document.close();
-        
-        setTimeout(() => {
-          pdfWindow.print();
-        }, 250);
-      }
+      // Create downloadable PDF
+      const imgData = canvas.toDataURL('image/png');
       
-      toast.success('Label PDF generated');
+      // Create a blob with the HTML content for download
+      const htmlContent = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Safety Label PDF - ${productName}</title>
+    <style>
+      body { 
+        margin: 0; 
+        padding: 20px; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        min-height: 100vh; 
+        background: white;
+        font-family: monospace;
+      }
+      img { 
+        max-width: 100%; 
+        height: auto; 
+        border: 2px solid #000;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      @page { 
+        size: letter; 
+        margin: 0.5in; 
+      }
+      @media print { 
+        body { 
+          margin: 0; 
+          padding: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          zoom: 1 !important;
+          transform: scale(1) !important;
+        }
+        img {
+          border: none;
+          box-shadow: none;
+          width: auto !important;
+          height: auto !important;
+          max-width: 100% !important;
+          zoom: 1 !important;
+          transform: scale(1) !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <img src="${imgData}" alt="Safety Label PDF" />
+  </body>
+</html>`;
+
+      // Create blob and download
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `safety-label-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      toast.success('Label PDF downloaded - open the HTML file and print with default scale');
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error('Failed to generate PDF');
