@@ -102,7 +102,7 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
           processing_time_ms: extractedData.processing_time_ms || 0,
           analysis_method: 'claude_sonnet'
         },
-        ai_extraction_confidence: extractedData.confidence_score || 0,
+        ai_extraction_confidence: Math.round((extractedData.confidence_score || 0) * 100),
         ai_extraction_date: new Date().toISOString(),
         extraction_status: 'completed',
         hmis_codes: extractedData.hmis_codes || {},
