@@ -130,7 +130,7 @@ Please analyze the SDS document at the URL provided and return only the requeste
             content: analysisPrompt
           }
         ],
-        max_tokens: 2000,
+        max_completion_tokens: 2000,
         temperature: 0.1
       }),
     });
