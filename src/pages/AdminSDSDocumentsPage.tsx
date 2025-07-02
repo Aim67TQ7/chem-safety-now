@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Search, FileText, Download, Eye } from "lucide-react";
+import { ArrowLeft, Search, FileText, Download, Eye, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SDSEvaluationButton from "@/components/SDSEvaluationButton";
 import { getSDSDocumentStatus } from "@/utils/sdsStatusUtils";
+import LabelPrinterPopup from "@/components/popups/LabelPrinterPopup";
 
 interface SDSDocument {
   id: string;
@@ -31,6 +32,8 @@ const AdminSDSDocumentsPage = () => {
   const [filteredDocuments, setFilteredDocuments] = useState<SDSDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [labelPrinterOpen, setLabelPrinterOpen] = useState(false);
+  const [selectedDocumentForLabel, setSelectedDocumentForLabel] = useState<SDSDocument | null>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -77,6 +80,11 @@ const AdminSDSDocumentsPage = () => {
       : document.source_url;
     
     window.open(pdfUrl, '_blank');
+  };
+
+  const handlePrintLabel = (document: SDSDocument) => {
+    setSelectedDocumentForLabel(document);
+    setLabelPrinterOpen(true);
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -209,6 +217,18 @@ const AdminSDSDocumentsPage = () => {
                             View PDF
                           </Button>
                           
+                          {document.ai_extraction_confidence > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePrintLabel(document)}
+                              className="flex items-center gap-2"
+                            >
+                              <Printer className="h-4 w-4" />
+                              Print Label
+                            </Button>
+                          )}
+                          
                           <SDSEvaluationButton
                             document={document}
                             onEvaluationComplete={fetchDocuments}
@@ -223,6 +243,19 @@ const AdminSDSDocumentsPage = () => {
           )}
         </div>
       </div>
+
+      {selectedDocumentForLabel && (
+        <LabelPrinterPopup
+          isOpen={labelPrinterOpen}
+          onClose={() => {
+            setLabelPrinterOpen(false);
+            setSelectedDocumentForLabel(null);
+          }}
+          initialProductName={selectedDocumentForLabel.product_name}
+          initialManufacturer={selectedDocumentForLabel.manufacturer || ''}
+          selectedDocument={selectedDocumentForLabel}
+        />
+      )}
     </div>
   );
 };
