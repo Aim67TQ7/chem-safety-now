@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { navItems } from '@/nav-items';
-import { CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { CheckCircle, AlertCircle, ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 const SiteMapDisplay = () => {
   // Define which routes actually exist and work
@@ -26,12 +27,36 @@ const SiteMapDisplay = () => {
     '/terms'
   ];
 
+  // Define which routes should be discoverable by search engines
+  const defaultDiscoverableRoutes = [
+    '/',
+    '/signup',
+    '/privacy',
+    '/terms',
+    '/sales-partner',
+    '/sales-partner-terms'
+  ];
+
+  const [discoverableRoutes, setDiscoverableRoutes] = useState<string[]>(defaultDiscoverableRoutes);
+
   const getRouteStatus = (route: string) => {
     if (workingRoutes.includes(route)) {
       return { status: 'working', color: 'green' };
     }
     return { status: 'broken', color: 'red' };
   };
+
+  const toggleDiscoverable = (route: string) => {
+    setDiscoverableRoutes(prev => {
+      if (prev.includes(route)) {
+        return prev.filter(r => r !== route);
+      } else {
+        return [...prev, route];
+      }
+    });
+  };
+
+  const isDiscoverable = (route: string) => discoverableRoutes.includes(route);
 
   return (
     <div className="space-y-6">
@@ -41,12 +66,17 @@ const SiteMapDisplay = () => {
             <ExternalLink className="w-5 h-5" />
             Site Map - All Routes
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Toggle which pages are discoverable by search engines. Protected routes should remain non-discoverable.
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3">
             {navItems.map((item, index) => {
               const routeStatus = getRouteStatus(item.to);
               const StatusIcon = routeStatus.status === 'working' ? CheckCircle : AlertCircle;
+              
+              const discoverable = isDiscoverable(item.to);
               
               return (
                 <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
@@ -57,16 +87,35 @@ const SiteMapDisplay = () => {
                       <code className="text-xs text-gray-500">{item.to}</code>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusIcon 
-                      className={`w-4 h-4 ${routeStatus.color === 'green' ? 'text-green-600' : 'text-red-600'}`} 
-                    />
-                    <Badge 
-                      variant={routeStatus.status === 'working' ? 'default' : 'destructive'}
-                      className="text-xs"
-                    >
-                      {routeStatus.status === 'working' ? 'Working' : 'Needs Fix'}
-                    </Badge>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        {discoverable ? (
+                          <Eye className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-gray-400" />
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {discoverable ? 'Public' : 'Hidden'}
+                        </span>
+                        <Switch
+                          checked={discoverable}
+                          onCheckedChange={() => toggleDiscoverable(item.to)}
+                          disabled={item.to.includes('admin') || item.to.includes('facility') || item.to.includes('qr-print') || item.to.includes('upgrade')}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusIcon 
+                        className={`w-4 h-4 ${routeStatus.color === 'green' ? 'text-green-600' : 'text-red-600'}`} 
+                      />
+                      <Badge 
+                        variant={routeStatus.status === 'working' ? 'default' : 'destructive'}
+                        className="text-xs"
+                      >
+                        {routeStatus.status === 'working' ? 'Working' : 'Needs Fix'}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               );
