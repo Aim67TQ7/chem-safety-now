@@ -112,9 +112,27 @@ const LabelPrinter = ({
       // Capture the label as high-quality canvas
       const canvas = await html2canvas(labelElement, {
         backgroundColor: 'white',
-        scale: 3, // High resolution for printing
+        scale: 4, // Higher resolution for better print quality
         logging: false,
-        useCORS: true
+        useCORS: true,
+        width: labelElement.offsetWidth,
+        height: labelElement.offsetHeight,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector('.safety-label') as HTMLElement;
+          if (clonedElement) {
+            clonedElement.style.transform = 'none';
+            clonedElement.style.boxShadow = 'none';
+            clonedElement.style.position = 'static';
+            
+            // Force consistent text rendering for print
+            const allElements = clonedElement.querySelectorAll('*');
+            allElements.forEach((el: any) => {
+              el.style.fontFamily = 'monospace';
+              el.style.textRendering = 'optimizeLegibility';
+              el.style.webkitFontSmoothing = 'antialiased';
+            });
+          }
+        }
       });
 
       // Create a new window for printing the image

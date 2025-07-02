@@ -40,8 +40,12 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     
     // Map GHS pictograms from OSHA data with comprehensive mapping
     const pictograms: string[] = [];
-    if (Array.isArray(oshaData.ghs_pictograms)) {
-      oshaData.ghs_pictograms.forEach((p: any) => {
+    
+    // First try ai_extracted_data.ghs_pictograms, then fall back to main pictograms field
+    const pictogramData = oshaData.ghs_pictograms || selectedDocument.pictograms || [];
+    
+    if (Array.isArray(pictogramData)) {
+      pictogramData.forEach((p: any) => {
         // Handle both GHS codes and descriptive names
         const ghsCodeMapping: Record<string, string> = {
           'GHS01': 'exploding_bomb',
@@ -73,8 +77,9 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
           'environment': 'environment'
         };
         
-        const pictogramName = p.name?.toLowerCase() || '';
-        const pictogramCode = p.code || '';
+        // Handle both object format {name: "...", code: "..."} and string format "Exclamation Mark"
+        const pictogramName = (typeof p === 'string' ? p : (p.name || '')).toLowerCase();
+        const pictogramCode = typeof p === 'string' ? '' : (p.code || '');
         
         let mappedPictogram = ghsCodeMapping[pictogramCode] || 
                              nameMapping[pictogramName] || 
@@ -131,8 +136,12 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     const reviewData = selectedDocument.ai_extracted_data;
     
     const pictograms: string[] = [];
-    if (reviewData && Array.isArray(reviewData.ghs_pictograms)) {
-      reviewData.ghs_pictograms.forEach((p: any) => {
+    
+    // First try ai_extracted_data.ghs_pictograms, then fall back to main pictograms field
+    const pictogramData = (reviewData && reviewData.ghs_pictograms) || selectedDocument.pictograms || [];
+    
+    if (Array.isArray(pictogramData)) {
+      pictogramData.forEach((p: any) => {
         // Handle both GHS codes and descriptive names
         const ghsCodeMapping: Record<string, string> = {
           'GHS01': 'exploding_bomb',
@@ -164,8 +173,9 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
           'environment': 'environment'
         };
         
-        const pictogramName = p.name?.toLowerCase() || '';
-        const pictogramCode = p.code || '';
+        // Handle both object format {name: "...", code: "..."} and string format "Exclamation Mark"
+        const pictogramName = (typeof p === 'string' ? p : (p.name || '')).toLowerCase();
+        const pictogramCode = typeof p === 'string' ? '' : (p.code || '');
         
         let mappedPictogram = ghsCodeMapping[pictogramCode] || 
                              nameMapping[pictogramName] || 
@@ -218,8 +228,12 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     
     // Map GHS pictograms from AI data with comprehensive mapping
     const pictograms: string[] = [];
-    if (Array.isArray(aiData.ghs_pictograms)) {
-      aiData.ghs_pictograms.forEach((p: any) => {
+    
+    // First try ai_extracted_data.ghs_pictograms, then fall back to main pictograms field
+    const pictogramData = aiData.ghs_pictograms || selectedDocument.pictograms || [];
+    
+    if (Array.isArray(pictogramData)) {
+      pictogramData.forEach((p: any) => {
         const codeMapping: Record<string, string> = {
           'GHS01': 'exploding_bomb',
           'GHS02': 'flame',
@@ -250,8 +264,9 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
           'environment': 'environment'
         };
         
-        const pictogramName = p.name?.toLowerCase() || '';
-        const pictogramCode = p.code || '';
+        // Handle both object format {name: "...", code: "..."} and string format "Exclamation Mark"
+        const pictogramName = (typeof p === 'string' ? p : (p.name || '')).toLowerCase();
+        const pictogramCode = typeof p === 'string' ? '' : (p.code || '');
         
         let mappedPictogram = codeMapping[pictogramCode] || 
                              nameMapping[pictogramName] || 
