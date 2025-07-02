@@ -38,23 +38,51 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     console.log('✅ Using OSHA-compliant data extraction');
     const oshaData = selectedDocument.ai_extracted_data;
     
-    // Map GHS pictograms from OSHA data with enhanced mapping
+    // Map GHS pictograms from OSHA data with comprehensive mapping
     const pictograms: string[] = [];
     if (Array.isArray(oshaData.ghs_pictograms)) {
       oshaData.ghs_pictograms.forEach((p: any) => {
+        // Handle both GHS codes and descriptive names
+        const ghsCodeMapping: Record<string, string> = {
+          'GHS01': 'exploding_bomb',
+          'GHS02': 'flame',
+          'GHS03': 'flame_over_circle',
+          'GHS04': 'gas_cylinder',
+          'GHS05': 'corrosion',
+          'GHS06': 'skull_crossbones',
+          'GHS07': 'exclamation',
+          'GHS08': 'health_hazard',
+          'GHS09': 'environment'
+        };
+        
         const nameMapping: Record<string, string> = {
           'flame': 'flame',
           'gas-cylinder': 'gas_cylinder',
+          'gas cylinder': 'gas_cylinder',
           'skull-and-crossbones': 'skull_crossbones',
+          'skull and crossbones': 'skull_crossbones',
           'exclamation-mark': 'exclamation',
+          'exclamation mark': 'exclamation',
           'health-hazard': 'health_hazard',
+          'health hazard': 'health_hazard',
           'corrosion': 'corrosion',
           'exploding-bomb': 'exploding_bomb',
+          'exploding bomb': 'exploding_bomb',
           'flame-over-circle': 'flame_over_circle',
+          'flame over circle': 'flame_over_circle',
           'environment': 'environment'
         };
         
-        const mappedPictogram = nameMapping[p.name] || p.name?.toLowerCase().replace(/[-\s]+/g, '_') || 'exclamation';
+        const pictogramName = p.name?.toLowerCase() || '';
+        const pictogramCode = p.code || '';
+        
+        let mappedPictogram = ghsCodeMapping[pictogramCode] || 
+                             nameMapping[pictogramName] || 
+                             nameMapping[pictogramName.replace(/[-\s]+/g, '-')] ||
+                             pictogramName.replace(/[-\s]+/g, '_') || 
+                             'exclamation';
+        
+        console.log(`🎯 Mapping pictogram - Original: "${pictogramName}" (${pictogramCode}) → Mapped: "${mappedPictogram}"`);
         pictograms.push(mappedPictogram);
       });
     }
@@ -104,19 +132,47 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     const pictograms: string[] = [];
     if (reviewData && Array.isArray(reviewData.ghs_pictograms)) {
       reviewData.ghs_pictograms.forEach((p: any) => {
+        // Handle both GHS codes and descriptive names
+        const ghsCodeMapping: Record<string, string> = {
+          'GHS01': 'exploding_bomb',
+          'GHS02': 'flame',
+          'GHS03': 'flame_over_circle',
+          'GHS04': 'gas_cylinder',
+          'GHS05': 'corrosion',
+          'GHS06': 'skull_crossbones',
+          'GHS07': 'exclamation',
+          'GHS08': 'health_hazard',
+          'GHS09': 'environment'
+        };
+        
         const nameMapping: Record<string, string> = {
           'flame': 'flame',
           'gas-cylinder': 'gas_cylinder',
+          'gas cylinder': 'gas_cylinder',
           'skull-and-crossbones': 'skull_crossbones',
+          'skull and crossbones': 'skull_crossbones',
           'exclamation-mark': 'exclamation',
+          'exclamation mark': 'exclamation',
           'health-hazard': 'health_hazard',
+          'health hazard': 'health_hazard',
           'corrosion': 'corrosion',
           'exploding-bomb': 'exploding_bomb',
+          'exploding bomb': 'exploding_bomb',
           'flame-over-circle': 'flame_over_circle',
+          'flame over circle': 'flame_over_circle',
           'environment': 'environment'
         };
         
-        const mappedPictogram = nameMapping[p.name] || p.name?.toLowerCase().replace(/[-\s]+/g, '_') || 'exclamation';
+        const pictogramName = p.name?.toLowerCase() || '';
+        const pictogramCode = p.code || '';
+        
+        let mappedPictogram = ghsCodeMapping[pictogramCode] || 
+                             nameMapping[pictogramName] || 
+                             nameMapping[pictogramName.replace(/[-\s]+/g, '-')] ||
+                             pictogramName.replace(/[-\s]+/g, '_') || 
+                             'exclamation';
+        
+        console.log(`⚠️ Manual review - Mapping pictogram: "${pictogramName}" (${pictogramCode}) → "${mappedPictogram}"`);
         pictograms.push(mappedPictogram);
       });
     }
@@ -178,17 +234,31 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
         const nameMapping: Record<string, string> = {
           'flame': 'flame',
           'gas-cylinder': 'gas_cylinder',
+          'gas cylinder': 'gas_cylinder',
           'skull-and-crossbones': 'skull_crossbones',
+          'skull and crossbones': 'skull_crossbones',
           'exclamation-mark': 'exclamation',
+          'exclamation mark': 'exclamation',
           'health-hazard': 'health_hazard',
+          'health hazard': 'health_hazard',
           'corrosion': 'corrosion',
           'exploding-bomb': 'exploding_bomb',
+          'exploding bomb': 'exploding_bomb',
           'flame-over-circle': 'flame_over_circle',
+          'flame over circle': 'flame_over_circle',
           'environment': 'environment'
         };
         
-        let mappedPictogram = codeMapping[p.code] || nameMapping[p.name] || 
-                             p.name?.toLowerCase().replace(/\s+/g, '_') || 'exclamation';
+        const pictogramName = p.name?.toLowerCase() || '';
+        const pictogramCode = p.code || '';
+        
+        let mappedPictogram = codeMapping[pictogramCode] || 
+                             nameMapping[pictogramName] || 
+                             nameMapping[pictogramName.replace(/[-\s]+/g, '-')] ||
+                             pictogramName.replace(/[-\s]+/g, '_') || 
+                             'exclamation';
+        
+        console.log(`🤖 AI data - Mapping pictogram: "${pictogramName}" (${pictogramCode}) → "${mappedPictogram}"`);
         pictograms.push(mappedPictogram);
       });
     }
