@@ -68,13 +68,13 @@ const QRCodePrintPage = () => {
       const facilityUrl = `${window.location.origin}/facility/${facilitySlug}`;
       
       QRCodeLib.toDataURL(facilityUrl, {
-        width: 400,
-        margin: 3,
+        width: 500,
+        margin: 4,
         color: {
           dark: '#000000',
           light: '#ffffff'
         },
-        errorCorrectionLevel: 'M'
+        errorCorrectionLevel: 'H'
       }, (error, url) => {
         if (!error && url) {
           setQrCodeDataUrl(url);
@@ -174,25 +174,26 @@ const QRCodePrintPage = () => {
 
         <div className="text-center space-y-4 flex-1 flex flex-col justify-center">
           
-          {/* QR Code with embedded logo */}
-          <div className="relative inline-block">
+          {/* QR Code */}
+          <div className="space-y-3">
             {qrCodeDataUrl && (
-              <div className="relative">
-                <img 
-                  src={qrCodeDataUrl} 
-                  alt="Facility QR Code"
-                  className="w-40 h-40 mx-auto border-4 border-gray-800 rounded-lg"
-                />
-                {/* Company logo overlay in center of QR code */}
-                {facilityData.logo_url && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-lg shadow-lg border-2 border-gray-800">
-                    <img 
-                      src={facilityData.logo_url} 
-                      alt={`${facilityDisplayName} Logo`}
-                      className="w-8 h-8 object-contain"
-                    />
-                  </div>
-                )}
+              <img 
+                src={qrCodeDataUrl} 
+                alt="Facility QR Code"
+                className="w-40 h-40 mx-auto border-4 border-gray-800 rounded-lg"
+              />
+            )}
+            
+            {/* Company logo below QR code */}
+            {facilityData.logo_url && (
+              <div className="flex justify-center">
+                <div className="bg-white p-2 rounded-lg shadow-md border-2 border-gray-400">
+                  <img 
+                    src={facilityData.logo_url} 
+                    alt={`${facilityDisplayName} Logo`}
+                    className="w-6 h-6 object-contain"
+                  />
+                </div>
               </div>
             )}
           </div>

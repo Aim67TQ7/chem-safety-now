@@ -36,13 +36,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
     setIsGenerating(true);
     try {
       const dataUrl = await QRCodeLib.toDataURL(facilityUrl, {
-        width: 300,
-        margin: 3,
+        width: 400,
+        margin: 4,
         color: {
           dark: '#000000',
           light: '#ffffff'
         },
-        errorCorrectionLevel: 'M'
+        errorCorrectionLevel: 'H'
       });
       setQrCodeDataUrl(dataUrl);
     } catch (error) {
@@ -100,20 +100,22 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
                 </div>
               </div>
             ) : qrCodeDataUrl ? (
-              <div className="relative inline-block">
+              <div className="space-y-4">
                 <img 
                   src={qrCodeDataUrl} 
                   alt="Facility QR Code"
                   className="w-64 h-64 mx-auto border border-gray-200 rounded-lg"
                 />
-                {/* Company logo overlay */}
+                {/* Company logo below QR code */}
                 {facilityData.logo_url && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-3 rounded-lg shadow-lg border-2 border-gray-800">
-                    <img 
-                      src={facilityData.logo_url} 
-                      alt={`${facilityDisplayName} Logo`}
-                      className="w-12 h-12 object-contain"
-                    />
+                  <div className="flex justify-center">
+                    <div className="bg-white p-2 rounded-lg shadow-md border border-gray-300">
+                      <img 
+                        src={facilityData.logo_url} 
+                        alt={`${facilityDisplayName} Logo`}
+                        className="w-8 h-8 object-contain"
+                      />
+                    </div>
                   </div>
                 )}
               </div>

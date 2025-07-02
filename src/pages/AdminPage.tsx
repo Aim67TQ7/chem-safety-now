@@ -8,6 +8,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import SiteMapDisplay from "@/components/SiteMapDisplay";
 import AdminTrialTabs from "@/components/AdminTrialTabs";
 import SalesRepManagement from "@/components/SalesRepManagement";
+import AdminFeedbackPanel from "@/components/AdminFeedbackPanel";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminPage = () => {
@@ -194,37 +195,41 @@ const AdminPage = () => {
               </Card>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-orange-600" />
-                  Known Issues
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div>
-                      <div className="font-medium text-green-900">✅ Fixed: QR Print functionality</div>
-                      <div className="text-sm text-green-700">Print QR code links now work correctly with facility slugs</div>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-600" />
+                    Known Issues
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div>
+                        <div className="font-medium text-green-900">✅ Fixed: QR Print functionality</div>
+                        <div className="text-sm text-green-700">Print QR code links now work correctly with facility slugs</div>
+                      </div>
+                      <Badge variant="outline" className="text-green-600 border-green-600">
+                        Resolved
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-green-600 border-green-600">
-                      Resolved
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div>
-                      <div className="font-medium text-green-900">✅ Fixed: Navigation routes</div>
-                      <div className="text-sm text-green-700">Missing page components have been created and routes established</div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div>
+                        <div className="font-medium text-green-900">✅ Fixed: Navigation routes</div>
+                        <div className="text-sm text-green-700">Missing page components have been created and routes established</div>
+                      </div>
+                      <Badge variant="outline" className="text-green-600 border-green-600">
+                        Resolved
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-green-600 border-green-600">
-                      Resolved
-                    </Badge>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              <AdminFeedbackPanel />
+            </div>
           </TabsContent>
 
           <TabsContent value="facilities">

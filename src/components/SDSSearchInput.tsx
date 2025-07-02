@@ -159,23 +159,23 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             disabled={isSearching}
-            className="flex-1 text-xl md:text-2xl py-8 px-6 border-3 border-orange-300 focus:border-red-500 focus:ring-4 focus:ring-orange-200 bg-white shadow-lg font-semibold placeholder:text-gray-600 placeholder:font-bold"
+            className="flex-1 text-base md:text-xl py-6 px-4 border-3 border-orange-300 focus:border-red-500 focus:ring-4 focus:ring-orange-200 bg-white shadow-lg font-medium placeholder:text-gray-600 placeholder:font-semibold"
           />
           <Button 
             onClick={() => handleSearch()}
             disabled={isSearching || !searchQuery.trim()}
             size="lg"
-            className="px-3 md:px-12 py-4 md:py-8 text-sm md:text-2xl bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:to-red-700 text-white font-black shadow-2xl transform transition-all hover:scale-110 border-2 border-white"
+            className="px-2 md:px-8 py-3 md:py-6 text-xs md:text-lg bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:to-red-700 text-white font-black shadow-2xl transform transition-all hover:scale-110 border-2 border-white"
           >
             {isSearching ? (
               <>
-                <Loader2 className="w-4 md:w-6 h-4 md:h-6 mr-1 md:mr-3 animate-spin" />
+                <Loader2 className="w-3 md:w-5 h-3 md:h-5 mr-1 md:mr-2 animate-spin" />
                 <span className="hidden sm:inline">SEARCHING...</span>
                 <span className="sm:hidden">SEARCH</span>
               </>
             ) : (
               <>
-                <Search className="w-4 md:w-6 h-4 md:h-6 mr-1 md:mr-3" />
+                <Search className="w-3 md:w-5 h-3 md:h-5 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">SEARCH SDS NOW</span>
                 <span className="sm:hidden">SEARCH</span>
               </>
