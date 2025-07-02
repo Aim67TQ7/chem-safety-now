@@ -101,15 +101,15 @@ export function SafetyLabel({
 
   // OSHA-compliant GHS pictogram mapping
   const pictograms = [
-    { id: "exclamation", name: "Exclamation Mark", imageUrl: "/lovable-uploads/6cd8b649-2ebf-4e28-8997-a92c02012e71.png" },
-    { id: "health_hazard", name: "Health Hazard", imageUrl: "/lovable-uploads/50920ae1-4fe6-4a57-a06e-ac06fc8f011a.png" },
-    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "/lovable-uploads/cf10d450-6275-49c6-85d7-c048c8964caf.png" },
-    { id: "corrosion", name: "Corrosion", imageUrl: "/lovable-uploads/0b533868-23ee-4e7d-ad06-4e2f7c3ec70d.png" },
-    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "/lovable-uploads/13dd5aab-1662-4d57-8504-c0dd39e5d60d.png" },
-    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "/lovable-uploads/bb58bdf6-4847-4243-8e98-c8cf73ec723b.png" },
-    { id: "flame", name: "Flame", imageUrl: "/lovable-uploads/58fd609e-022c-4776-92d3-55935a27ad11.png" },
-    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "/lovable-uploads/2d8f3e54-3799-46c7-8b16-cd21d9f33c97.png" },
-    { id: "environment", name: "Environment", imageUrl: "/lovable-uploads/d45076d9-8aba-4589-94a1-f97424d3f2ae.png" }
+    { id: "exclamation", name: "Exclamation Mark", imageUrl: "/lovable-uploads/04752379-7d70-4aec-abaa-5495664cdc62.png" },
+    { id: "health_hazard", name: "Health Hazard", imageUrl: "/lovable-uploads/0bd57060-18fb-4ad6-8485-e5521c2e7b71.png" },
+    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "/lovable-uploads/3c1d4332-95eb-44a9-bfef-207e02156b08.png" },
+    { id: "corrosion", name: "Corrosion", imageUrl: "/lovable-uploads/48ffe476-275a-4796-a9a4-edbfaba414f4.png" },
+    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "/lovable-uploads/4c13f8f5-8a47-4c2d-a5ed-90cdf7a521c0.png" },
+    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "/lovable-uploads/5146a1d1-bc42-4a39-ae55-cf61a2dc012f.png" },
+    { id: "flame", name: "Flame", imageUrl: "/lovable-uploads/54ad4b94-8ebd-4158-aaf2-03ef75373444.png" },
+    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "/lovable-uploads/56985d36-8ad8-4521-a737-19d7eb00ceab.png" },
+    { id: "environment", name: "Environment", imageUrl: "/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" }
   ];
 
   const getSpecificPPE = () => {
