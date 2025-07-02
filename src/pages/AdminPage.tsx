@@ -86,7 +86,7 @@ const AdminPage = () => {
       if (error) throw error;
 
       // Process the data to add calculated fields
-      const processedFacilities = data?.map(facility => {
+        const processedFacilities = data?.map(facility => {
         const trialEndDate = facility.trial_end_date ? new Date(facility.trial_end_date) : null;
         const now = new Date();
         
@@ -101,8 +101,7 @@ const AdminPage = () => {
         return {
           ...facility,
           trial_days_remaining,
-          subscription_days_remaining,
-          facility_url: `https://chemlabel-gpt.lovable.app/facility/${facility.slug}`
+          subscription_days_remaining
         };
       }) || [];
 

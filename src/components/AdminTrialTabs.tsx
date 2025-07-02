@@ -21,7 +21,7 @@ interface Facility {
   billing_period: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
-  facility_url: string | null;
+  slug: string;
   created_at: string;
 }
 
@@ -139,9 +139,9 @@ const AdminTrialTabs = ({ facilities, onStatusUpdate }: AdminTrialTabsProps) => 
                     <div className="text-sm text-gray-500">
                       {facility.email || "—"}
                     </div>
-                    {facility.facility_url && (
+                    {facility.slug && (
                       <a 
-                        href={facility.facility_url} 
+                        href={`https://chemlabel-gpt.com/facility/${facility.slug}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-xs text-blue-500 hover:underline"
