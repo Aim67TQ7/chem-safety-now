@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import LabelPrinter from '@/components/LabelPrinter';
 import ProductSelector from '@/components/ProductSelector';
+import FacilityNavbar from '@/components/FacilityNavbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -169,6 +170,13 @@ const LabelPrinterPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Facility Navigation */}
+      <FacilityNavbar 
+        facilityName={facility?.facility_name}
+        facilityLogo={facility?.logo_url}
+        facilityAddress={facility?.address}
+      />
+      
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-6">
         <div className="max-w-7xl mx-auto">
