@@ -136,24 +136,31 @@ export function SafetyLabel({
   labelWidth = 288, 
   labelHeight = 192 
 }: SafetyLabelProps) {
+  // Calculate proportional sizes based on label dimensions
+  const scaleFactor = Math.min(labelWidth / 288, labelHeight / 192);
+  
+  // Proportional spacing and sizing
+  const padding = Math.max(2, Math.floor(labelWidth * 0.02));
+  const verticalSpacing = Math.max(3, Math.floor(labelHeight * 0.015));
+  
+  // Section heights (as percentage of total)
   const headerHeight = Math.floor(labelHeight * 0.15);
-  const hmisHeight = Math.floor(labelHeight * 0.10);
-  const infoHeight = Math.floor(labelHeight * 0.50);
-  const pictosHeight = Math.floor(labelHeight * 0.20);
+  const hmisHeight = Math.floor(labelHeight * 0.12);
+  const infoHeight = Math.floor(labelHeight * 0.48);
   const footerHeight = Math.floor(labelHeight * 0.05);
 
+  // HMIS box dimensions
   const hmisWidthEach = Math.floor(labelWidth / 4);
-  const hmisBoxHeight = Math.floor(hmisHeight * 0.7 * 1.25);
-  const pictogramSize = Math.floor(hmisBoxHeight * 2);
-  const padding = Math.floor(labelWidth * 0.02);
-
-  // Increase all font sizes by 150%
-  const baseFontSize = Math.max(6, Math.floor(hmisBoxHeight * 0.15));
-  const titleFontSize = Math.max(12, Math.floor(hmisBoxHeight * 0.75));
-  const headerFontSize = Math.max(9, Math.floor(baseFontSize * 1.5));
-  const bodyFontSize = Math.max(8, Math.floor(baseFontSize * 1.2));
-  const smallFontSize = Math.max(6, Math.floor(baseFontSize * 0.9));
-  const hmisFontSize = Math.max(9, Math.floor(hmisBoxHeight * 1.2));
+  const hmisBoxHeight = Math.floor(hmisHeight * 0.7);
+  const pictogramSize = Math.max(30 * scaleFactor, Math.floor(labelHeight * 0.15));
+  
+  // Calculated font sizes
+  const baseFontSize = Math.max(7, Math.floor(8 * scaleFactor));
+  const titleFontSize = Math.max(11, Math.floor(14 * scaleFactor));
+  const headerFontSize = Math.max(9, Math.floor(10 * scaleFactor));
+  const bodyFontSize = Math.max(8, Math.floor(9 * scaleFactor));
+  const smallFontSize = Math.max(7, Math.floor(8 * scaleFactor));
+  const hmisFontSize = Math.max(10, Math.floor(12 * scaleFactor));
 
   // OSHA-compliant GHS pictogram mapping using Supabase storage
   const pictograms = [
@@ -301,7 +308,9 @@ export function SafetyLabel({
         padding: `${padding}px`, 
         fontSize: `${bodyFontSize}px`, 
         fontFamily: 'monospace',
-        position: 'relative'
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
       <div className="h-full flex flex-col">
@@ -309,7 +318,7 @@ export function SafetyLabel({
         <div 
           className="text-center border-b-2 border-black" 
           style={{ 
-            height: `${headerHeight}px`, 
+            minHeight: `${headerHeight}px`, 
             display: 'flex', 
             flexDirection: 'column', 
             justifyContent: 'center', 
@@ -355,7 +364,7 @@ export function SafetyLabel({
         <div 
           className="flex justify-between items-center" 
           style={{ 
-            height: `${hmisHeight}px`, 
+            minHeight: `${hmisHeight}px`, 
             padding: `${Math.floor(padding)}px 0 ${Math.floor(padding/2)}px 0`
           }}
         >
@@ -401,7 +410,7 @@ export function SafetyLabel({
         <div 
           style={{ 
             height: `${infoHeight}px`, 
-            padding: `${padding}px`, 
+            padding: `${verticalSpacing * 2}px ${padding}px ${padding}px`, // Added top spacing after HMIS
             display: 'flex', 
             flexDirection: 'column', 
             justifyContent: 'flex-start' 
@@ -425,7 +434,7 @@ export function SafetyLabel({
             )}
             
             {selectedHazards.length > 0 && (
-              <div style={{ marginTop: `${padding}px` }}>
+              <div style={{ marginTop: `${verticalSpacing}px` }}>
                 <div 
                   className="font-bold" 
                   style={{ 
@@ -453,7 +462,7 @@ export function SafetyLabel({
             {selectedPictograms.length > 0 && (
               <div 
                 style={{ 
-                  marginTop: `${padding}px`, 
+                  marginTop: `${verticalSpacing}px`, 
                   display: 'flex', 
                   flexWrap: 'wrap', 
                   gap: `${Math.floor(padding/2)}px`, 
@@ -490,7 +499,9 @@ export function SafetyLabel({
             left: `${padding}px`,
             right: `${padding}px`,
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            height: `${footerHeight}px`,
+            minHeight: '15px'
           }}
         >
           <div 
