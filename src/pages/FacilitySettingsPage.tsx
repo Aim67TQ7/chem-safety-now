@@ -108,6 +108,7 @@ const FacilitySettingsPage = () => {
       <FacilityNavbar 
         facilityName={facilityData.facility_name || undefined}
         facilityLogo={facilityData.logo_url}
+        facilityId={facilityData.id}
       />
       <div className="p-6">
         <div className="max-w-4xl mx-auto">

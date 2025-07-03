@@ -175,6 +175,7 @@ const LabelPrinterPage = () => {
         facilityName={facility?.facility_name}
         facilityLogo={facility?.logo_url}
         facilityAddress={facility?.address}
+        facilityId={facility?.id}
       />
       
       {/* Header */}

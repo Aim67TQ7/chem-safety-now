@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link, useParams, useLocation } from 'react-router-dom';
+import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { 
   Building2, 
@@ -12,42 +12,63 @@ import {
   MapPin,
   Database
 } from "lucide-react";
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import SubscriptionBadge from '@/components/SubscriptionBadge';
 
 
 interface FacilityNavbarProps {
   facilityName?: string;
   facilityLogo?: string;
   facilityAddress?: string;
+  facilityId?: string;
 }
 
-const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: FacilityNavbarProps) => {
+const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityId }: FacilityNavbarProps) => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  const { subscription, loading, hasFeatureAccess } = useFeatureAccess(facilityId || '');
+  
 
-  const navItems = [
-    {
-      name: 'Dashboard',
-      path: `/facility/${facilitySlug}`,
-      icon: <Building2 className="w-4 h-4" />,
-    },
-    {
-      name: 'Access Tools',
-      path: `/facility/${facilitySlug}/access-tools`,
-      icon: <QrCode className="w-4 h-4" />,
-    },
-    {
-      name: 'Incidents',
-      path: `/facility/${facilitySlug}/incidents`,
-      icon: <AlertTriangle className="w-4 h-4" />,
-    },
-    {
-      name: 'Settings',
-      path: `/facility/${facilitySlug}/settings`,
-      icon: <Settings className="w-4 h-4" />,
-    },
-  ];
+  // Dynamic navigation based on subscription level
+  const getNavItems = () => {
+    const baseItems = [
+      {
+        name: 'Dashboard',
+        path: `/facility/${facilitySlug}`,
+        icon: <Building2 className="w-4 h-4" />,
+        feature: 'dashboard'
+      },
+      {
+        name: 'Access Tools',
+        path: `/facility/${facilitySlug}/access-tools`,
+        icon: <QrCode className="w-4 h-4" />,
+        feature: 'basic_qr_codes'
+      },
+      {
+        name: 'Settings',
+        path: `/facility/${facilitySlug}/settings`,
+        icon: <Settings className="w-4 h-4" />,
+        feature: 'settings'
+      },
+    ];
+
+    // Only show Incidents for users with access to incidents feature
+    if (hasFeatureAccess('incidents')) {
+      baseItems.splice(2, 0, {
+        name: 'Incidents',
+        path: `/facility/${facilitySlug}/incidents`,
+        icon: <AlertTriangle className="w-4 h-4" />,
+        feature: 'incidents'
+      });
+    }
+
+    return baseItems;
+  };
+
+  const navItems = getNavItems();
 
   const isActive = (path: string) => {
     if (path === `/facility/${facilitySlug}`) {
@@ -80,6 +101,15 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Subscription Status */}
+          <div className="hidden md:flex items-center">
+            <SubscriptionBadge 
+              subscription={subscription}
+              onUpgrade={() => navigate('/subscription-plans')}
+              loading={loading}
+            />
           </div>
 
           {/* Desktop Navigation */}
@@ -131,6 +161,18 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-2">
             <div className="space-y-1">
+              {/* Mobile Subscription Status */}
+              <div className="px-3 py-2">
+                <SubscriptionBadge 
+                  subscription={subscription}
+                  onUpgrade={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate('/subscription-plans');
+                  }}
+                  loading={loading}
+                />
+              </div>
+              
               {navItems.map((item) => (
                 <Link
                   key={item.name}

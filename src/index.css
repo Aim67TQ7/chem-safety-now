@@ -86,6 +86,14 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Subscription status colors */
+    --trial: 38 92% 50%;
+    --trial-foreground: 48 96% 89%;
+    --basic: 213 94% 68%;
+    --basic-foreground: 213 31% 91%;
+    --premium: 271 81% 56%;
+    --premium-foreground: 270 20% 93%;
   }
 
   .dark {
@@ -124,6 +132,14 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Subscription status colors */
+    --trial: 38 92% 50%;
+    --trial-foreground: 48 96% 89%;
+    --basic: 213 94% 68%;
+    --basic-foreground: 213 31% 91%;
+    --premium: 271 81% 56%;
+    --premium-foreground: 270 20% 93%;
   }
 }
 

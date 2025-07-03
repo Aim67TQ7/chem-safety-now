@@ -71,6 +71,7 @@ const AccessToolsPage = () => {
         <FacilityNavbar 
           facilityName={facility?.facility_name}
           facilityLogo={facility?.logo_url}
+          facilityId={facility?.id}
         />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -88,6 +89,7 @@ const AccessToolsPage = () => {
         <FacilityNavbar 
           facilityName={facility?.facility_name}
           facilityLogo={facility?.logo_url}
+          facilityId={facility?.id}
         />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -104,6 +106,7 @@ const AccessToolsPage = () => {
       <FacilityNavbar 
         facilityName={facility.facility_name}
         facilityLogo={facility.logo_url}
+        facilityId={facility.id}
       />
       
       <div className="container mx-auto px-4 py-8">

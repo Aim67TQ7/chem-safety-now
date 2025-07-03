@@ -80,7 +80,7 @@ const SDSDocumentsPage = () => {
       
       const { data: facility, error } = await supabase
         .from('facilities')
-        .select('facility_name, logo_url, address')
+        .select('id, facility_name, logo_url, address')
         .eq('slug', facilitySlug)
         .single();
 
@@ -182,6 +182,7 @@ const SDSDocumentsPage = () => {
           facilityName={facilityData?.facility_name || undefined}
           facilityLogo={facilityData?.logo_url}
           facilityAddress={facilityData?.address}
+          facilityId={facilityData?.id}
         />
         <div className="container mx-auto p-4">
           <div className="flex items-center justify-center h-32">
@@ -202,6 +203,7 @@ const SDSDocumentsPage = () => {
           facilityName={facilityData?.facility_name || undefined}
           facilityLogo={facilityData?.logo_url}
           facilityAddress={facilityData?.address}
+          facilityId={facilityData?.id}
         />
         <div className="container mx-auto p-4">
           <Card className="border-red-200 bg-red-50">
@@ -363,6 +365,7 @@ const SDSDocumentsPage = () => {
         facilityName={facilityData?.facility_name || undefined}
         facilityLogo={facilityData?.logo_url}
         facilityAddress={facilityData?.address}
+        facilityId={facilityData?.id}
       />
       <div className="container mx-auto p-4">
         <div className="mb-4">

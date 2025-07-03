@@ -44,6 +44,7 @@ const IncidentsPage = () => {
       <FacilityNavbar 
         facilityName={facilityData?.facility_name || undefined}
         facilityLogo={facilityData?.logo_url}
+        facilityId={facilityData?.id}
       />
       
       <div className="container mx-auto py-8 px-4">

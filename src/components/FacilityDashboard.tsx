@@ -37,6 +37,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
         facilityName={facility.facility_name}
         facilityLogo={facility.logo_url}
         facilityAddress={facility.address}
+        facilityId={facility.id}
       />
 
       <div className="container mx-auto px-4 py-8">
