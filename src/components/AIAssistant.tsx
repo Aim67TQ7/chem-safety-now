@@ -15,6 +15,7 @@ interface AIAssistantProps {
   selectedDocument?: any;
   onGenerateLabel?: (document: any) => void;
   onThinkingChange?: (isThinking: boolean) => void;
+  isTrainingMode?: boolean;
 }
 
 interface Message {
@@ -24,7 +25,7 @@ interface Message {
   timestamp: Date;
 }
 
-const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinkingChange }: AIAssistantProps) => {
+const AIAssistant = ({ facilityData, selectedDocument, onGenerateLabel, onThinkingChange, isTrainingMode = false }: AIAssistantProps) => {
   const getInitialMessage = () => {
     let content = `Hi there! I'm Stanley, your Safety Expert. I'm here to help you with any safety questions you have about chemicals, PPE, procedures, or workplace safety.`;
     

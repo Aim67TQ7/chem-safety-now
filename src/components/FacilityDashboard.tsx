@@ -12,6 +12,9 @@ import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
 import { interactionLogger } from "@/services/interactionLogger";
 import { AuditService } from "@/services/auditService";
+import { TrainingProvider } from "./training/OnboardingTrainingProvider";
+import TrainingWelcomeCard from "./training/TrainingWelcomeCard";
+import TrainingStanChat from "./training/TrainingStanChat";
 
 interface FacilityProps {
   id: string;
@@ -30,6 +33,7 @@ interface FacilityDashboardProps {
 
 const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
   const navigate = useNavigate();
+  const [showTraining, setShowTraining] = useState(false);
 
   // Set facility context for all logging
   useEffect(() => {
@@ -53,34 +57,49 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
   }, [facility.id, facility.facility_name, facility.slug]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Global Navigation Bar */}
-      <FacilityNavbar 
-        facilityName={facility.facility_name}
-        facilityLogo={facility.logo_url}
-        facilityAddress={facility.address}
-        facilityId={facility.id}
-      />
+    <TrainingProvider facilityId={facility.id}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        {/* Global Navigation Bar */}
+        <FacilityNavbar 
+          facilityName={facility.facility_name}
+          facilityLogo={facility.logo_url}
+          facilityAddress={facility.address}
+          facilityId={facility.id}
+        />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* SDS Search Section */}
-        <div className="mb-16 relative">
-          {/* SDS Search Component */}
-          <div className="max-w-6xl mx-auto">
-            <SDSSearch facilityId={facility.id} />
+        <div className="container mx-auto px-4 py-8">
+          {/* Training Welcome Card */}
+          <div className="mb-6">
+            <TrainingWelcomeCard onStartTraining={() => setShowTraining(true)} />
+          </div>
+
+          {/* SDS Search Section */}
+          <div className="mb-16 relative">
+            {/* SDS Search Component */}
+            <div className="max-w-6xl mx-auto">
+              <SDSSearch facilityId={facility.id} />
+            </div>
+          </div>
+
+          {/* Dashboard Cards Section */}
+          <div className="grid grid-cols-1 gap-6">
+            {/* Facility Activity Card */}
+            <FacilityActivityCard facilityId={facility.id} />
+
+            {/* Audit Trail */}
+            <AuditTrail facilityId={facility.id} />
           </div>
         </div>
 
-        {/* Dashboard Cards Section */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Facility Activity Card */}
-          <FacilityActivityCard facilityId={facility.id} />
-
-          {/* Audit Trail */}
-          <AuditTrail facilityId={facility.id} />
-        </div>
+        {/* Training Chat Modal */}
+        {showTraining && (
+          <TrainingStanChat 
+            facilityData={facility}
+            onClose={() => setShowTraining(false)}
+          />
+        )}
       </div>
-    </div>
+    </TrainingProvider>
   );
 };
 
