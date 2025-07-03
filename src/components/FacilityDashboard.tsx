@@ -10,6 +10,8 @@ import FacilityActivityCard from "./FacilityActivityCard";
 import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
+import { interactionLogger } from "@/services/interactionLogger";
+import { AuditService } from "@/services/auditService";
 
 interface FacilityProps {
   id: string;
@@ -28,6 +30,27 @@ interface FacilityDashboardProps {
 
 const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
   const navigate = useNavigate();
+
+  // Set facility context for all logging
+  useEffect(() => {
+    console.log('🏢 Setting facility context for logging:', facility.id);
+    interactionLogger.setUserContext(null, facility.id);
+    
+    // Log facility dashboard access
+    AuditService.logAction({
+      facilityId: facility.id,
+      actionType: 'facility_access',
+      actionDescription: `Facility dashboard accessed: ${facility.facility_name}`,
+    });
+
+    interactionLogger.logFacilityUsage({
+      eventType: 'dashboard_access',
+      eventDetail: {
+        facilityName: facility.facility_name,
+        facilitySlug: facility.slug
+      }
+    });
+  }, [facility.id, facility.facility_name, facility.slug]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">

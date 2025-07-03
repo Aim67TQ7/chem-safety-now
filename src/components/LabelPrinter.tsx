@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { PrintAlignmentFix } from './PrintPreviewWithAlignmentFixes';
+import { AuditService } from '@/services/auditService';
+import { interactionLogger } from '@/services/interactionLogger';
 
 interface LabelPrinterProps {
   initialProductName?: string;
@@ -109,6 +111,20 @@ const LabelPrinter = ({
       return;
     }
     setShowPrintPreview(true);
+    
+    // Log label preview generation
+    interactionLogger.logLabelGeneration({
+      productName,
+      manufacturer,
+      actionType: 'generate',
+      labelType: 'secondary_container',
+      hazardCodes: selectedHazards,
+      pictograms: selectedPictograms,
+      metadata: {
+        sdsDocumentId: selectedDocument?.id,
+        labelDimensions: `${labelWidth}x${labelHeight}`
+      }
+    });
   };
 
   const handleDownloadPDF = async () => {
@@ -203,6 +219,21 @@ const LabelPrinter = ({
       // Download the PDF
       const fileName = `safety-label-poster-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
       pdf.save(fileName);
+      
+      // Log label download for audit trail
+      interactionLogger.logLabelGeneration({
+        productName,
+        manufacturer,
+        actionType: 'download',
+        labelType: 'poster_pdf',
+        hazardCodes: selectedHazards,
+        pictograms: selectedPictograms,
+        metadata: {
+          sdsDocumentId: selectedDocument?.id,
+          fileName,
+          downloadType: 'poster_pdf'
+        }
+      });
       
       toast.success('Poster PDF downloaded successfully');
     } catch (error) {

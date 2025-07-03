@@ -11,6 +11,8 @@ import SDSSearchInput from './SDSSearchInput';
 import { Badge } from '@/components/ui/badge';
 import PDFViewerPopup from './popups/PDFViewerPopup';
 import { useLocation } from 'react-router-dom';
+import { AuditService } from '@/services/auditService';
+import { interactionLogger } from '@/services/interactionLogger';
 
 interface SDSSearchProps {
   facilityId?: string;
@@ -111,12 +113,41 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
   const handleViewDocument = (document: any) => {
     setSelectedDocument(document);
     setShowPDFViewer(true);
+    
+    // Log SDS document access for OSHA compliance
+    if (facilityId) {
+      AuditService.logSDSAccess(facilityId, document.product_name, document.id);
+      
+      interactionLogger.logSDSInteraction({
+        sdsDocumentId: document.id,
+        actionType: 'view_sds',
+        metadata: {
+          productName: document.product_name,
+          manufacturer: document.manufacturer,
+          accessMethod: 'search_results'
+        }
+      });
+    }
   };
 
   const handleDownloadDocument = (document: any) => {
     const url = document.bucket_url || document.source_url;
     if (url) {
       window.open(url, '_blank');
+      
+      // Log SDS document download
+      if (facilityId) {
+        AuditService.logSDSAccess(facilityId, document.product_name, document.id);
+        
+        interactionLogger.logSDSInteraction({
+          sdsDocumentId: document.id,
+          actionType: 'download',
+          metadata: {
+            productName: document.product_name,
+            downloadUrl: url
+          }
+        });
+      }
     } else {
       toast.error('Document URL not available');
     }

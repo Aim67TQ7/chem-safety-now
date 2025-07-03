@@ -10,6 +10,7 @@ import AdminTrialTabs from "@/components/AdminTrialTabs";
 import SalesRepManagement from "@/components/SalesRepManagement";
 import AdminFeedbackPanel from "@/components/AdminFeedbackPanel";
 import AdminErrorPanel from "@/components/AdminErrorPanel";
+import LoggingVerificationPanel from "@/components/LoggingVerificationPanel";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminPage = () => {
@@ -131,7 +132,7 @@ const AdminPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full max-w-5xl">
+          <TabsList className="grid grid-cols-9 w-full max-w-6xl">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="facilities">Facilities</TabsTrigger>
             <TabsTrigger value="sales">Sales</TabsTrigger>
@@ -139,6 +140,7 @@ const AdminPage = () => {
             <TabsTrigger value="errors">Errors</TabsTrigger>
             <TabsTrigger value="sitemap">Site Map</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="logging">Logging</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -335,6 +337,10 @@ const AdminPage = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="logging">
+            <LoggingVerificationPanel />
           </TabsContent>
 
           <TabsContent value="settings">

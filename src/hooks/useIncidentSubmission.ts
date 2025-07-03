@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { AuditService } from '@/services/auditService';
+import { interactionLogger } from '@/services/interactionLogger';
 
 export const useIncidentSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,6 +76,21 @@ export const useIncidentSubmission = () => {
         });
         return false;
       }
+
+      // Log incident creation for OSHA compliance
+      const incidentDescription = `${incidentData.incident_type} incident: ${incidentData.description.substring(0, 100)}...`;
+      
+      AuditService.logIncidentReport(facilityId, data.id, incidentDescription);
+      
+      interactionLogger.logFacilityUsage({
+        eventType: 'incident_report_created',
+        eventDetail: {
+          incidentId: data.id,
+          incidentType: incidentData.incident_type,
+          location: incidentData.location,
+          personInvolved: incidentData.person_involved_name
+        }
+      });
 
       // If there are images, save them to the incident_images table
       if (images && images.length > 0 && data) {

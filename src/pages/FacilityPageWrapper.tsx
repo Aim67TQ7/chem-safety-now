@@ -4,6 +4,8 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from "@/components/ui/card";
 import FacilityDashboard from '@/components/FacilityDashboard';
+import { interactionLogger } from '@/services/interactionLogger';
+import { AuditService } from '@/services/auditService';
 
 interface Facility {
   id: string;
@@ -51,6 +53,18 @@ const FacilityPageWrapper = () => {
         };
 
         setFacility(facilityData);
+        
+        // Set up logging context once facility is loaded
+        console.log('🏢 Facility loaded, setting up logging context:', facilityData.id);
+        interactionLogger.setUserContext(null, facilityData.id);
+        
+        // Log page access
+        AuditService.logAction({
+          facilityId: facilityData.id,
+          actionType: 'page_access',
+          actionDescription: `Facility page accessed: ${facilityData.facility_name}`,
+        });
+
       } catch (err: any) {
         setError(err.message || 'Failed to load facility data.');
         console.error(err);
