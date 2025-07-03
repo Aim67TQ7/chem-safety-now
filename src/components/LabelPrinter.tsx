@@ -13,6 +13,7 @@ import { extractEnhancedSDSData } from './utils/enhancedSdsDataExtractor';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import LabelPrintPreviewPopup from './popups/LabelPrintPreviewPopup';
 
 interface LabelPrinterProps {
   initialProductName?: string;
@@ -33,6 +34,7 @@ const LabelPrinter = ({
   const [labelHeight, setLabelHeight] = useState(192);
   const [productId, setProductId] = useState(sdsData?.productId || '');
   const [labelPrintDate] = useState(sdsData?.labelPrintDate || new Date().toISOString().split('T')[0]);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // Safety-critical data (read-only from SDS)
   const productName = sdsData?.productName || initialProductName;
@@ -100,92 +102,12 @@ const LabelPrinter = ({
     };
   };
 
-  const handlePrint = async () => {
-    const labelElement = document.getElementById('safety-label-preview');
-    if (!labelElement) {
-      toast.error('Label element not found');
+  const handlePrintPreview = () => {
+    if (!productName.trim()) {
+      toast.error('Product name is required');
       return;
     }
-
-    try {
-      toast.info('Generating print image...');
-      
-      // Capture the label as high-quality canvas
-      const canvas = await html2canvas(labelElement, {
-        backgroundColor: 'white',
-        scale: 4, // Higher resolution for better print quality
-        logging: false,
-        useCORS: true,
-        width: labelElement.offsetWidth,
-        height: labelElement.offsetHeight,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('.safety-label') as HTMLElement;
-          if (clonedElement) {
-            clonedElement.style.transform = 'none';
-            clonedElement.style.boxShadow = 'none';
-            clonedElement.style.position = 'static';
-            
-            // Force consistent text rendering for print
-            const allElements = clonedElement.querySelectorAll('*');
-            allElements.forEach((el: any) => {
-              el.style.fontFamily = 'monospace';
-              el.style.textRendering = 'optimizeLegibility';
-              el.style.webkitFontSmoothing = 'antialiased';
-            });
-          }
-        }
-      });
-
-      // Create a new window for printing the image
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        const imgData = canvas.toDataURL('image/png');
-        
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Safety Label - ${productName}</title>
-              <style>
-                body { 
-                  margin: 0; 
-                  padding: 20px; 
-                  display: flex; 
-                  justify-content: center; 
-                  align-items: center; 
-                  min-height: 100vh; 
-                  background: white;
-                }
-                img { 
-                  max-width: 100%; 
-                  height: auto; 
-                  border: 1px solid #ccc;
-                }
-                @page { 
-                  size: letter; 
-                  margin: 0.5in; 
-                }
-                @media print { 
-                  body { padding: 0; }
-                }
-              </style>
-            </head>
-            <body>
-              <img src="${imgData}" alt="Safety Label" />
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        
-        setTimeout(() => {
-          printWindow.print();
-        }, 250);
-      }
-      
-      toast.success('Label sent to printer');
-    } catch (error) {
-      console.error('Print generation error:', error);
-      toast.error('Failed to generate print image');
-    }
+    setShowPrintPreview(true);
   };
 
   const handleDownloadPDF = async () => {
@@ -323,9 +245,9 @@ const LabelPrinter = ({
           </div>
           
           <div className="flex gap-2 ml-4">
-            <Button onClick={handlePrint} size="sm" className="text-xs">
+            <Button onClick={handlePrintPreview} size="sm" className="text-xs">
               <Printer className="w-3 h-3 mr-1" />
-              Print
+              Preview & Print
             </Button>
             <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="text-xs">
               <Download className="w-3 h-3 mr-1" />
@@ -544,6 +466,29 @@ const LabelPrinter = ({
           </div>
         </div>
       </div>
+
+      {/* Print Preview Popup */}
+      <LabelPrintPreviewPopup
+        isOpen={showPrintPreview}
+        onClose={() => setShowPrintPreview(false)}
+        labelData={{
+          productName,
+          manufacturer,
+          chemicalFormula,
+          chemicalCompound,
+          casNumber,
+          productId,
+          hmisHealth,
+          hmisFlammability,
+          hmisPhysical,
+          hmisSpecial,
+          selectedPictograms,
+          selectedHazards,
+          ppeRequirements
+        }}
+        labelWidth={labelWidth}
+        labelHeight={labelHeight}
+      />
     </div>
   );
 };

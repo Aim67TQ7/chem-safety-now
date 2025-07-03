@@ -515,4 +515,6 @@ export function SafetyLabel({
       </div>
     </div>
   );
-}
+};
+
+export default SafetyLabel;
