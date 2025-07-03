@@ -99,14 +99,14 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
               </Link>
             ))}
             
-            {/* Print SDS Label Button */}
-            <Link to={`/facility/${facilitySlug}/label-printer`}>
+            {/* Manage SDS Button */}
+            <Link to={`/facility/${facilitySlug}/sds-documents`}>
               <Button 
                 size="sm" 
                 className="flex items-center space-x-2 ml-2"
               >
                 <Database className="w-4 h-4" />
-                <span>Print SDS Label from Database</span>
+                <span>Manage SDS</span>
               </Button>
             </Link>
           </div>
@@ -147,9 +147,9 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
                 </Link>
               ))}
               
-              {/* Mobile Print SDS Label Button */}
+              {/* Mobile Manage SDS Button */}
               <Link 
-                to={`/facility/${facilitySlug}/label-printer`}
+                to={`/facility/${facilitySlug}/sds-documents`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full"
               >
@@ -158,7 +158,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress }: Facilit
                   size="sm"
                 >
                   <Database className="w-4 h-4" />
-                  <span>Print SDS Label from Database</span>
+                  <span>Manage SDS</span>
                 </Button>
               </Link>
             </div>

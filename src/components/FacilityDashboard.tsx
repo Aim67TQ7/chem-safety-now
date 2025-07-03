@@ -10,6 +10,7 @@ import FacilityActivityCard from "./FacilityActivityCard";
 import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
+import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
 
 interface FacilityProps {
   id: string;
@@ -39,6 +40,12 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
       />
 
       <div className="container mx-auto px-4 py-8">
+        {/* Subscription Status Header */}
+        <SubscriptionStatusHeader 
+          facilityId={facility.id} 
+          onUpgrade={() => navigate('/subscription-plans')}
+        />
+        
         {/* SDS Search Section */}
         <div className="mb-16 relative">
           {/* SDS Search Component */}
