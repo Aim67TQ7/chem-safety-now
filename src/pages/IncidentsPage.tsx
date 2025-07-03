@@ -22,7 +22,7 @@ const IncidentsPage = () => {
 
       const { data: facility } = await supabase
         .from('facilities')
-        .select('facility_name, logo_url')
+        .select('id, facility_name, logo_url')
         .eq('slug', facilitySlug)
         .single();
 
@@ -95,15 +95,23 @@ const IncidentsPage = () => {
                 </Card>
               </div>
 
-              <IncidentsList />
+              <IncidentsList facilityId={facilityData?.id} />
             </TabsContent>
 
             <TabsContent value="report" className="space-y-6">
-              <IncidentReportForm 
-                incidentType={incidentType}
-                onSuccess={() => setActiveTab('list')}
-                onCancel={() => setActiveTab('list')}
-              />
+              {facilityData?.id ? (
+                <IncidentReportForm 
+                  incidentType={incidentType}
+                  onSuccess={() => setActiveTab('list')}
+                  onCancel={() => setActiveTab('list')}
+                />
+              ) : (
+                <Card className="border-amber-200 bg-amber-50">
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-amber-800">Loading facility data...</p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>

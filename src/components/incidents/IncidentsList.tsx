@@ -9,14 +9,18 @@ import { useIncidents } from '@/hooks/useIncidents';
 import { format } from 'date-fns';
 import { IncidentDetailsDialog } from './IncidentDetailsDialog';
 
-export const IncidentsList: React.FC = () => {
+interface IncidentsListProps {
+  facilityId?: string;
+}
+
+export const IncidentsList: React.FC<IncidentsListProps> = ({ facilityId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedIncident, setSelectedIncident] = useState<any>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   
-  const { incidents, isLoading, error } = useIncidents();
+  const { incidents, isLoading, error } = useIncidents(facilityId);
 
   const filteredIncidents = incidents?.filter(incident => {
     const matchesSearch = incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,6 +86,16 @@ export const IncidentsList: React.FC = () => {
       <Card className="border-red-200 bg-red-50">
         <CardContent className="pt-6">
           <p className="text-red-800">Error loading incidents: {error.message}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!facilityId) {
+    return (
+      <Card className="border-amber-200 bg-amber-50">
+        <CardContent className="pt-6">
+          <p className="text-amber-800">No facility selected. Cannot display incidents.</p>
         </CardContent>
       </Card>
     );
