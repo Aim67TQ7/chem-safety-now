@@ -299,7 +299,7 @@ export function SafetyLabel({
           className="flex justify-between items-center" 
           style={{ 
             height: `${hmisHeight}px`, 
-            padding: `${Math.floor(padding/2)}px 0`
+            padding: `${Math.floor(padding)}px 0 ${Math.floor(padding/2)}px 0`
           }}
         >
           <div className="flex" style={{ gap: `${Math.floor(padding/2)}px` }}>
@@ -316,7 +316,7 @@ export function SafetyLabel({
                     fontSize: `${smallFontSize}px`, 
                     marginBottom: `${Math.floor(padding/4)}px`, 
                     lineHeight: '1.2', 
-                    marginTop: '2px' 
+                    marginTop: '6px' // Increased top margin
                   }}
                 >
                   {label}
