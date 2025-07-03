@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Printer, Download, Desktop } from "lucide-react";
+import { AlertCircle, Printer, Download, Monitor } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
@@ -10,9 +10,8 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 import { SafetyLabel } from './SafetyLabel';
-import { PrintPreview } from './PrintPreview';
-import { ZebraPrintAdapter, ZebraPrintOptions } from './ZebraPrintAdapter';
-import { useZebraPrintHandler } from './ZebraPrintHandler';
+import { ZebraPrintAdapter, ZebraPrintOptions } from './ZebraPrinterIntegration';
+import { useZebraPrintHandler } from './ZebraPrinterHandlerImplementation';
 
 interface LabelPrinterProps {
   productName: string;
@@ -256,7 +255,7 @@ export const IntegratedLabelPrinter: React.FC<LabelPrinterProps> = ({
             Desktop Printer
           </TabsTrigger>
           <TabsTrigger value="zebra">
-            <Desktop className="h-4 w-4 mr-2" />
+            <Monitor className="h-4 w-4 mr-2" />
             Zebra Thermal
           </TabsTrigger>
           <TabsTrigger value="download">
@@ -271,25 +270,27 @@ export const IntegratedLabelPrinter: React.FC<LabelPrinterProps> = ({
               <CardTitle className="text-base">Desktop Printer Options</CardTitle>
             </CardHeader>
             <CardContent>
-              <PrintPreview
-                productName={productName}
-                manufacturer={manufacturer}
-                chemicalFormula={chemicalFormula}
-                chemicalCompound={chemicalCompound}
-                casNumber={casNumber}
-                productId={productId}
-                hmisHealth={hmisHealth}
-                hmisFlammability={hmisFlammability}
-                hmisPhysical={hmisPhysical}
-                hmisSpecial={hmisSpecial}
-                selectedPictograms={selectedPictograms}
-                selectedHazards={selectedHazards}
-                ppeRequirements={ppeRequirements}
-                labelWidth={labelWidth}
-                labelHeight={labelHeight}
-                physicalWidth={physicalWidth}
-                physicalHeight={physicalHeight}
-              />
+              <div className="space-y-4">
+                <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                  <strong>Desktop Printing:</strong> Use your standard inkjet or laser printer with 
+                  high-quality settings for best results. Labels will be scaled to fit standard paper sizes.
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="p-3 border rounded">
+                    <div className="font-medium text-sm">Label Size</div>
+                    <div className="text-xs text-gray-600">{physicalWidth}" × {physicalHeight}"</div>
+                  </div>
+                  <div className="p-3 border rounded">
+                    <div className="font-medium text-sm">Resolution</div>
+                    <div className="text-xs text-gray-600">{Math.round(labelWidth / physicalWidth)} DPI</div>
+                  </div>
+                  <div className="p-3 border rounded">
+                    <div className="font-medium text-sm">Quality</div>
+                    <div className="text-xs text-gray-600">High Resolution</div>
+                  </div>
+                </div>
+              </div>
               
               <div className="mt-4">
                 <Button 

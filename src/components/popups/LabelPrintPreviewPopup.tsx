@@ -3,8 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Printer, Grid, RotateCcw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, Printer, Grid, RotateCcw, Monitor } from "lucide-react";
 import { SafetyLabel } from '@/components/SafetyLabel';
+import { ZebraPrintAdapter, ZebraPrintOptions } from '@/components/ZebraPrinterIntegration';
+import { useZebraPrintHandler } from '@/components/ZebraPrinterHandlerImplementation';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -41,7 +44,19 @@ const LabelPrintPreviewPopup = ({
   const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [layoutMode, setLayoutMode] = useState<'single' | 'sheet4' | 'sheet8' | 'sheet15'>('single');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('desktop');
   const previewRef = useRef<HTMLDivElement>(null);
+  const singleLabelRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Zebra print handler
+  const { handlePrint: handleZebraPrint, isPrinting: isZebraPrinting, isAvailable: isZebraAvailable } = useZebraPrintHandler({
+    labelRef: singleLabelRef,
+    onPrintComplete: () => {
+      toast.success('Label sent to Zebra printer');
+      onClose();
+    },
+    onPrintError: (error) => toast.error(`Zebra print error: ${error.message}`)
+  });
 
   const labelSizes = {
     small: { width: 288, height: 192, name: '2" × 1.33"' },
@@ -58,6 +73,11 @@ const LabelPrintPreviewPopup = ({
 
   const currentSize = labelSizes[selectedSize];
   const currentLayout = layoutOptions[layoutMode];
+
+  // Handle Zebra print request
+  const handleZebraPrintRequest = (options: ZebraPrintOptions) => {
+    handleZebraPrint(options);
+  };
 
   const handlePrint = async () => {
     if (!previewRef.current) {
@@ -244,8 +264,22 @@ const LabelPrintPreviewPopup = ({
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+          {/* Printer Selection Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="desktop" className="flex items-center gap-2">
+                <Monitor className="h-4 w-4" />
+                Desktop Printer
+              </TabsTrigger>
+              <TabsTrigger value="zebra" className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                Zebra Thermal
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="desktop" className="space-y-6 mt-6">
+              {/* Desktop Printer Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">
                 Label Size
@@ -288,11 +322,11 @@ const LabelPrintPreviewPopup = ({
                   </button>
                 ))}
               </div>
-            </div>
-          </div>
+                </div>
+              </div>
 
-          {/* Preview */}
-          <div className="bg-gray-100 p-6 rounded-lg">
+              {/* Desktop Preview */}
+              <div className="bg-gray-100 p-6 rounded-lg">
             <div className="text-center mb-4">
               <Badge variant="outline" className="bg-white">
                 Preview - {currentSize.name} Labels ({currentLayout.name})
@@ -315,11 +349,11 @@ const LabelPrintPreviewPopup = ({
               >
                 {renderLabels()}
               </div>
-            </div>
-          </div>
+                </div>
+              </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 justify-center">
+              {/* Desktop Action Buttons */}
+              <div className="flex gap-4 justify-center">
             <Button 
               onClick={handlePrint}
               disabled={isGenerating}
@@ -338,18 +372,18 @@ const LabelPrintPreviewPopup = ({
               {isGenerating ? 'Generating...' : 'Download PDF'}
             </Button>
 
-            <Button 
-              onClick={onClose}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Edit Label
-            </Button>
-          </div>
+                <Button 
+                  onClick={onClose}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Edit Label
+                </Button>
+              </div>
 
-          {/* Print Instructions */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              {/* Desktop Print Instructions */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
               <Grid className="w-4 h-4" />
               Print Instructions
@@ -360,9 +394,69 @@ const LabelPrintPreviewPopup = ({
               <li>• Multi-label sheets include proper spacing for easy cutting</li>
               <li>• Use "Print Labels" for immediate printing with proper scaling</li>
               <li>• Use "Download PDF" to save or print later with consistent quality</li>
-              <li>• All safety data is automatically extracted from SDS documents</li>
-            </ul>
-          </div>
+                <li>• All safety data is automatically extracted from SDS documents</li>
+              </ul>
+            </div>
+            </TabsContent>
+
+            <TabsContent value="zebra" className="space-y-6 mt-6">
+              {/* Hidden single label for Zebra printing */}
+              <div className="hidden">
+                <div ref={singleLabelRef}>
+                  <SafetyLabel
+                    {...labelData}
+                    labelWidth={labelWidth}
+                    labelHeight={labelHeight}
+                  />
+                </div>
+              </div>
+
+              {/* Zebra Printer Component */}
+              <ZebraPrintAdapter
+                onPrint={handleZebraPrintRequest}
+                defaultLabelWidth={labelWidth / 203} // Convert pixels to inches (203 DPI)
+                defaultLabelHeight={labelHeight / 203}
+                showAdvancedOptions={true}
+              />
+
+              {/* Zebra Status */}
+              {!isZebraAvailable && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                    <Printer className="w-4 h-4" />
+                    Zebra Browser Print Required
+                  </h4>
+                  <p className="text-sm text-yellow-800 mb-3">
+                    To print to Zebra thermal printers, you need to install the Zebra Browser Print utility.
+                  </p>
+                  <a 
+                    href="https://www.zebra.com/us/en/support-downloads/printer-software/printer-setup-utilities.html" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Download Zebra Browser Print →
+                  </a>
+                </div>
+              )}
+
+              {/* Zebra Print Instructions */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                  <Grid className="w-4 h-4" />
+                  Zebra Thermal Printing
+                </h4>
+                <ul className="text-sm text-green-800 space-y-1">
+                  <li>• Optimized for Zebra thermal label printers (ZD420, ZD620, etc.)</li>
+                  <li>• Supports multiple label sizes and thermal transfer settings</li>
+                  <li>• High-quality output with proper darkness and speed controls</li>
+                  <li>• Direct thermal and thermal transfer ribbon options</li>
+                  <li>• Real-time printer detection and ZPL command generation</li>
+                  <li>• Preview mode available when Zebra Browser Print is not installed</li>
+                </ul>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>

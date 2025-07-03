@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
-import { ZebraPrintOptions } from './ZebraPrintAdapter';
+import { ZebraPrintOptions } from './ZebraPrinterIntegration';
 
 // Zebra Programming Language (ZPL) commands
 const ZPL_COMMANDS = {
