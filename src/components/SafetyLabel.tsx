@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Helper function to deduplicate pictograms
@@ -244,11 +243,12 @@ export function SafetyLabel({
         height: `${labelHeight}px`, 
         padding: `${padding}px`, 
         fontSize: `${bodyFontSize}px`, 
-        fontFamily: 'monospace' 
+        fontFamily: 'monospace',
+        position: 'relative'
       }}
     >
       <div className="h-full flex flex-col">
-        {/* Header */}
+        {/* Header - REDUCED SPACE */}
         <div 
           className="text-center border-b-2 border-black" 
           style={{ 
@@ -256,7 +256,7 @@ export function SafetyLabel({
             display: 'flex', 
             flexDirection: 'column', 
             justifyContent: 'center', 
-            padding: `${Math.floor(padding/2)}px 0` 
+            padding: `0px 0` // Removed padding to reduce space
           }}
         >
           <h4 
@@ -294,7 +294,7 @@ export function SafetyLabel({
           )}
         </div>
 
-        {/* HMIS */}
+        {/* HMIS - BLACK TEXT ON YELLOW */}
         <div 
           className="flex justify-between items-center" 
           style={{ 
@@ -322,7 +322,7 @@ export function SafetyLabel({
                   {label}
                 </div>
                 <div 
-                  className={`hmis-box ${type ? getHazardColor(value as string, type as any) : 'bg-white'} ${type ? 'text-white' : 'text-black'} font-bold border border-black`} 
+                  className={`hmis-box ${type ? getHazardColor(value as string, type as any) : 'bg-white'} ${type === 'reactivity' ? 'text-black' : type ? 'text-white' : 'text-black'} font-bold border border-black`} 
                   style={{ 
                     width: `${hmisWidthEach - padding}px`, 
                     height: `${hmisBoxHeight}px`, 
@@ -420,23 +420,26 @@ export function SafetyLabel({
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer - SMALLER TEXT AND ANCHORED TO BOTTOM */}
         <div 
           style={{ 
-            height: `${footerHeight}px`, 
-            borderTop: '2px solid black', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'flex-start', 
-            padding: `${Math.floor(padding/2)}px 0` 
+            borderTop: '2px solid black',
+            position: 'absolute',
+            bottom: `${padding}px`,
+            left: `${padding}px`,
+            right: `${padding}px`,
+            display: 'flex',
+            alignItems: 'center'
           }}
         >
           <div 
             className="font-bold" 
             style={{ 
-              fontSize: `${smallFontSize}px`, 
-              textAlign: 'left', 
-              paddingLeft: `${padding}px` 
+              fontSize: `${Math.floor(smallFontSize * 0.8)}px`, // Reduced font size
+              textAlign: 'left',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
             {getSpecificPPE()} • VENTILATION REQUIRED
