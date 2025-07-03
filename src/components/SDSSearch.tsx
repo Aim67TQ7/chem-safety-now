@@ -175,6 +175,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                 onSelect={() => {}}
                 showSelection={false}
                 facilitySlug={facilitySlug}
+                isAdminContext={false}
               />
             ))}
           </div>
