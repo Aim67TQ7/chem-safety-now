@@ -26,7 +26,8 @@ interface SDSResultCardProps {
   isSelected: boolean;
   onSelect: (document: any) => void;
   showSelection: boolean;
-  facilitySlug?: string; // Change this to facilitySlug instead of facilityId
+  facilitySlug?: string;
+  isAdminContext?: boolean; // Add admin context prop
 }
 
 const SDSResultCard: React.FC<SDSResultCardProps> = ({
@@ -36,10 +37,12 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
   isSelected,
   onSelect,
   showSelection,
-  facilitySlug // Use facilitySlug directly
+  facilitySlug,
+  isAdminContext = false
 }) => {
   const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isQuickPrinting, setIsQuickPrinting] = useState(false);
   const [extractedDataPopupOpen, setExtractedDataPopupOpen] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [savedDocumentId, setSavedDocumentId] = useState<string | null>(null);
@@ -224,6 +227,57 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
     }
   };
 
+  const handleQuickPrint = async () => {
+    try {
+      setIsQuickPrinting(true);
+      console.log('🚀 Starting Quick Print for:', document.product_name);
+
+      const pdfUrl = document.bucket_url || document.source_url;
+      
+      // Step 1: Extract data
+      toast.loading('Extracting label data...');
+      const { data, error } = await supabase.functions.invoke('openai-sds-analysis', {
+        body: {
+          document_id: document.id || 'temp-id',
+          pdf_url: pdfUrl
+        }
+      });
+
+      if (error) {
+        console.error('❌ Quick Print extraction error:', error);
+        throw error;
+      }
+
+      if (data.success && data.data) {
+        // Step 2: Save to database
+        toast.loading('Saving document...');
+        const savedDoc = await saveToDatabase(data.data, pdfUrl);
+        
+        if (savedDoc) {
+          // Step 3: Navigate immediately
+          toast.loading('Opening label printer...');
+          
+          const printerUrl = isAdminContext 
+            ? `/admin/label-printer?documentId=${savedDoc.id}`
+            : `/facility/${facilitySlug}/label-printer?documentId=${savedDoc.id}`;
+          
+          console.log('🖨️ Quick Print navigating to:', printerUrl);
+          navigate(printerUrl);
+          
+          toast.success(`Redirecting to label printer for ${document.product_name}`);
+        }
+      } else {
+        throw new Error(data.error || 'Quick Print failed');
+      }
+
+    } catch (error: any) {
+      console.error('❌ Quick Print failed:', error);
+      toast.error(`Quick Print failed: ${error.message}`);
+    } finally {
+      setIsQuickPrinting(false);
+    }
+  };
+
   const handleViewDocument = () => {
     onView(document);
     setExtractedDataPopupOpen(false);
@@ -295,7 +349,7 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
               variant="outline"
               size="sm"
               onClick={handleLabelAnalysis}
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isQuickPrinting}
               className="flex items-center space-x-1 border-purple-300 text-purple-700 hover:bg-purple-50"
             >
               {isAnalyzing ? (
@@ -307,6 +361,26 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
                 <>
                   <Bot className="h-4 w-4" />
                   <span>Extract Data</span>
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleQuickPrint}
+              disabled={isQuickPrinting || isAnalyzing}
+              className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white"
+            >
+              {isQuickPrinting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <Printer className="h-4 w-4" />
+                  <span>Quick Print</span>
                 </>
               )}
             </Button>
