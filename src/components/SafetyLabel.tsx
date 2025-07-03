@@ -1,64 +1,85 @@
 import React from 'react';
 
+interface SafetyLabelProps {
+  productName: string;
+  manufacturer?: string;
+  chemicalFormula?: string;
+  chemicalCompound?: string;
+  casNumber?: string;
+  productId?: string;
+  hmisHealth: string;
+  hmisFlammability: string;
+  hmisPhysical: string;
+  hmisSpecial?: string;
+  selectedPictograms: string[];
+  selectedHazards: string[];
+  ppeRequirements: string[];
+  labelWidth?: number;
+  labelHeight?: number;
+}
+
 // Helper function to get H-code explanations
-  const getHCodeExplanation = (hCode: string) => {
-    const hCodes: {[key: string]: string} = {
-      'H225': 'Highly flammable liquid and vapor',
-      'H226': 'Flammable liquid and vapor',
-      'H227': 'Combustible liquid',
-      'H228': 'Flammable solid',
-      'H229': 'Pressurized container: may burst if heated',
-      'H301': 'Toxic if swallowed',
-      'H302': 'Harmful if swallowed',
-      'H303': 'May be harmful if swallowed',
-      'H304': 'May be fatal if swallowed and enters airways',
-      'H305': 'May be harmful if swallowed and enters airways',
-      'H311': 'Toxic in contact with skin',
-      'H312': 'Harmful in contact with skin',
-      'H313': 'May be harmful in contact with skin',
-      'H314': 'Causes severe skin burns and eye damage',
-      'H315': 'Causes skin irritation',
-      'H316': 'Causes mild skin irritation',
-      'H317': 'May cause an allergic skin reaction',
-      'H318': 'Causes serious eye damage',
-      'H319': 'Causes serious eye irritation',
-      'H320': 'Causes eye irritation',
-      'H330': 'Fatal if inhaled',
-      'H331': 'Toxic if inhaled',
-      'H332': 'Harmful if inhaled',
-      'H333': 'May be harmful if inhaled',
-      'H334': 'May cause allergy or asthma symptoms or breathing difficulties if inhaled',
-      'H335': 'May cause respiratory irritation',
-      'H336': 'May cause drowsiness or dizziness',
-      'H340': 'May cause genetic defects',
-      'H341': 'Suspected of causing genetic defects',
-      'H350': 'May cause cancer',
-      'H351': 'Suspected of causing cancer',
-      'H360': 'May damage fertility or the unborn child',
-      'H361': 'Suspected of damaging fertility or the unborn child',
-      'H362': 'May cause harm to breast-fed children',
-      'H370': 'Causes damage to organs',
-      'H371': 'May cause damage to organs',
-      'H372': 'Causes damage to organs through prolonged or repeated exposure',
-      'H373': 'May cause damage to organs through prolonged or repeated exposure',
-      'H400': 'Very toxic to aquatic life',
-      'H401': 'Toxic to aquatic life',
-      'H402': 'Harmful to aquatic life',
-      'H410': 'Very toxic to aquatic life with long lasting effects',
-      'H411': 'Toxic to aquatic life with long lasting effects',
-      'H412': 'Harmful to aquatic life with long lasting effects',
-      'H413': 'May cause long lasting harmful effects to aquatic life'
-    };
-    
-    // Match H-code pattern
-    const hCodeMatch = hCode.match(/H\d{3}/i);
-    if (hCodeMatch) {
-      const code = hCodeMatch[0].toUpperCase();
-      return `${code}: ${hCodes[code] || 'Hazardous material'}`;
-    }
-    
-    return hCode;
+const getHCodeExplanation = (hCode: string) => {
+  const hCodes: {[key: string]: string} = {
+    'H225': 'Highly flammable liquid and vapor',
+    'H226': 'Flammable liquid and vapor',
+    'H227': 'Combustible liquid',
+    'H228': 'Flammable solid',
+    'H229': 'Pressurized container: may burst if heated',
+    'H301': 'Toxic if swallowed',
+    'H302': 'Harmful if swallowed',
+    'H303': 'May be harmful if swallowed',
+    'H304': 'May be fatal if swallowed and enters airways',
+    'H305': 'May be harmful if swallowed and enters airways',
+    'H311': 'Toxic in contact with skin',
+    'H312': 'Harmful in contact with skin',
+    'H313': 'May be harmful in contact with skin',
+    'H314': 'Causes severe skin burns and eye damage',
+    'H315': 'Causes skin irritation',
+    'H316': 'Causes mild skin irritation',
+    'H317': 'May cause an allergic skin reaction',
+    'H318': 'Causes serious eye damage',
+    'H319': 'Causes serious eye irritation',
+    'H320': 'Causes eye irritation',
+    'H330': 'Fatal if inhaled',
+    'H331': 'Toxic if inhaled',
+    'H332': 'Harmful if inhaled',
+    'H333': 'May be harmful if inhaled',
+    'H334': 'May cause allergy or asthma symptoms or breathing difficulties if inhaled',
+    'H335': 'May cause respiratory irritation',
+    'H336': 'May cause drowsiness or dizziness',
+    'H340': 'May cause genetic defects',
+    'H341': 'Suspected of causing genetic defects',
+    'H350': 'May cause cancer',
+    'H351': 'Suspected of causing cancer',
+    'H360': 'May damage fertility or the unborn child',
+    'H361': 'Suspected of damaging fertility or the unborn child',
+    'H362': 'May cause harm to breast-fed children',
+    'H370': 'Causes damage to organs',
+    'H371': 'May cause damage to organs',
+    'H372': 'Causes damage to organs through prolonged or repeated exposure',
+    'H373': 'May cause damage to organs through prolonged or repeated exposure',
+    'H400': 'Very toxic to aquatic life',
+    'H401': 'Toxic to aquatic life',
+    'H402': 'Harmful to aquatic life',
+    'H410': 'Very toxic to aquatic life with long lasting effects',
+    'H411': 'Toxic to aquatic life with long lasting effects',
+    'H412': 'Harmful to aquatic life with long lasting effects',
+    'H413': 'May cause long lasting harmful effects to aquatic life'
   };
+  
+  // Match H-code pattern
+  const hCodeMatch = hCode.match(/H\d{3}/i);
+  if (hCodeMatch) {
+    const code = hCodeMatch[0].toUpperCase();
+    return `${code}: ${hCodes[code] || 'Hazardous material'}`;
+  }
+  
+  return hCode;
+};
+
+// Helper function to deduplicate pictograms
+function getUniquePictograms(pictograms: any[]) {
   const normalized = pictograms.map(p => {
     const pictogramString = typeof p === 'string' ? p : (p as any)?.name || 'warning';
     return pictogramString.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -99,24 +120,6 @@ import React from 'react';
   }
   
   return unique;
-}
-
-interface SafetyLabelProps {
-  productName: string;
-  manufacturer?: string;
-  chemicalFormula?: string;
-  chemicalCompound?: string;
-  casNumber?: string;
-  productId?: string;
-  hmisHealth: string;
-  hmisFlammability: string;
-  hmisPhysical: string;
-  hmisSpecial?: string;
-  selectedPictograms: string[];
-  selectedHazards: string[];
-  ppeRequirements: string[];
-  labelWidth?: number;
-  labelHeight?: number;
 }
 
 export function SafetyLabel({ 
@@ -231,13 +234,9 @@ export function SafetyLabel({
   };
 
   const getHazardIcon = (pictogramId: string, size: number) => {
-    console.log(`🔍 Looking for pictogram ID: "${pictogramId}"`);
-    console.log('📋 Available pictograms:', pictograms.map(p => p.id));
-    
     const pictogram = pictograms.find(p => p.id === pictogramId);
     
     if (!pictogram) {
-      console.warn(`⚠️ Pictogram not found for ID: "${pictogramId}"`);
       // Try alternative matching
       const alternativeMatch = pictograms.find(p => 
         p.name.toLowerCase().includes(pictogramId.replace(/_/g, ' ')) ||
@@ -245,7 +244,6 @@ export function SafetyLabel({
       );
       
       if (alternativeMatch) {
-        console.log(`✅ Found alternative match: ${alternativeMatch.id} for ${pictogramId}`);
         return (
           <img 
             src={alternativeMatch.imageUrl} 
@@ -279,8 +277,6 @@ export function SafetyLabel({
       );
     }
     
-    console.log(`✅ Found pictogram: ${pictogram.name} for ID: ${pictogramId}`);
-    
     return (
       <img 
         src={pictogram.imageUrl} 
@@ -292,7 +288,6 @@ export function SafetyLabel({
           aspectRatio: '1 / 1'
         }}
         onError={(e) => {
-          console.error(`❌ Image failed to load: ${pictogram.imageUrl}`);
           e.currentTarget.style.display = 'none';
         }}
       />
