@@ -117,6 +117,87 @@ export type Database = {
           },
         ]
       }
+      error_tracking: {
+        Row: {
+          additional_context: Json | null
+          assigned_to: string | null
+          created_at: string
+          error_code: string | null
+          error_level: string
+          error_message: string
+          error_stack: string | null
+          error_type: string
+          facility_id: string | null
+          id: string
+          ip_address: unknown | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          session_id: string | null
+          status: string
+          updated_at: string
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          additional_context?: Json | null
+          assigned_to?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_level?: string
+          error_message: string
+          error_stack?: string | null
+          error_type: string
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          additional_context?: Json | null
+          assigned_to?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_level?: string
+          error_message?: string
+          error_stack?: string | null
+          error_type?: string
+          facility_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_tracking_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "admin_facility_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "error_tracking_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facilities: {
         Row: {
           address: string | null
