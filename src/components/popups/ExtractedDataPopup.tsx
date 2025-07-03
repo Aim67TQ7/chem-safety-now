@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
   facilitySlug,
   documentId
 }) => {
+  const navigate = useNavigate();
   // GHS Pictogram mapping to display actual images
   const pictogramImages: Record<string, { name: string; imageUrl: string }> = {
     'exclamation': { name: 'Exclamation Mark', imageUrl: '/lovable-uploads/933bd224-1e9d-413f-88f7-577fbaeeaa0f.png' },
@@ -280,8 +282,11 @@ const ExtractedDataPopup: React.FC<ExtractedDataPopupProps> = ({
               <Button 
                 onClick={() => {
                   if (facilitySlug && documentId) {
-                    window.location.href = `/facility/${facilitySlug}/label-printer?documentId=${documentId}`;
+                    // Close the popup first, then navigate to label printer
+                    onClose();
+                    navigate(`/facility/${facilitySlug}/label-printer?documentId=${documentId}`);
                   } else {
+                    // Fallback to the provided onPrintLabel function
                     onPrintLabel();
                   }
                 }} 
