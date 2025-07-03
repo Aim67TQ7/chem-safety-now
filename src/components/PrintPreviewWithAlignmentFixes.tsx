@@ -26,6 +26,7 @@ interface PrintAlignmentFixProps {
   ppeRequirements: string[];
   labelWidth?: number;
   labelHeight?: number;
+  signalWord?: string;
 }
 
 export const PrintAlignmentFix: React.FC<PrintAlignmentFixProps> = ({
@@ -43,7 +44,8 @@ export const PrintAlignmentFix: React.FC<PrintAlignmentFixProps> = ({
   selectedHazards,
   ppeRequirements,
   labelWidth = 288,
-  labelHeight = 192
+  labelHeight = 192,
+  signalWord
 }) => {
   const [activeTab, setActiveTab] = useState<string>('preview');
   const [zoom, setZoom] = useState<number>(1.5);
@@ -158,6 +160,7 @@ export const PrintAlignmentFix: React.FC<PrintAlignmentFixProps> = ({
                   ppeRequirements={ppeRequirements}
                   labelWidth={labelWidth}
                   labelHeight={labelHeight}
+                  signalWord={signalWord}
                 />
               </div>
             </div>

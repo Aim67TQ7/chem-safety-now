@@ -16,6 +16,7 @@ interface SafetyLabelProps {
   ppeRequirements: string[];
   labelWidth?: number;
   labelHeight?: number;
+  signalWord?: string;
 }
 
 // Helper function to get H-code explanations
@@ -137,7 +138,8 @@ export function SafetyLabel({
   selectedHazards,
   ppeRequirements,
   labelWidth = 288, 
-  labelHeight = 192 
+  labelHeight = 192,
+  signalWord 
 }: SafetyLabelProps) {
   // Calculate proportional sizes based on label dimensions
   const scaleFactor = Math.min(labelWidth / 288, labelHeight / 192);
@@ -431,13 +433,13 @@ export function SafetyLabel({
             {selectedHazards.length > 0 && (
               <div style={{ marginTop: `${verticalSpacing}px` }}>
                 <div 
-                  className="font-bold" 
+                  className={`font-bold ${signalWord === 'DANGER' ? 'text-red-700' : signalWord === 'WARNING' ? 'text-orange-600' : ''}`}
                   style={{ 
                     marginBottom: `${Math.floor(padding/2)}px`,
                     fontSize: `${bodyFontSize}px`
                   }}
                 >
-                  HAZARDS:
+                  {signalWord || 'HAZARDS'}:
                 </div>
                 <div style={{ fontSize: `${smallFontSize}px`, lineHeight: '1.1' }}>
                   {selectedHazards.slice(0, 3).map((hazard, index) => {

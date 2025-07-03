@@ -40,6 +40,7 @@ const LabelPrinter = ({
   const productName = sdsData?.productName || initialProductName;
   const manufacturer = sdsData?.manufacturer || initialManufacturer;
   const casNumber = sdsData?.casNumber || '';
+  const signalWord = sdsData?.signalWord || '';
   const chemicalFormula = sdsData?.chemicalFormula || '';
   const chemicalCompound = sdsData?.chemicalCompound || '';
   const hmisHealth = sdsData?.hmisRatings?.health || '2';
@@ -453,6 +454,7 @@ const LabelPrinter = ({
                       ppeRequirements={ppeRequirements}
                       labelWidth={labelWidth}
                       labelHeight={labelHeight}
+                      signalWord={signalWord}
                     />
                   </div>
                   
@@ -494,6 +496,7 @@ const LabelPrinter = ({
                 ppeRequirements={ppeRequirements}
                 labelWidth={labelWidth}
                 labelHeight={labelHeight}
+                signalWord={signalWord}
               />
             </div>
           </div>
