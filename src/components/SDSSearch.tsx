@@ -135,10 +135,6 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
               <CardTitle className="flex items-center gap-2">
                 <Search className="w-5 h-5" />
                 Search SDS Documents
-                <Badge variant="secondary" className="ml-2">
-                  <Bot className="w-3 h-3 mr-1" />
-                  AI-Powered
-                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
