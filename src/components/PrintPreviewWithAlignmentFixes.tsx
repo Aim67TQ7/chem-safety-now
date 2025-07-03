@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Printer, Download, Grid2X2, AlertTriangle, ZoomIn, ZoomOut } from "lucide-react";
-import { useImprovedPrintHandler } from './improved-print-handler';
+import { useImprovedPrintHandler } from './ImprovedPrintHandler';
 import { SafetyLabel } from './SafetyLabel';
 
 interface PrintAlignmentFixProps {

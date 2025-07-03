@@ -13,7 +13,7 @@ import { extractEnhancedSDSData } from './utils/enhancedSdsDataExtractor';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import LabelPrintPreviewPopup from './popups/LabelPrintPreviewPopup';
+import { PrintAlignmentFix } from './PrintPreviewWithAlignmentFixes';
 
 interface LabelPrinterProps {
   initialProductName?: string;
@@ -467,30 +467,41 @@ const LabelPrinter = ({
         </div>
       </div>
 
-      {/* Print Preview Popup */}
-      <LabelPrintPreviewPopup
-        isOpen={showPrintPreview}
-        onClose={() => setShowPrintPreview(false)}
-        labelData={{
-          productName,
-          manufacturer,
-          chemicalFormula,
-          chemicalCompound,
-          casNumber,
-          productId,
-          hmisHealth,
-          hmisFlammability,
-          hmisPhysical,
-          hmisSpecial,
-          selectedPictograms,
-          selectedHazards,
-          ppeRequirements
-        }}
-        labelWidth={labelWidth}
-        labelHeight={labelHeight}
-      />
+      {/* Print Preview with Alignment Fixes */}
+      {showPrintPreview && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Print Preview - {productName}</h2>
+                <Button variant="outline" onClick={() => setShowPrintPreview(false)}>
+                  Close
+                </Button>
+              </div>
+              <PrintAlignmentFix
+                productName={productName}
+                manufacturer={manufacturer}
+                chemicalFormula={chemicalFormula}
+                chemicalCompound={chemicalCompound}
+                casNumber={casNumber}
+                productId={productId}
+                hmisHealth={hmisHealth}
+                hmisFlammability={hmisFlammability}
+                hmisPhysical={hmisPhysical}
+                hmisSpecial={hmisSpecial}
+                selectedPictograms={selectedPictograms}
+                selectedHazards={selectedHazards}
+                ppeRequirements={ppeRequirements}
+                labelWidth={labelWidth}
+                labelHeight={labelHeight}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+
 };
 
 export default LabelPrinter;
