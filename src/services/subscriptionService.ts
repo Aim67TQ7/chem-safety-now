@@ -28,7 +28,7 @@ export class SubscriptionService {
       
       if (subscription) {
         // Enhanced logic for trial users - they get full access to basic features during trial
-        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
+        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
         const isBasicFeature = basicFeatures.includes(featureName);
         const isActiveTrial = subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0;
         
@@ -164,7 +164,7 @@ export class SubscriptionService {
 
   // Enhanced method to get feature tier
   static getFeatureTier(featureName: string): 'basic' | 'premium' {
-    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
+    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
     return basicFeatures.includes(featureName) ? 'basic' : 'premium';
   }
 }

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { 
   Building2, 
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
+import SubscriptionPlansModal from '@/components/SubscriptionPlansModal';
 
 
 interface FacilityNavbarProps {
@@ -26,8 +27,8 @@ interface FacilityNavbarProps {
 const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityId }: FacilityNavbarProps) => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const location = useLocation();
-  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
   const { subscription, loading, hasFeatureAccess } = useFeatureAccess(facilityId || '');
   
@@ -107,7 +108,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
           <div className="hidden md:flex items-center">
             <SubscriptionBadge 
               subscription={subscription}
-              onUpgrade={() => navigate('/subscription-plans')}
+              onUpgrade={() => setShowSubscriptionModal(true)}
               loading={loading}
             />
           </div>
@@ -167,7 +168,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
                   subscription={subscription}
                   onUpgrade={() => {
                     setIsMobileMenuOpen(false);
-                    navigate('/subscription-plans');
+                    setShowSubscriptionModal(true);
                   }}
                   loading={loading}
                 />
@@ -207,6 +208,15 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
           </div>
         )}
       </div>
+
+      {/* Subscription Plans Modal */}
+      <SubscriptionPlansModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        facilityId={facilityId || ''}
+        currentPlan={subscription?.subscription_status}
+        facilitySlug={facilitySlug}
+      />
     </nav>
   );
 };

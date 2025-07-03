@@ -34,7 +34,7 @@ export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
   const hasFeatureAccess = (feature: string): boolean => {
     if (!subscription) return false;
     
-    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
+    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
     const isBasicFeature = basicFeatures.includes(feature);
     const isActiveTrial = subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0;
     
