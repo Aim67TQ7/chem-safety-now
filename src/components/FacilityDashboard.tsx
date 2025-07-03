@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 import FacilityActivityCard from "./FacilityActivityCard";
 import AuditTrail from "./AuditTrail";
-import SimplifiedSDSSearch from "./SimplifiedSDSSearch";
+import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
 import SubscriptionStatusHeader from "./SubscriptionStatusHeader";
 
@@ -50,7 +50,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
         <div className="mb-16 relative">
           {/* SDS Search Component */}
           <div className="max-w-6xl mx-auto">
-            <SimplifiedSDSSearch facilityId={facility.id} />
+            <SDSSearch facilityId={facility.id} />
           </div>
         </div>
 
