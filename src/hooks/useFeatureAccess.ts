@@ -35,11 +35,13 @@ export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
     if (!subscription) return false;
     
     const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+    const premiumFeatures = ['incident_reporting', 'incidents'];
     const isBasicFeature = basicFeatures.includes(feature);
+    const isPremiumFeature = premiumFeatures.includes(feature);
     const isActiveTrial = subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0;
     
-    // Active trial users get full access to basic features
-    if (isActiveTrial && isBasicFeature) {
+    // Active trial users get access to all features (basic + premium)
+    if (isActiveTrial && (isBasicFeature || isPremiumFeature)) {
       return true;
     }
     
@@ -48,7 +50,7 @@ export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
       return true;
     }
     
-    // Basic users get basic features only
+    // Basic users get only basic features (no premium features like incidents)
     if (subscription.subscription_status === 'basic' && isBasicFeature) {
       return true;
     }

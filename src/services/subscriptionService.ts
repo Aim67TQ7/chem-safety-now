@@ -27,13 +27,15 @@ export class SubscriptionService {
       const subscription = await this.getFacilitySubscription(facilityId);
       
       if (subscription) {
-        // Enhanced logic for trial users - they get full access to basic features during trial
+        // Enhanced logic for trial users - they get access to basic and premium features during trial
         const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
+        const premiumFeatures = ['incident_reporting', 'incidents'];
         const isBasicFeature = basicFeatures.includes(featureName);
+        const isPremiumFeature = premiumFeatures.includes(featureName);
         const isActiveTrial = subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0;
         
-        // Active trial users get full access to basic features
-        if (isActiveTrial && isBasicFeature) {
+        // Active trial users get access to all features (basic + premium)
+        if (isActiveTrial && (isBasicFeature || isPremiumFeature)) {
           return true;
         }
         
@@ -42,7 +44,7 @@ export class SubscriptionService {
           return true;
         }
         
-        // Basic users get basic features
+        // Basic users get only basic features (no premium features like incidents)
         if (subscription.subscription_status === 'basic' && isBasicFeature) {
           return true;
         }
@@ -165,6 +167,10 @@ export class SubscriptionService {
   // Enhanced method to get feature tier
   static getFeatureTier(featureName: string): 'basic' | 'premium' {
     const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
-    return basicFeatures.includes(featureName) ? 'basic' : 'premium';
+    const premiumFeatures = ['incident_reporting', 'incidents'];
+    
+    if (basicFeatures.includes(featureName)) return 'basic';
+    if (premiumFeatures.includes(featureName)) return 'premium';
+    return 'premium'; // Default to premium for unknown features
   }
 }
