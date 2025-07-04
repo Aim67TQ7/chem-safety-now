@@ -132,7 +132,7 @@ const AdminPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-9 w-full max-w-6xl">
+          <TabsList className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 w-full">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="facilities">Facilities</TabsTrigger>
             <TabsTrigger value="sales">Sales</TabsTrigger>
