@@ -1,21 +1,14 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Calendar, Globe, QrCode, Crown, Zap, ArrowDown, Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { SubscriptionService, FacilitySubscription } from "@/services/subscriptionService";
 import FacilityActivityCard from "./FacilityActivityCard";
 import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
-import SubscriptionStatusIndicator from "./SubscriptionStatusIndicator";
 import { interactionLogger } from "@/services/interactionLogger";
 import { AuditService } from "@/services/auditService";
 import { TrainingProvider } from "./training/OnboardingTrainingProvider";
-import TrainingWelcomeCard from "./training/TrainingWelcomeCard";
 import TrainingStanChat from "./training/TrainingStanChat";
+import StanleyTrainingFloatingIcon from "./StanleyTrainingFloatingIcon";
 
 interface FacilityProps {
   id: string;
@@ -33,7 +26,6 @@ interface FacilityDashboardProps {
 }
 
 const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
-  const navigate = useNavigate();
   const [showTraining, setShowTraining] = useState(false);
 
   // Set facility context for all logging
@@ -69,20 +61,6 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
         />
 
         <div className="container mx-auto px-4 py-8">
-          {/* Subscription Status */}
-          <div className="mb-6">
-            <SubscriptionStatusIndicator 
-              facilityId={facility.id} 
-              facilitySlug={facility.slug}
-              showManageButton={true}
-            />
-          </div>
-
-          {/* Training Welcome Card */}
-          <div className="mb-6">
-            <TrainingWelcomeCard onStartTraining={() => setShowTraining(true)} />
-          </div>
-
           {/* SDS Search Section */}
           <div className="mb-16 relative">
             {/* SDS Search Component */}
@@ -100,6 +78,11 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
             <AuditTrail facilityId={facility.id} />
           </div>
         </div>
+
+        {/* Floating Stanley Training Icon */}
+        <StanleyTrainingFloatingIcon 
+          onOpenTraining={() => setShowTraining(true)}
+        />
 
         {/* Training Chat Modal */}
         {showTraining && (
