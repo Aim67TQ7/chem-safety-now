@@ -169,8 +169,8 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
                 </CardTitle>
                 <div className="space-y-1">
                   {plan.name === 'Basic' && billingCycle === 'monthly' ? (
-                    <div className="text-sm text-gray-600">
-                      Annual Plan Only - ${plan.annual_price.toLocaleString()}/year
+                    <div className="text-3xl font-bold">
+                      $5<span className="text-lg font-normal text-gray-600">/month</span>
                     </div>
                   ) : (
                     <>
@@ -204,7 +204,7 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
 
                 <Button
                   onClick={() => handleSelectPlan(plan)}
-                  disabled={currentPlan === plan.name.toLowerCase() || processingPlan === plan.id || (plan.name === 'Basic' && billingCycle === 'monthly')}
+                  disabled={currentPlan === plan.name.toLowerCase() || processingPlan === plan.id}
                   className={`w-full ${
                     plan.name === 'Premium'
                       ? 'bg-purple-600 hover:bg-purple-700'
@@ -217,8 +217,6 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
                     ? 'Processing...' 
                     : currentPlan === plan.name.toLowerCase() 
                       ? 'Current Plan' 
-                      : plan.name === 'Basic' && billingCycle === 'monthly'
-                      ? 'Annual Only'
                       : `Choose ${plan.name}`
                   }
                 </Button>
