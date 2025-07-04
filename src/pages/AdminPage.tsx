@@ -132,14 +132,15 @@ const AdminPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 w-full">
+          <TabsList className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 w-full">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="facilities">Facilities</TabsTrigger>
             <TabsTrigger value="sales">Sales</TabsTrigger>
             <TabsTrigger value="sales-reps">Sales Reps</TabsTrigger>
-            <TabsTrigger value="monitoring">System Monitoring</TabsTrigger>
+            <TabsTrigger value="errors">Errors</TabsTrigger>
             <TabsTrigger value="sitemap">Site Map</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="logging">Logging</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -204,11 +205,8 @@ const AdminPage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="monitoring" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-1">
-              <AdminErrorPanel />
-              <LoggingVerificationPanel />
-            </div>
+          <TabsContent value="errors">
+            <AdminErrorPanel />
           </TabsContent>
 
           <TabsContent value="facilities">
@@ -339,6 +337,10 @@ const AdminPage = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="logging">
+            <LoggingVerificationPanel />
           </TabsContent>
 
           <TabsContent value="settings">
