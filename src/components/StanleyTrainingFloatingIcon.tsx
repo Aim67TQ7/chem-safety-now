@@ -16,11 +16,14 @@ const StanleyTrainingFloatingIcon = ({ onOpenTraining }: StanleyTrainingFloating
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            onClick={onOpenTraining}
+            onClick={() => {
+              console.log('Stanley icon clicked!');
+              onOpenTraining();
+            }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             className={`
-              fixed bottom-6 left-6 z-50 
+              fixed bottom-6 left-6 z-[9999] 
               w-16 h-16 rounded-full p-0 
               bg-gradient-to-r from-blue-600 to-green-600 
               hover:from-blue-700 hover:to-green-700
@@ -28,6 +31,7 @@ const StanleyTrainingFloatingIcon = ({ onOpenTraining }: StanleyTrainingFloating
               transition-all duration-300 ease-in-out
               ${isHovered ? 'scale-110' : 'scale-100'}
               animate-pulse
+              pointer-events-auto cursor-pointer
             `}
             style={{
               animationDuration: '3s'
