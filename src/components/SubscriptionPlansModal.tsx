@@ -69,9 +69,9 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
     ai_assistant: "24/7 access to Sarah AI safety assistant", 
     basic_qr_codes: "Generate facility QR codes",
     label_printing: "Create GHS compliant labels",
-    qr_codes: "Advanced QR code features",
-    dashboards: "Analytics and usage dashboards",
-    compliance_tracking: "Compliance monitoring tools",
+    custom_branding: "Custom branded facility site",
+    incident_reporting: "Advanced incident reporting system",
+    incidents: "Full incidents management",
     audit_trails: "Detailed audit trails and reporting"
   };
 
@@ -130,13 +130,15 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan) => (
             <Card 
               key={plan.id} 
               className={`relative ${
                 plan.name === 'Premium' 
                   ? 'border-purple-200 shadow-lg' 
+                  : plan.name === 'Pro'
+                  ? 'border-blue-200 shadow-md'
                   : 'border-gray-200'
               }`}
             >
@@ -144,6 +146,15 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   <Badge className="bg-purple-600 text-white px-3 py-1">
                     <Crown className="w-3 h-3 mr-1" />
+                    Full Featured
+                  </Badge>
+                </div>
+              )}
+              
+              {plan.name === 'Pro' && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-blue-600 text-white px-3 py-1">
+                    <Zap className="w-3 h-3 mr-1" />
                     Most Popular
                   </Badge>
                 </div>
@@ -151,21 +162,30 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
               
               <CardHeader className="text-center pb-4">
                 <CardTitle className="flex items-center justify-center space-x-2">
-                  {plan.name === 'Basic' && <Zap className="w-5 h-5 text-blue-500" />}
+                  {plan.name === 'Basic' && <span className="text-green-500">🌱</span>}
+                  {plan.name === 'Pro' && <Zap className="w-5 h-5 text-blue-500" />}
                   {plan.name === 'Premium' && <Crown className="w-5 h-5 text-purple-500" />}
                   <span>{plan.name}</span>
                 </CardTitle>
                 <div className="space-y-1">
-                  <div className="text-3xl font-bold">
-                    ${getPrice(plan).toLocaleString()}
-                    <span className="text-lg font-normal text-gray-600">
-                      /{billingCycle === 'monthly' ? 'month' : 'year'}
-                    </span>
-                  </div>
-                  {billingCycle === 'annual' && (
-                    <div className="text-sm text-green-600">
-                      Save {getSavings(plan)}% annually
+                  {plan.name === 'Basic' && billingCycle === 'monthly' ? (
+                    <div className="text-sm text-gray-600">
+                      Annual Plan Only - ${plan.annual_price.toLocaleString()}/year
                     </div>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold">
+                        ${getPrice(plan).toLocaleString()}
+                        <span className="text-lg font-normal text-gray-600">
+                          /{billingCycle === 'monthly' ? 'month' : 'year'}
+                        </span>
+                      </div>
+                      {billingCycle === 'annual' && getSavings(plan) > 0 && (
+                        <div className="text-sm text-green-600">
+                          Save {getSavings(plan)}% annually
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </CardHeader>
@@ -184,17 +204,21 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
 
                 <Button
                   onClick={() => handleSelectPlan(plan)}
-                  disabled={currentPlan === plan.name.toLowerCase() || processingPlan === plan.id}
+                  disabled={currentPlan === plan.name.toLowerCase() || processingPlan === plan.id || (plan.name === 'Basic' && billingCycle === 'monthly')}
                   className={`w-full ${
                     plan.name === 'Premium'
                       ? 'bg-purple-600 hover:bg-purple-700'
-                      : 'bg-blue-600 hover:bg-blue-700'
+                      : plan.name === 'Pro'
+                      ? 'bg-blue-600 hover:bg-blue-700'
+                      : 'bg-green-600 hover:bg-green-700'
                   }`}
                 >
                   {processingPlan === plan.id 
                     ? 'Processing...' 
                     : currentPlan === plan.name.toLowerCase() 
                       ? 'Current Plan' 
+                      : plan.name === 'Basic' && billingCycle === 'monthly'
+                      ? 'Annual Only'
                       : `Choose ${plan.name}`
                   }
                 </Button>

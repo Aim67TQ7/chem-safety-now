@@ -31,14 +31,32 @@ export const navItems = [
     page: <FacilityPageWrapper />,
   },
   {
+    title: "Shared Basic Facility",
+    to: "/facility/basic/:companyId",
+    icon: <Building2 className="h-4 w-4" />,
+    page: <FacilityPageWrapper />,
+  },
+  {
     title: "Facility Settings",
     to: "/facility/:facilitySlug/settings",
     icon: <Settings className="h-4 w-4" />,
     page: <FacilitySettingsPage />,
   },
   {
+    title: "Shared Basic Settings",
+    to: "/facility/basic/:companyId/settings",
+    icon: <Settings className="h-4 w-4" />,
+    page: <FacilitySettingsPage />,
+  },
+  {
     title: "SDS Documents",
     to: "/facility/:facilitySlug/sds-documents",
+    icon: <FileText className="h-4 w-4" />,
+    page: <SDSDocumentsPage />,
+  },
+  {
+    title: "Shared Basic SDS Documents",
+    to: "/facility/basic/:companyId/sds-documents",
     icon: <FileText className="h-4 w-4" />,
     page: <SDSDocumentsPage />,
   },
@@ -51,6 +69,12 @@ export const navItems = [
   {
     title: "Access Tools",
     to: "/facility/:facilitySlug/access-tools",
+    icon: <Wrench className="h-4 w-4" />,
+    page: <AccessToolsPage />,
+  },
+  {
+    title: "Shared Basic Access Tools",
+    to: "/facility/basic/:companyId/access-tools",
     icon: <Wrench className="h-4 w-4" />,
     page: <AccessToolsPage />,
   },

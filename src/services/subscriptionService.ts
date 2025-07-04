@@ -12,8 +12,8 @@ export interface SubscriptionPlan {
 }
 
 export interface FacilitySubscription {
-  subscription_status: 'trial' | 'basic' | 'premium' | 'expired';
-  feature_access_level: 'trial' | 'basic' | 'premium' | 'expired';
+  subscription_status: 'trial' | 'basic' | 'pro' | 'premium' | 'expired';
+  feature_access_level: 'trial' | 'basic' | 'pro' | 'premium' | 'expired';
   trial_start_date: string;
   trial_end_date: string;
   trial_days_remaining: number;
@@ -27,15 +27,18 @@ export class SubscriptionService {
       const subscription = await this.getFacilitySubscription(facilityId);
       
       if (subscription) {
-        // Enhanced logic for trial users - they get access to basic and premium features during trial
-        const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
-        const premiumFeatures = ['incident_reporting', 'incidents'];
+        // Enhanced logic for trial users - they get access to all features during trial
+        const basicFeatures = ['sds_search'];
+        const proFeatures = ['ai_assistant', 'basic_qr_codes', 'label_printing', 'custom_branding'];
+        const premiumFeatures = ['incident_reporting', 'incidents', 'audit_trails'];
+        
         const isBasicFeature = basicFeatures.includes(featureName);
+        const isProFeature = proFeatures.includes(featureName);
         const isPremiumFeature = premiumFeatures.includes(featureName);
         const isActiveTrial = subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0;
         
-        // Active trial users get access to all features (basic + premium)
-        if (isActiveTrial && (isBasicFeature || isPremiumFeature)) {
+        // Active trial users get access to all features
+        if (isActiveTrial && (isBasicFeature || isProFeature || isPremiumFeature)) {
           return true;
         }
         
@@ -44,7 +47,12 @@ export class SubscriptionService {
           return true;
         }
         
-        // Basic users get only basic features (no premium features like incidents)
+        // Pro users get basic + pro features
+        if (subscription.subscription_status === 'pro' && (isBasicFeature || isProFeature)) {
+          return true;
+        }
+        
+        // Basic users get only basic features
         if (subscription.subscription_status === 'basic' && isBasicFeature) {
           return true;
         }
@@ -94,7 +102,7 @@ export class SubscriptionService {
       // Calculate subscription days remaining for paid plans
       let subscriptionDaysRemaining: number | undefined;
       
-      if (['basic', 'premium'].includes(data.subscription_status)) {
+      if (['basic', 'pro', 'premium'].includes(data.subscription_status)) {
         // For paid subscriptions, use trial_end_date as the subscription end date
         // This assumes that when a subscription is granted, trial_end_date is updated to the subscription end date
         const subscriptionEndDate = new Date(data.trial_end_date);
@@ -103,8 +111,8 @@ export class SubscriptionService {
       }
 
       return {
-        subscription_status: data.subscription_status as 'trial' | 'basic' | 'premium' | 'expired',
-        feature_access_level: data.feature_access_level as 'trial' | 'basic' | 'premium' | 'expired',
+        subscription_status: data.subscription_status as 'trial' | 'basic' | 'pro' | 'premium' | 'expired',
+        feature_access_level: data.feature_access_level as 'trial' | 'basic' | 'pro' | 'premium' | 'expired',
         trial_start_date: data.trial_start_date,
         trial_end_date: data.trial_end_date,
         trial_days_remaining: trialDaysRemaining,
@@ -149,7 +157,12 @@ export class SubscriptionService {
   }
 
   static hasBasicAccess(subscription: FacilitySubscription): boolean {
-    return ['basic', 'premium'].includes(subscription.feature_access_level) || 
+    return ['basic', 'pro', 'premium'].includes(subscription.feature_access_level) || 
+           (subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0);
+  }
+
+  static hasProAccess(subscription: FacilitySubscription): boolean {
+    return ['pro', 'premium'].includes(subscription.feature_access_level) || 
            (subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0);
   }
 
@@ -160,16 +173,18 @@ export class SubscriptionService {
 
   // Enhanced method to check if a feature is available for trial users
   static isFeatureAvailableForTrial(featureName: string): boolean {
-    const trialFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'incident_reporting', 'incidents'];
+    const trialFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes', 'label_printing', 'custom_branding', 'incident_reporting', 'incidents', 'audit_trails'];
     return trialFeatures.includes(featureName);
   }
 
   // Enhanced method to get feature tier
-  static getFeatureTier(featureName: string): 'basic' | 'premium' {
-    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
-    const premiumFeatures = ['incident_reporting', 'incidents'];
+  static getFeatureTier(featureName: string): 'basic' | 'pro' | 'premium' {
+    const basicFeatures = ['sds_search'];
+    const proFeatures = ['ai_assistant', 'basic_qr_codes', 'label_printing', 'custom_branding'];
+    const premiumFeatures = ['incident_reporting', 'incidents', 'audit_trails'];
     
     if (basicFeatures.includes(featureName)) return 'basic';
+    if (proFeatures.includes(featureName)) return 'pro';
     if (premiumFeatures.includes(featureName)) return 'premium';
     return 'premium'; // Default to premium for unknown features
   }

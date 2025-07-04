@@ -202,6 +202,7 @@ export type Database = {
         Row: {
           address: string | null
           billing_period: string | null
+          company_identifier: string | null
           contact_name: string | null
           created_at: string
           email: string | null
@@ -223,6 +224,7 @@ export type Database = {
         Insert: {
           address?: string | null
           billing_period?: string | null
+          company_identifier?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null
@@ -244,6 +246,7 @@ export type Database = {
         Update: {
           address?: string | null
           billing_period?: string | null
+          company_identifier?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null

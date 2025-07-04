@@ -34,14 +34,17 @@ export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
   const hasFeatureAccess = (feature: string): boolean => {
     if (!subscription) return false;
     
-    const basicFeatures = ['sds_search', 'ai_assistant', 'basic_qr_codes'];
-    const premiumFeatures = ['incident_reporting', 'incidents'];
+    const basicFeatures = ['sds_search'];
+    const proFeatures = ['ai_assistant', 'basic_qr_codes', 'label_printing', 'custom_branding'];
+    const premiumFeatures = ['incident_reporting', 'incidents', 'audit_trails'];
+    
     const isBasicFeature = basicFeatures.includes(feature);
+    const isProFeature = proFeatures.includes(feature);
     const isPremiumFeature = premiumFeatures.includes(feature);
     const isActiveTrial = subscription.subscription_status === 'trial' && subscription.trial_days_remaining > 0;
     
-    // Active trial users get access to all features (basic + premium)
-    if (isActiveTrial && (isBasicFeature || isPremiumFeature)) {
+    // Active trial users get access to all features
+    if (isActiveTrial && (isBasicFeature || isProFeature || isPremiumFeature)) {
       return true;
     }
     
@@ -50,7 +53,12 @@ export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
       return true;
     }
     
-    // Basic users get only basic features (no premium features like incidents)
+    // Pro users get basic + pro features
+    if (subscription.subscription_status === 'pro' && (isBasicFeature || isProFeature)) {
+      return true;
+    }
+    
+    // Basic users get only basic features
     if (subscription.subscription_status === 'basic' && isBasicFeature) {
       return true;
     }
