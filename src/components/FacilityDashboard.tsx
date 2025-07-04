@@ -10,6 +10,7 @@ import FacilityActivityCard from "./FacilityActivityCard";
 import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
+import SubscriptionStatusIndicator from "./SubscriptionStatusIndicator";
 import { interactionLogger } from "@/services/interactionLogger";
 import { AuditService } from "@/services/auditService";
 import { TrainingProvider } from "./training/OnboardingTrainingProvider";
@@ -68,6 +69,15 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
         />
 
         <div className="container mx-auto px-4 py-8">
+          {/* Subscription Status */}
+          <div className="mb-6">
+            <SubscriptionStatusIndicator 
+              facilityId={facility.id} 
+              facilitySlug={facility.slug}
+              showManageButton={true}
+            />
+          </div>
+
           {/* Training Welcome Card */}
           <div className="mb-6">
             <TrainingWelcomeCard onStartTraining={() => setShowTraining(true)} />

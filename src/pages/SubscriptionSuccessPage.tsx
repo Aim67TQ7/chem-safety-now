@@ -1,151 +1,123 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowRight, Building2 } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const SubscriptionSuccessPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [countdown, setCountdown] = useState(5);
-  const [facilityExists, setFacilityExists] = useState<boolean | null>(null);
-  const [facilityName, setFacilityName] = useState<string>("");
-
+  const [loading, setLoading] = useState(true);
   const facilitySlug = searchParams.get('facility');
 
   useEffect(() => {
-    const validateFacilityAndRedirect = async () => {
-      toast.success("Payment successful! Your subscription is now active.");
-      
-      // Validate facility if slug is provided
-      if (facilitySlug) {
-        try {
-          const { data: facility, error } = await supabase
+    const verifySubscription = async () => {
+      try {
+        // Give Stripe webhook time to process
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Refresh subscription status if we have a facility
+        if (facilitySlug) {
+          const { data: facility } = await supabase
             .from('facilities')
-            .select('facility_name')
+            .select('subscription_status')
             .eq('slug', facilitySlug)
             .single();
 
-          if (error || !facility) {
-            console.log('Facility not found after payment:', facilitySlug);
-            setFacilityExists(false);
-          } else {
-            setFacilityExists(true);
-            setFacilityName(facility.facility_name);
+          if (facility?.subscription_status !== 'trial') {
+            toast.success('Subscription activated successfully!');
           }
-        } catch (error) {
-          console.error('Error validating facility after payment:', error);
-          setFacilityExists(false);
         }
-      } else {
-        setFacilityExists(null);
+      } catch (error) {
+        console.error('Error verifying subscription:', error);
+      } finally {
+        setLoading(false);
       }
-
-      // Countdown timer for auto-redirect
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            handleRedirect();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
     };
 
-    validateFacilityAndRedirect();
-  }, [navigate, facilitySlug]);
+    verifySubscription();
+  }, [facilitySlug]);
 
-  const handleRedirect = () => {
-    if (facilitySlug && facilityExists) {
+  const handleContinue = () => {
+    if (facilitySlug) {
       navigate(`/facility/${facilitySlug}`);
     } else {
       navigate('/');
     }
   };
 
-  const handleContinue = () => {
-    handleRedirect();
-  };
-
-  const handleCreateFacility = () => {
-    navigate('/signup');
-  };
-
-  // Show facility not found message
-  if (facilitySlug && facilityExists === false) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl text-green-700">Payment Successful!</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
-              Your subscription is now active! However, the facility "{facilitySlug}" could not be found.
-            </p>
-            
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-700">
-                You can create a new facility to get started with your subscription.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Button onClick={handleCreateFacility} className="w-full">
-                <Building2 className="w-4 h-4 mr-2" />
-                Create New Facility
-              </Button>
-              
-              <Button onClick={() => navigate('/')} variant="outline" className="w-full">
-                Continue to Home
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Processing your subscription...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+      <Card className="max-w-md w-full text-center">
+        <CardHeader className="pb-4">
+          <div className="mx-auto mb-4">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
           </div>
-          <CardTitle className="text-2xl text-green-700">Payment Successful!</CardTitle>
+          <CardTitle className="text-2xl text-green-700">
+            Subscription Successful!
+          </CardTitle>
         </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-gray-600">
-            Thank you for your subscription! Your account has been upgraded and you now have access to all premium features.
-            {facilityExists && facilityName && (
-              <span className="block mt-2 font-medium">
-                Welcome to {facilityName}!
-              </span>
-            )}
-          </p>
-          
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-sm text-green-700">
-              Redirecting in {countdown} seconds...
+        
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-gray-600">
+              Thank you for subscribing! Your payment has been processed successfully.
+            </p>
+            <p className="text-sm text-gray-500">
+              You now have access to all the features included in your plan.
             </p>
           </div>
 
-          <Button onClick={handleContinue} className="w-full">
-            {facilityExists ? `Continue to ${facilityName || 'Dashboard'}` : 'Continue to Home'}
-            <ArrowRight className="w-4 h-4 ml-2" />
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="text-sm text-green-700 font-medium">
+              What's next?
+            </p>
+            <p className="text-sm text-green-600 mt-1">
+              {facilitySlug 
+                ? "Return to your facility dashboard to start using your new features."
+                : "Start exploring all the premium features now available to you."
+              }
+            </p>
+          </div>
+
+          <Button 
+            onClick={handleContinue}
+            size="lg"
+            className="w-full"
+          >
+            {facilitySlug ? (
+              <>
+                <Building2 className="w-4 h-4 mr-2" />
+                Go to Facility Dashboard
+              </>
+            ) : (
+              <>
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Continue to Dashboard
+              </>
+            )}
           </Button>
+
+          <div className="text-xs text-gray-500 pt-2">
+            <p>
+              Need help? Contact our support team anytime.
+              <br />
+              You can manage your subscription from your account settings.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

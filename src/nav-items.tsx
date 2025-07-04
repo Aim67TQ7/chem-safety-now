@@ -16,6 +16,9 @@ import AccessToolsPage from "@/pages/AccessToolsPage";
 import LabelPrinterPage from "@/pages/LabelPrinterPage";
 import AdminLabelPrinterPage from "@/pages/AdminLabelPrinterPage";
 import SalesRepPage from "@/pages/SalesRepPage";
+import SubscriptionPlansPage from "@/pages/SubscriptionPlansPage";
+import SubscriptionSuccessPage from "@/pages/SubscriptionSuccessPage";
+import SubscriptionCancelPage from "@/pages/SubscriptionCancelPage";
 
 export const navItems = [
   {
@@ -143,5 +146,29 @@ export const navItems = [
     to: "/sales-rep/:salesRepId",
     icon: <UserCheck className="h-4 w-4" />,
     page: <SalesRepPage />,
+  },
+  {
+    title: "Subscribe",
+    to: "/subscribe",
+    icon: <Crown className="h-4 w-4" />,
+    page: <SubscriptionPlansPage />,
+  },
+  {
+    title: "Subscribe with Facility",
+    to: "/subscribe/:facilitySlug",
+    icon: <Crown className="h-4 w-4" />,
+    page: <SubscriptionPlansPage />,
+  },
+  {
+    title: "Subscription Success",
+    to: "/subscription/success",
+    icon: <Crown className="h-4 w-4" />,
+    page: <SubscriptionSuccessPage />,
+  },
+  {
+    title: "Subscription Cancel",
+    to: "/subscription/cancel",
+    icon: <Crown className="h-4 w-4" />,
+    page: <SubscriptionCancelPage />,
   },
 ];

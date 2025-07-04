@@ -77,9 +77,16 @@ serve(async (req) => {
         if (subscription.items.data.length > 0) {
           const price = subscription.items.data[0].price;
           const amount = price.unit_amount || 0;
-          if (amount >= 2000) { // $20+ = premium
+          // Updated pricing tiers
+          if (amount >= 3900) { // $39+ = premium
             planType = 'premium';
             accessLevel = 'premium';
+          } else if (amount >= 1900) { // $19+ = pro
+            planType = 'pro';
+            accessLevel = 'pro';
+          } else if (amount >= 500) { // $5+ = basic
+            planType = 'basic';
+            accessLevel = 'basic';
           }
         }
 
