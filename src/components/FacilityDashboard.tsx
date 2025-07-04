@@ -77,7 +77,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
           <div className="mb-16 relative">
             {/* SDS Search Component */}
             <div className="max-w-6xl mx-auto">
-              <SDSSearch facilityId={facility.id} />
+              <SDSSearch facilityId={facility.id} facilitySlug={facility.slug} />
             </div>
           </div>
 
