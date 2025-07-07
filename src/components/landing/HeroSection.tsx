@@ -36,7 +36,7 @@ const HeroSection = () => {
           </div>
           <div className="flex items-center">
             <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
-            Pass Inspections
+            Pass Every Inspection
           </div>
           <div className="flex items-center">
             <CheckCircle className="w-6 h-6 text-green-400 mr-3" />

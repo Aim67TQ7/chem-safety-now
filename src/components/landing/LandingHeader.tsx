@@ -26,15 +26,9 @@ const LandingHeader = ({ showStanley, onTalkWithStanley }: LandingHeaderProps) =
             <div className="flex items-center space-x-3">
               <div>
                 <h1 className="text-2xl font-bold text-white">QRsafetyapp.com</h1>
-                <p className="text-sm text-gray-200">AI-Powered Chemical Safety</p>
+                <p className="text-sm text-gray-200">Digital Safety Management</p>
               </div>
             </div>
-            <Button 
-              onClick={onTalkWithStanley}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold"
-            >
-              Talk with Stanley
-            </Button>
           </div>
         </div>
       </header>

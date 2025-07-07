@@ -26,9 +26,9 @@ const Index = () => {
         minHeight: '100vh'
       }}
     >
-      {/* Enhanced double-exposure overlay with much more transparency */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-transparent to-green-900/10 mix-blend-multiply"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/1 to-transparent mix-blend-screen"></div>
+      {/* Enhanced double-exposure overlay with blur and better contrast */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-black/20 to-green-900/30 mix-blend-multiply backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/5 to-transparent mix-blend-screen"></div>
       
       <LandingHeader 
         showStanley={showStanley}
