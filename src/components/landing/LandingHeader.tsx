@@ -24,13 +24,6 @@ const LandingHeader = ({ showStanley, onTalkWithStanley }: LandingHeaderProps) =
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10">
-                <img 
-                  src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-                  alt="QRsafetyapp.com Logo" 
-                  className="w-full h-full object-contain"
-                />
-              </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">QRsafetyapp.com</h1>
                 <p className="text-sm text-gray-200">AI-Powered Chemical Safety</p>
