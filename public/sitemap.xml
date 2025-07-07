@@ -7,7 +7,7 @@
   
   <!-- Main landing page - highest priority for SDS/MSDS rankings -->
   <url>
-    <loc>https://chemlabel-gpt.com/</loc>
+    <loc>https://qrsafetyapp.com/</loc>
     <lastmod>2025-01-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -15,7 +15,7 @@
   
   <!-- Public signup page -->
   <url>
-    <loc>https://chemlabel-gpt.com/signup</loc>
+    <loc>https://qrsafetyapp.com/signup</loc>
     <lastmod>2025-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -23,7 +23,7 @@
   
   <!-- Sales partner program -->
   <url>
-    <loc>https://chemlabel-gpt.com/sales-partner</loc>
+    <loc>https://qrsafetyapp.com/sales-partner</loc>
     <lastmod>2025-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -31,21 +31,21 @@
   
   <!-- Legal pages -->
   <url>
-    <loc>https://chemlabel-gpt.com/privacy</loc>
+    <loc>https://qrsafetyapp.com/privacy</loc>
     <lastmod>2025-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
   <url>
-    <loc>https://chemlabel-gpt.com/terms</loc>
+    <loc>https://qrsafetyapp.com/terms</loc>
     <lastmod>2025-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
   <url>
-    <loc>https://chemlabel-gpt.com/sales-partner-terms</loc>
+    <loc>https://qrsafetyapp.com/sales-partner-terms</loc>
     <lastmod>2025-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

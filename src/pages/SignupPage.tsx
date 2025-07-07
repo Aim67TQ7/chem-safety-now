@@ -146,7 +146,7 @@ const SignupPage = () => {
       }
       
       toast({
-        title: "Welcome to ChemLabel-GPT!",
+        title: "Welcome to QRsafetyapp.com!",
         description: "Your facility has been set up successfully.",
       });
       
@@ -184,7 +184,7 @@ const SignupPage = () => {
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">ChemLabel-GPT</h1>
+                <h1 className="text-2xl font-bold text-gray-900">QRsafetyapp.com</h1>
                 <p className="text-sm text-gray-600">AI-Powered Chemical Safety</p>
               </div>
             </div>

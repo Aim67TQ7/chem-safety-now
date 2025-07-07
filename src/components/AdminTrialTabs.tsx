@@ -141,7 +141,7 @@ const AdminTrialTabs = ({ facilities, onStatusUpdate }: AdminTrialTabsProps) => 
                     </div>
                     {facility.slug && (
                       <a 
-                        href={`https://chemlabel-gpt.com/facility/${facility.slug}`} 
+                        href={`https://qrsafetyapp.com/facility/${facility.slug}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-xs text-blue-500 hover:underline"

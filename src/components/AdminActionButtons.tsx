@@ -38,7 +38,7 @@ const AdminActionButtons = ({
   const [trialDays, setTrialDays] = useState<number>(7);
   const [notes, setNotes] = useState<string>('');
 
-  const adminEmail = sessionStorage.getItem("adminEmail") || "admin@chemlabel-gpt.com";
+  const adminEmail = sessionStorage.getItem("adminEmail") || "admin@qrsafetyapp.com";
 
   const handleAction = async () => {
     setLoading(true);

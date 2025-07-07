@@ -44,9 +44,9 @@ const SEOHelmet = () => {
     
     // Update page title for better SEO on public pages
     if (location.pathname === '/') {
-      document.title = 'ChemLabel-GPT – AI-Powered SDS Lookup & OSHA Chemical Safety Management';
+      document.title = 'QRsafetyapp.com – AI-Powered SDS Lookup & OSHA Chemical Safety Management';
     } else if (location.pathname === '/signup') {
-      document.title = 'Sign Up - ChemLabel-GPT SDS Lookup & Chemical Safety Platform';
+      document.title = 'Sign Up - QRsafetyapp.com SDS Lookup & Chemical Safety Platform';
     }
     
   }, [location.pathname]);

@@ -19,7 +19,7 @@ interface AccessToolsProps {
 }
 
 const AccessTools = ({ facilityData }: AccessToolsProps) => {
-  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+  const facilityUrl = `https://qrsafetyapp.com/facility/${facilityData.slug}`;
 
   return (
     <div className="space-y-6">

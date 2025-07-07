@@ -8,11 +8,11 @@ const LandingFooter = () => {
             <div className="w-8 h-8">
               <img 
                 src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-                alt="ChemLabel-GPT Logo" 
+                alt="QRsafetyapp.com Logo" 
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="text-xl font-bold">ChemLabel-GPT</span>
+            <span className="text-xl font-bold">QRsafetyapp.com</span>
           </div>
           <div className="flex items-center space-x-6">
             <a 
@@ -22,7 +22,7 @@ const LandingFooter = () => {
               Sales Partner Program
             </a>
             <p className="text-gray-300">
-              © 2025 ChemLabel-GPT. OSHA Compliant Chemical Safety Solutions.
+              © 2025 QRsafetyapp.com. OSHA Compliant Chemical Safety Solutions.
             </p>
           </div>
         </div>

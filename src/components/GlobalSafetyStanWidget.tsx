@@ -35,7 +35,7 @@ interface Message {
 
 export default function GlobalSafetyStanWidget({
   initialPosition = { x: 400, y: 50 },
-  companyName = 'ChemLabel-GPT',
+  companyName = 'QRsafetyapp.com',
   customInstructions = '',
   industry = 'Chemical Safety',
   selectedDocument,
@@ -95,7 +95,7 @@ export default function GlobalSafetyStanWidget({
       setMessages([{
         id: '1',
         role: 'assistant',
-        content: `Hi! I'm Stan, your Safety Expert. Ready to see how ChemLabel-GPT can save your facility hours of paperwork?\n\nJust give me your email and I'll show you around!`,
+        content: `Hi! I'm Stan, your Safety Expert. Ready to see how QRsafetyapp.com can save your facility hours of paperwork?\n\nJust give me your email and I'll show you around!`,
         timestamp: new Date()
       }]);
     } else if (isSignupPage) {

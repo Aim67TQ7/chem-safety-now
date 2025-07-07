@@ -23,7 +23,7 @@ const CTASection = () => {
             🟢 Ditch the dusty binders and filing cabinets.
           </h3>
           <p className="text-xl mb-6">
-            Get ChemLabel-GPT working for your team in under 15 minutes.
+            Get QRsafetyapp.com working for your team in under 15 minutes.
           </p>
           <Button 
             onClick={handleGetStarted}

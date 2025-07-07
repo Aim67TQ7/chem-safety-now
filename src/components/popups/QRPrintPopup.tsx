@@ -25,9 +25,9 @@ const QRPrintPopup = ({ isOpen, onClose, facilityData, facilityUrl }: QRPrintPop
   const facilityDisplayName = facilityData.facility_name || 'Facility';
 
   // Ensure we're using the correct domain
-  const correctedFacilityUrl = facilityUrl.includes('chemlabel-gpt.com') 
+  const correctedFacilityUrl = facilityUrl.includes('qrsafetyapp.com') 
     ? facilityUrl 
-    : `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+    : `https://qrsafetyapp.com/facility/${facilityData.slug}`;
 
   useEffect(() => {
     if (isOpen) {

@@ -24,11 +24,11 @@ const PrivacyPage = () => {
               <div className="w-8 h-8">
                 <img 
                   src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-                  alt="ChemLabel-GPT Logo" 
+                  alt="QRsafetyapp.com Logo" 
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="text-lg font-bold text-gray-900">ChemLabel-GPT</span>
+              <span className="text-lg font-bold text-gray-900">QRsafetyapp.com</span>
             </div>
           </div>
         </div>

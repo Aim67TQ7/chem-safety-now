@@ -11,7 +11,7 @@ const BenefitsSection = () => {
             📱 Why Smart Facilities Are Replacing Paper Systems
           </h2>
           <p className="text-xl text-gray-200 font-semibold mb-16">
-            ChemLabel-GPT eliminates the time drain and compliance risks of paper-based safety management.
+            QRsafetyapp.com eliminates the time drain and compliance risks of paper-based safety management.
           </p>
         </div>
         

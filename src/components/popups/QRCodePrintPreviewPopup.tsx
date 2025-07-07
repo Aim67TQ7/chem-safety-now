@@ -29,7 +29,7 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
   const { toast } = useToast();
   
   const facilityDisplayName = facilityData.facility_name || 'Facility';
-  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+  const facilityUrl = `https://qrsafetyapp.com/facility/${facilityData.slug}`;
 
   useEffect(() => {
     if (isOpen) {
@@ -173,15 +173,15 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
           </div>
         )}
 
-        {/* ChemLabel-GPT branding */}
+        {/* QRsafetyapp.com branding */}
         <div className="text-center">
           <div className="flex items-center justify-center space-x-1 mb-1">
             <img 
               src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-              alt="ChemLabel-GPT Logo" 
+              alt="QRsafetyapp.com Logo" 
               className="w-3 h-3 object-contain"
             />
-            <p className="text-xs text-gray-800 font-bold">ChemLabel-GPT</p>
+            <p className="text-xs text-gray-800 font-bold">QRsafetyapp.com</p>
           </div>
           <p className="text-xs text-gray-500">No app required • Works with any smartphone</p>
         </div>

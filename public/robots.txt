@@ -1,5 +1,5 @@
 
-# ChemLabel-GPT Robots.txt - Optimized for Chemical Safety SEO
+# QRsafetyapp.com Robots.txt - Optimized for Chemical Safety SEO
 User-agent: *
 Allow: /
 Allow: /signup
@@ -58,7 +58,7 @@ User-agent: Claude-Web
 Disallow: /
 
 # Sitemap location
-Sitemap: https://chemlabel-gpt.com/sitemap.xml
+Sitemap: https://qrsafetyapp.com/sitemap.xml
 
 # Crawl delay for respectful bots
 Crawl-delay: 1

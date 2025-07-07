@@ -17,10 +17,10 @@ interface DesktopLinkGeneratorProps {
 }
 
 const DesktopLinkGenerator = ({ facilityData }: DesktopLinkGeneratorProps) => {
-  const [linkTitle, setLinkTitle] = useState(facilityData.facility_name || "ChemLabel-GPT Access");
+  const [linkTitle, setLinkTitle] = useState(facilityData.facility_name || "QRsafetyapp.com Access");
   const [generating, setGenerating] = useState(false);
 
-  const facilityUrl = `https://chemlabel-gpt.com/facility/${facilityData.slug}`;
+  const facilityUrl = `https://qrsafetyapp.com/facility/${facilityData.slug}`;
 
   const generateDesktopFile = () => {
     setGenerating(true);
@@ -29,7 +29,7 @@ const DesktopLinkGenerator = ({ facilityData }: DesktopLinkGeneratorProps) => {
       // Create Windows .url file content
       const urlFileContent = `[InternetShortcut]
 URL=${facilityUrl}
-IconFile=${facilityData.logo_url || 'https://chemlabel-gpt.com/favicon.ico'}
+IconFile=${facilityData.logo_url || 'https://qrsafetyapp.com/favicon.ico'}
 IconIndex=0`;
 
       // Create and download the .url file

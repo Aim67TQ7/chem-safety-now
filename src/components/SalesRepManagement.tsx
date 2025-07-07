@@ -290,7 +290,7 @@ const SalesRepManagement = () => {
                     <FormItem>
                       <FormLabel>Email Address *</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="john@chemlabel-gpt.com" {...field} required disabled={submitting} />
+                        <Input type="email" placeholder="john@qrsafetyapp.com" {...field} required disabled={submitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
