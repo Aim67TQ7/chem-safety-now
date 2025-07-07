@@ -136,8 +136,8 @@ const TermsPage = () => {
             </p>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-700">
-                <strong>Email:</strong> legal@chemlabel-gpt.com<br />
-                <strong>Address:</strong> ChemLabel-GPT Legal Department<br />
+                <strong>Email:</strong> legal@qrsafetyapp.com<br />
+                <strong>Address:</strong> QRsafetyapp.com Legal Department<br />
                 123 Safety Boulevard, Suite 100<br />
                 Industrial City, IC 12345
               </p>

@@ -90,7 +90,7 @@ serve(async (req) => {
     }
     logStep("Using price ID", { priceId, billingCycle });
 
-    const origin = req.headers.get("origin") || "https://chemlabel-gpt.com";
+    const origin = req.headers.get("origin") || "https://qrsafetyapp.com";
     const facilityParam = facilitySlug ? `?facility=${facilitySlug}` : '';
     const successUrl = `${origin}/subscription/success${facilityParam}`;
     const cancelUrl = `${origin}/subscription/cancel${facilityParam}`;

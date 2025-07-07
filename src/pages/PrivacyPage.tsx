@@ -139,7 +139,7 @@ const PrivacyPage = () => {
               <li><strong>Right to Object:</strong> Object to our processing of your data</li>
             </ul>
             <p className="text-gray-700 mb-4">
-              To exercise these rights, contact us at <strong>privacy@chemlabel-gpt.com</strong>
+              To exercise these rights, contact us at <strong>privacy@qrsafetyapp.com</strong>
             </p>
           </section>
 
@@ -198,9 +198,9 @@ const PrivacyPage = () => {
             </p>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-700">
-                <strong>Data Protection Officer:</strong> privacy@chemlabel-gpt.com<br />
-                <strong>General Contact:</strong> support@chemlabel-gpt.com<br />
-                <strong>Address:</strong> ChemLabel-GPT Privacy Department<br />
+                <strong>Data Protection Officer:</strong> privacy@qrsafetyapp.com<br />
+                <strong>General Contact:</strong> support@qrsafetyapp.com<br />
+                <strong>Address:</strong> QRsafetyapp.com Privacy Department<br />
                 123 Safety Boulevard, Suite 100<br />
                 Industrial City, IC 12345<br />
                 <strong>EU Representative:</strong> Available upon request for EU residents
