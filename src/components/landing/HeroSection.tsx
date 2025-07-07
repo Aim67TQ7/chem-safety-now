@@ -14,10 +14,10 @@ const HeroSection = () => {
     <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
       <div className="text-center">
         <h1 className="text-7xl font-bold text-white mb-8 drop-shadow-2xl leading-tight">
-          Stop failing safety inspections
+          Stop spending 15 minutes reading every SDS
         </h1>
         <p className="text-3xl text-gray-100 mb-16 max-w-3xl mx-auto drop-shadow-lg font-medium">
-          Get complete incident reports in 3 minutes, not 3 hours
+          AI extracts critical safety data in seconds - you approve in minutes
         </p>
         
         <div className="flex justify-center mb-12">
@@ -32,15 +32,15 @@ const HeroSection = () => {
         <div className="flex items-center justify-center space-x-8 text-lg text-gray-100 font-semibold">
           <div className="flex items-center">
             <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
-            Avoid OSHA Fines
+            Same Compliance
           </div>
           <div className="flex items-center">
             <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
-            Pass Every Inspection
+            80% Less Time
           </div>
           <div className="flex items-center">
             <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
-            No More Paperwork
+            Zero Errors from Missed Details
           </div>
         </div>
       </div>
