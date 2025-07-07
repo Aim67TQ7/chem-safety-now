@@ -6,9 +6,7 @@ import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
 import { interactionLogger } from "@/services/interactionLogger";
 import { AuditService } from "@/services/auditService";
-import { TrainingProvider } from "./training/OnboardingTrainingProvider";
-import TrainingStanChat from "./training/TrainingStanChat";
-import StanleyTrainingFloatingIcon from "./StanleyTrainingFloatingIcon";
+
 
 interface FacilityProps {
   id: string;
@@ -26,7 +24,6 @@ interface FacilityDashboardProps {
 }
 
 const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
-  const [showTraining, setShowTraining] = useState(false);
 
   // Set facility context for all logging
   useEffect(() => {
@@ -50,8 +47,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
   }, [facility.id, facility.facility_name, facility.slug]);
 
   return (
-    <TrainingProvider facilityId={facility.id}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         {/* Global Navigation Bar */}
         <FacilityNavbar 
           facilityName={facility.facility_name}
@@ -79,20 +75,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
           </div>
         </div>
 
-        {/* Floating Stanley Training Icon */}
-        <StanleyTrainingFloatingIcon 
-          onOpenTraining={() => setShowTraining(true)}
-        />
-
-        {/* Training Chat Modal */}
-        {showTraining && (
-          <TrainingStanChat 
-            facilityData={facility}
-            onClose={() => setShowTraining(false)}
-          />
-        )}
-      </div>
-    </TrainingProvider>
+    </div>
   );
 };
 

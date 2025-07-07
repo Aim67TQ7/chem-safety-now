@@ -66,7 +66,7 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
 
   const featureDescriptions = {
     sds_search: "Unlimited SDS document search",
-    ai_assistant: "24/7 access to Sarah AI safety assistant", 
+    ai_assistant: "AI-powered safety guidance and analysis", 
     basic_qr_codes: "Generate facility QR codes",
     label_printing: "Create GHS compliant labels",
     custom_branding: "Custom branded facility site",

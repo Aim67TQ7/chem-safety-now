@@ -58,7 +58,7 @@ const SubscriptionStatusHeader = ({ facilityId, onUpgrade }: SubscriptionStatusH
             <>
               <AlertTriangle className="w-4 h-4" />
               <span className="text-sm font-medium">
-                Trial ending in {subscription.trial_days_remaining} day{subscription.trial_days_remaining !== 1 ? 's' : ''} - upgrade to continue access to SDS search and Sarah AI
+                Trial ending in {subscription.trial_days_remaining} day{subscription.trial_days_remaining !== 1 ? 's' : ''} - upgrade to continue access to SDS search and AI assistance
               </span>
             </>
           ) : (
