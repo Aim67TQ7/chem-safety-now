@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import HeroSection from "@/components/landing/HeroSection";
-import BenefitsSection from "@/components/landing/BenefitsSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ComparisonSection from "@/components/landing/ComparisonSection";
 import ProblemStatementSection from "@/components/landing/ProblemStatementSection";
@@ -37,7 +36,6 @@ const Index = () => {
       />
 
       <HeroSection />
-      <BenefitsSection />
       <HowItWorksSection />
       <ComparisonSection />
       <ProblemStatementSection />
