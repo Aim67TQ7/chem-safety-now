@@ -257,13 +257,25 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
 
       const pdfUrl = document.bucket_url || document.source_url;
       
-      // Step 1: Extract data using proper extraction function
+      // Step 1: First save the document to get an ID, then extract data
+      toast.loading('Saving document...');
+      const tempDoc = await saveToDatabase({
+        product_name: document.product_name,
+        manufacturer: document.manufacturer,
+        source_url: document.source_url,
+        bucket_url: pdfUrl
+      }, pdfUrl);
+
+      if (!tempDoc) {
+        throw new Error('Failed to save document for extraction');
+      }
+
+      // Step 2: Extract data using proper extraction function
       toast.loading('Extracting label data...');
       const { data, error } = await supabase.functions.invoke('extract-sds-text', {
         body: {
-          pdf_url: pdfUrl,
-          product_name: document.product_name,
-          manufacturer: document.manufacturer
+          document_id: tempDoc.id,
+          bucket_url: pdfUrl
         }
       });
 
@@ -272,24 +284,18 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
         throw error;
       }
 
-      if (data.success && data.extractedData) {
-        // Step 2: Save to database
-        toast.loading('Saving document...');
-        const savedDoc = await saveToDatabase(data.extractedData, pdfUrl);
+      if (data.success) {
+        // Step 3: Navigate to label printer with the extracted document
+        toast.loading('Opening label printer...');
         
-        if (savedDoc) {
-          // Step 3: Navigate immediately
-          toast.loading('Opening label printer...');
-          
-          const printerUrl = isAdminContext 
-            ? `/admin/label-printer?documentId=${savedDoc.id}`
-            : `/facility/${facilitySlug}/label-printer?documentId=${savedDoc.id}`;
-          
-          console.log('🖨️ Quick Print navigating to:', printerUrl);
-          navigate(printerUrl);
-          
-          toast.success(`Redirecting to label printer for ${document.product_name}`);
-        }
+        const printerUrl = isAdminContext 
+          ? `/admin/label-printer?documentId=${tempDoc.id}`
+          : `/facility/${facilitySlug}/label-printer?documentId=${tempDoc.id}`;
+        
+        console.log('🖨️ Quick Print navigating to:', printerUrl);
+        navigate(printerUrl);
+        
+        toast.success(`Redirecting to label printer for ${document.product_name}`);
       } else {
         throw new Error(data.error || 'Quick Print failed');
       }
