@@ -26,7 +26,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
   const { toast } = useToast();
 
   const facilityDisplayName = facilityData.facility_name || 'Facility';
-  const facilityUrl = `${window.location.origin}/facility/${facilityData.slug}`;
+  const facilityUrl = `https://qrsafetyapp.com/facility/${facilityData.slug}`;
 
   useEffect(() => {
     generateQRCode();

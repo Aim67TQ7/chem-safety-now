@@ -10,7 +10,7 @@ const HeroSection = () => {
   const navigate = useNavigate();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   
-  const demoUrl = `${window.location.origin}/facility/demo`;
+  const demoUrl = `https://qrsafetyapp.com/facility/demo`;
 
   useEffect(() => {
     generateQRCode();
