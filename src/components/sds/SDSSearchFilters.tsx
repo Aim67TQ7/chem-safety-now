@@ -10,7 +10,6 @@ interface SDSSearchFiltersProps {
   filterStatus: string;
   onFilterStatusChange: (value: string) => void;
   filterCounts?: {
-    oshaCompliant: number;
     manualReview: number;
     highQuality: number;
     readable: number;
@@ -20,7 +19,6 @@ interface SDSSearchFiltersProps {
 
 const quickFilters = [
   { value: 'all', label: 'All Documents', key: null },
-  { value: 'osha_compliant', label: 'OSHA Compliant', key: 'oshaCompliant' },
   { value: 'manual_review_required', label: 'Needs Review', key: 'manualReview' },
   { value: 'ai_enhanced', label: 'AI Enhanced', key: 'highQuality' }
 ];

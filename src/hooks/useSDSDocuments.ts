@@ -36,7 +36,7 @@ export const useSDSDocuments = ({
   pageSize = 20
 }: UseSDSDocumentsOptions) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedSearchTerm = useDebounce(searchTerm, 1200);
 
   // Reset page when search/filters change
   useEffect(() => {
@@ -97,7 +97,6 @@ export const useSDSDocuments = ({
     
     const docs = data.documents;
     return {
-      oshaCompliant: docs.filter(doc => doc.extraction_status === 'osha_compliant').length,
       manualReview: docs.filter(doc => doc.extraction_status === 'manual_review_required').length,
       highQuality: docs.filter(doc => (doc.ai_extraction_confidence || 0) >= 80).length,
       readable: docs.filter(doc => doc.is_readable).length
