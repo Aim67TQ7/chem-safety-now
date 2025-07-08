@@ -124,38 +124,40 @@ const HeroSection = () => {
         </div>
 
         {/* Search Interface */}
-        <div className="mb-8">
-          {/* Glowing background for the search area */}
-          <div className="absolute -inset-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-2xl blur opacity-30 animate-pulse"></div>
-          
-          <div className="relative flex gap-4 p-2 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border-4 border-orange-400 shadow-2xl">
-            <Input
-              placeholder="Enter chemical name, product, or manufacturer (e.g., Acetone, 3M Scotch-Weld, Loctite 242...)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1 text-base md:text-xl py-6 px-4 border-3 border-orange-300 focus:border-red-500 focus:ring-4 focus:ring-orange-200 bg-white shadow-lg font-medium placeholder:text-gray-600 placeholder:font-semibold"
-            />
-            <Button 
-              onClick={handleSearch}
-              disabled={isSearching}
-              size="lg"
-              className="px-2 md:px-8 py-3 md:py-6 text-xs md:text-lg bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:to-red-700 text-white font-black shadow-2xl transform transition-all hover:scale-110 border-2 border-white"
-            >
-              {isSearching ? (
-                <>
-                  <div className="animate-spin w-3 md:w-5 h-3 md:h-5 mr-1 md:mr-2 border-2 border-white border-t-transparent rounded-full" />
-                  <span className="hidden sm:inline">SEARCHING...</span>
-                  <span className="sm:hidden">SEARCH</span>
-                </>
-              ) : (
-                <>
-                  <Search className="w-3 md:w-5 h-3 md:h-5 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">SEARCH SDS NOW</span>
-                  <span className="sm:hidden">SEARCH</span>
-                </>
-              )}
-            </Button>
+        <div className="mb-8 relative">
+          <div className="relative">
+            {/* Glowing background for the search area only */}
+            <div className="absolute -inset-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-2xl blur opacity-30 animate-pulse"></div>
+            
+            <div className="relative flex gap-4 p-2 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border-4 border-orange-400 shadow-2xl">
+              <Input
+                placeholder="Enter chemical name, product, or manufacturer (e.g., Acetone, 3M Scotch-Weld, Loctite 242...)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1 text-base md:text-xl py-6 px-4 border-3 border-orange-300 focus:border-red-500 focus:ring-4 focus:ring-orange-200 bg-white shadow-lg font-medium placeholder:text-gray-600 placeholder:font-semibold"
+              />
+              <Button 
+                onClick={handleSearch}
+                disabled={isSearching}
+                size="lg"
+                className="px-2 md:px-8 py-3 md:py-6 text-xs md:text-lg bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:to-red-700 text-white font-black shadow-2xl transform transition-all hover:scale-110 border-2 border-white"
+              >
+                {isSearching ? (
+                  <>
+                    <div className="animate-spin w-3 md:w-5 h-3 md:h-5 mr-1 md:mr-2 border-2 border-white border-t-transparent rounded-full" />
+                    <span className="hidden sm:inline">SEARCHING...</span>
+                    <span className="sm:hidden">SEARCH</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-3 md:w-5 h-3 md:h-5 mr-1 md:mr-2" />
+                    <span className="hidden sm:inline">SEARCH SDS NOW</span>
+                    <span className="sm:hidden">SEARCH</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
           
           {searchResults.length > 0 && (
