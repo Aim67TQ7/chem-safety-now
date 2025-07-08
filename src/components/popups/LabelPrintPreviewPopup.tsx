@@ -378,7 +378,7 @@ const LabelPrintPreviewPopup = ({
                   className="flex items-center gap-2"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  Edit Label
+                  Back to Access Tools
                 </Button>
               </div>
 

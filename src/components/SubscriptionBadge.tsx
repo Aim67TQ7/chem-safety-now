@@ -13,6 +13,11 @@ interface SubscriptionBadgeProps {
 const SubscriptionBadge = ({ subscription, onUpgrade, loading }: SubscriptionBadgeProps) => {
   const { isDemo, navigateToSignup } = useDemoContext();
 
+  // Hide subscription badge completely in demo mode
+  if (isDemo) {
+    return null;
+  }
+
   if (loading || !subscription) {
     return (
       <div className="flex items-center space-x-2">
@@ -28,21 +33,14 @@ const SubscriptionBadge = ({ subscription, onUpgrade, loading }: SubscriptionBad
         className="bg-trial-foreground text-trial border-trial/20 flex items-center gap-1"
       >
         <Clock className="w-3 h-3" />
-        {isDemo ? 'Demo Mode' : `Trial - ${subscription.trial_days_remaining} days left`}
+        Trial - {subscription.trial_days_remaining} days left
       </Badge>
       <Button 
         size="sm" 
-        onClick={isDemo ? navigateToSignup : onUpgrade}
+        onClick={onUpgrade}
         className="bg-trial hover:bg-trial/90 text-trial-foreground font-medium px-4 py-1 h-8"
       >
-        {isDemo ? (
-          <>
-            <UserPlus className="w-3 h-3 mr-1" />
-            Create Your Site
-          </>
-        ) : (
-          'UPGRADE'
-        )}
+        UPGRADE
       </Button>
     </div>
   );

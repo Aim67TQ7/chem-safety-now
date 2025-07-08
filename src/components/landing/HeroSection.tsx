@@ -42,8 +42,19 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
-      <div className="w-full max-w-4xl">
+    <section className="relative flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 overflow-hidden">
+      {/* Subtle Hero Background */}
+      <div 
+        className="absolute inset-0 opacity-[0.03] blur-3xl"
+        style={{
+          backgroundImage: 'url("/lovable-uploads/906a5858-4278-496a-b72f-849e51561f57.png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
+      
+      <div className="w-full max-w-4xl relative z-10">
         {/* Hero Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">

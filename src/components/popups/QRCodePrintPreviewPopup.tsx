@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import QRCodeLib from 'qrcode';
 import { useToast } from "@/hooks/use-toast";
@@ -260,6 +260,15 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
             >
               <Download className="w-4 h-4" />
               Download QR Code
+            </Button>
+
+            <Button 
+              onClick={onClose}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Back to Access Tools
             </Button>
           </div>
 

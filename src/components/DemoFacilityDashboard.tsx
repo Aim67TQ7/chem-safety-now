@@ -65,8 +65,8 @@ const DemoFacilityDashboard: React.FC<DemoFacilityDashboardProps> = ({ facility 
         <Alert className="mb-6 border-blue-200 bg-blue-50">
           <Eye className="h-4 w-4" />
           <AlertDescription className="text-blue-800">
-            <strong>You're viewing a live demo.</strong> Feel free to explore all features! 
-            Data modifications, printing, and downloads are disabled in demo mode.
+            <strong>You're viewing a live demo.</strong> Explore all features! 
+            Create your own site to enable full functionality including printing and downloads.
           </AlertDescription>
         </Alert>
       </div>
