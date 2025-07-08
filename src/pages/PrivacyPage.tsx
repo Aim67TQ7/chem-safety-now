@@ -46,7 +46,7 @@ const PrivacyPage = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
             <p className="text-gray-700 mb-4">
-              ChemLabel-GPT ("we," "our," or "us") is committed to protecting your privacy. 
+              QRSafetyApp ("we," "our," or "us") is committed to protecting your privacy. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
             </p>
             <p className="text-gray-700 mb-4">
@@ -78,7 +78,7 @@ const PrivacyPage = () => {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. How We Use Your Information</h2>
             <p className="text-gray-700 mb-4">We use your information to:</p>
             <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li>Provide and maintain the ChemLabel-GPT Service</li>
+              <li>Provide and maintain the QRSafetyApp Service</li>
               <li>Process transactions and manage subscriptions</li>
               <li>Generate compliance reports and safety analytics</li>
               <li>Improve our Service and develop new features</li>
