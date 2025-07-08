@@ -16,7 +16,7 @@ const GlobalHeader = () => {
           onClick={handleLogoClick}
         >
           <img 
-            src="/lovable-uploads/971f2403-1d4a-499a-aadc-0bc3a2cdb1df.png" 
+            src="/lovable-uploads/18c1efed-2e96-48a0-a62a-d5887c53ac30.png" 
             alt="QRSafetyApp Logo" 
             className="h-10 w-10 object-contain"
           />
