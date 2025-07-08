@@ -43,8 +43,8 @@ const HeroSection = () => {
       
       const { data, error } = await supabase.functions.invoke('sds-search', {
         body: { 
-          query: searchTerm,
-          limit: 5 // Limit results for trial
+          product_name: searchTerm,
+          max_results: 5 // Limit results for trial
         }
       });
 
