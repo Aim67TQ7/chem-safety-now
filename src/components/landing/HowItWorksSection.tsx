@@ -1,7 +1,7 @@
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-20 relative z-10">
+    <section className="pt-8 pb-20 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-center text-white mb-16">
           From Hours of Filing to Seconds of Access

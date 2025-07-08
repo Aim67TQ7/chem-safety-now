@@ -11,7 +11,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
+    <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12 relative z-10">
       <div className="text-center">
         <h1 className="text-7xl font-bold text-white mb-8 drop-shadow-2xl leading-tight">
           Convert your entire system in 24 hours, not 24 months
