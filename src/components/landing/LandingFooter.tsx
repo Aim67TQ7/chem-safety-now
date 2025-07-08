@@ -1,4 +1,3 @@
-
 const LandingFooter = () => {
   return (
     <footer className="bg-black/50 backdrop-blur-sm text-white py-12 relative z-10 border-t border-white/20">
@@ -7,7 +6,7 @@ const LandingFooter = () => {
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8">
               <img 
-                src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
+                src="/lovable-uploads/18c1efed-2e96-48a0-a62a-d5887c53ac30.png" 
                 alt="QRsafetyapp.com Logo" 
                 className="w-full h-full object-contain"
               />
