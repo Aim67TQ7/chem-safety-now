@@ -19,13 +19,13 @@ const SalesPartnerTermsPage = () => {
           </CardHeader>
           <CardContent className="prose max-w-none">
             <h3>1. Partner Responsibilities</h3>
-            <p>Partners are expected to maintain professional standards and represent ChemLabel-GPT appropriately.</p>
+            <p>Partners are expected to maintain professional standards and represent QRSafetyApp appropriately.</p>
             
             <h3>2. Commission Structure</h3>
             <p>Commission rates vary based on partnership tier and sales volume. Details will be provided upon approval.</p>
             
             <h3>3. Marketing Guidelines</h3>
-            <p>All marketing materials must be approved by ChemLabel-GPT before use.</p>
+            <p>All marketing materials must be approved by QRSafetyApp before use.</p>
             
             <h3>4. Confidentiality</h3>
             <p>Partners must maintain confidentiality of proprietary information and customer data.</p>
