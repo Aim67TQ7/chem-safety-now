@@ -244,16 +244,16 @@ const QRCodePrintPage = () => {
           </div>
         </div>
 
-        {/* ChemLabel-GPT branding in lower center of outlined box */}
+        {/* QRSafetyApp branding in lower center of outlined box */}
         <div className="text-center mt-4">
           <div className="flex items-center justify-center space-x-2">
             <img 
               src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-              alt="ChemLabel-GPT Logo" 
+              alt="QRSafetyApp Logo" 
               className="w-5 h-5 object-contain"
             />
             <div className="text-center">
-              <p className="text-sm text-gray-800 font-bold">ChemLabel-GPT</p>
+              <p className="text-sm text-gray-800 font-bold">QRSafetyApp</p>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-1">No app required • Works with any smartphone • Real-time compliance tracking</p>
