@@ -22,19 +22,16 @@ const SignupPage = () => {
     facilityName: '',
     contactName: '',
     address: '',
-    salesPerson: '',
     logo: null as File | null
   });
+  
+  // Rob C's sales rep ID - set as default and hidden from user
+  const DEFAULT_SALES_REP_ID = '79b70722-8b45-49ee-bb06-9d04ce1c4e78';
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
 
-  // List of sales people - starting with Rob C as requested
-  const salesPeople = [
-    { value: "rob-c", label: "Rob C" },
-    // Additional sales people can be added here
-  ];
 
   const handleFormDataUpdate = (field: string, value: string) => {
     console.log('Stan is updating form field:', field, value);
@@ -110,7 +107,7 @@ const SignupPage = () => {
         logoUrl = await uploadLogo(formData.logo, facilitySlug);
       }
       
-      // Save facility data to Supabase with updated column names
+      // Save facility data to Supabase
       const { data: facility, error } = await supabase
         .from('facilities')
         .insert({
@@ -120,8 +117,6 @@ const SignupPage = () => {
           email: formData.email,
           address: formData.address,
           logo_url: logoUrl,
-          // Note: sales_person field would need to be added to the facilities table
-          // For now, we'll store it in a metadata field or handle separately
         })
         .select()
         .single();
@@ -143,6 +138,20 @@ const SignupPage = () => {
         } else {
           throw new Error(`Failed to create facility: ${error.message}`);
         }
+      }
+
+      // Create sales rep assignment for Rob C
+      const { error: assignmentError } = await supabase
+        .from('facility_sales_assignments')
+        .insert({
+          facility_id: facility.id,
+          sales_rep_id: DEFAULT_SALES_REP_ID,
+          is_primary: true
+        });
+
+      if (assignmentError) {
+        console.error('Sales assignment error:', assignmentError);
+        // Don't fail the whole signup for this, just log it
       }
       
       toast({
@@ -239,21 +248,6 @@ const SignupPage = () => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="salesPerson">Select Sales Representative *</Label>
-                <Select value={formData.salesPerson} onValueChange={(value) => setFormData({ ...formData, salesPerson: value })}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Choose your sales representative..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {salesPeople.map((person) => (
-                      <SelectItem key={person.value} value={person.value}>
-                        {person.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             {/* Facility Information */}
@@ -322,7 +316,7 @@ const SignupPage = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={isProcessing || !formData.email || !formData.facilityName || !formData.contactName || !formData.address || !formData.salesPerson}
+              disabled={isProcessing || !formData.email || !formData.facilityName || !formData.contactName || !formData.address}
               className="w-full bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white py-4 text-lg font-semibold"
             >
               {isProcessing ? (
