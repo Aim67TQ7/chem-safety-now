@@ -155,33 +155,47 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
   const saveToDatabase = async (labelData: any, pdfUrl: string) => {
     try {
       console.log('💾 Saving extracted data to database...');
+      console.log('📋 Label data structure:', labelData);
+      
+      // Handle both OpenAI and extract-sds-text response formats
+      const isExtractSdsFormat = labelData.hmis_health !== undefined || labelData.product_name || labelData.manufacturer;
       
       // Create or update the SDS document record
       const documentData = {
         product_name: labelData.product_name || document.product_name,
         manufacturer: labelData.manufacturer || document.manufacturer,
-        cas_number: labelData.cas_number,
+        cas_number: labelData.cas_number || labelData.cas_numbers?.[0],
         signal_word: labelData.signal_word,
         source_url: document.source_url,
         bucket_url: document.bucket_url || pdfUrl,
         file_name: `${document.product_name}_SDS.pdf`,
         file_type: 'application/pdf',
         
-        // HMIS codes as JSON
-        hmis_codes: labelData.hmis_codes || {},
+        // HMIS codes - handle both formats
+        hmis_codes: isExtractSdsFormat ? {
+          health: labelData.hmis_health || 0,
+          flammability: labelData.hmis_flammability || 0,
+          physical_hazard: labelData.hmis_physical || 0,
+          ppe: labelData.hmis_ppe || 'A'
+        } : (labelData.hmis_codes || {}),
         
-        // H-codes as array of objects
-        h_codes: labelData.h_codes ? labelData.h_codes.map((code: string) => ({
-          code: code,
-          description: `Hazard statement ${code}`
-        })) : [],
+        // H-codes - handle both formats
+        h_codes: (() => {
+          const codes = labelData.h_codes || labelData.hazard_codes || [];
+          if (Array.isArray(codes)) {
+            return codes.map((code: any) => 
+              typeof code === 'string' ? { code, description: `Hazard statement ${code}` } : code
+            );
+          }
+          return [];
+        })(),
         
-        // GHS pictograms as array of strings
-        pictograms: labelData.ghs_pictograms || [],
+        // GHS pictograms - handle both formats
+        pictograms: labelData.pictograms || labelData.ghs_pictograms || [],
         
         // Set extraction metadata
-        ai_extraction_confidence: labelData.confidence_score || 85,
-        extraction_quality_score: labelData.confidence_score || 85,
+        ai_extraction_confidence: labelData.confidence_score || labelData.quality_score || 85,
+        extraction_quality_score: labelData.confidence_score || labelData.quality_score || 85,
         extraction_status: 'ai_enhanced',
         ai_extraction_date: new Date().toISOString(),
         is_readable: true,
@@ -189,6 +203,15 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
         
         // Additional extracted data
         revision_date: labelData.revision_date,
+        full_text: labelData.full_text,
+        
+        // Additional safety data
+        hazard_statements: labelData.hazard_statements || [],
+        precautionary_statements: labelData.precautionary_statements || [],
+        physical_hazards: labelData.physical_hazards || [],
+        health_hazards: labelData.health_hazards || [],
+        environmental_hazards: labelData.environmental_hazards || [],
+        first_aid: labelData.first_aid || {},
         
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -234,12 +257,13 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
 
       const pdfUrl = document.bucket_url || document.source_url;
       
-      // Step 1: Extract data
+      // Step 1: Extract data using proper extraction function
       toast.loading('Extracting label data...');
-      const { data, error } = await supabase.functions.invoke('openai-sds-analysis', {
+      const { data, error } = await supabase.functions.invoke('extract-sds-text', {
         body: {
-          document_id: document.id || 'temp-id',
-          pdf_url: pdfUrl
+          pdf_url: pdfUrl,
+          product_name: document.product_name,
+          manufacturer: document.manufacturer
         }
       });
 
@@ -248,10 +272,10 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
         throw error;
       }
 
-      if (data.success && data.data) {
+      if (data.success && data.extractedData) {
         // Step 2: Save to database
         toast.loading('Saving document...');
-        const savedDoc = await saveToDatabase(data.data, pdfUrl);
+        const savedDoc = await saveToDatabase(data.extractedData, pdfUrl);
         
         if (savedDoc) {
           // Step 3: Navigate immediately
