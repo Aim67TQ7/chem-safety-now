@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, FileText, Loader2, Lightbulb, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ErrorTrackingService } from "@/services/errorTrackingService";
 
 interface SearchSuggestion {
   corrected_query?: string;
@@ -45,6 +46,18 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
 
       if (error) {
         console.error('❌ AI search assist error:', error);
+        
+        // Track the error
+        ErrorTrackingService.trackError(
+          'edge_function_error',
+          `AI Search Assist failed: ${error.message}`,
+          'error',
+          {
+            function_name: 'ai-search-assist',
+            query: query.trim(),
+            error_details: error
+          }
+        );
         return;
       }
 
@@ -121,6 +134,22 @@ const SDSSearchInput = ({ facilityId, onSearchResults, onSearchStart }: SDSSearc
     } catch (error: any) {
       console.error('❌ SDS search failed:', error);
       onSearchResults([]);
+      
+      // Track the error with proper categorization
+      const errorLevel = error.message === 'Search timed out after 15 seconds' ? 'warning' : 'error';
+      
+      ErrorTrackingService.trackError(
+        'edge_function_error',
+        `SDS Search failed: ${error.message || 'Unknown error occurred'}`,
+        errorLevel,
+        {
+          function_name: 'sds-search',
+          search_query: finalQuery,
+          facility_id: facilityId,
+          timeout: error.message === 'Search timed out after 15 seconds',
+          error_details: error
+        }
+      );
       
       if (error.message === 'Search timed out after 15 seconds') {
         toast.error('Search timed out after 15 seconds. Please try a more specific search term.');

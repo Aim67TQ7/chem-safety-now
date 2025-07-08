@@ -154,7 +154,9 @@ async function searchGoogleCSEWithVariations(productName: string, maxResults: nu
   
   if (!apiKey || !cseId) {
     console.error('❌ Missing Google API credentials');
-    throw new Error('Google API credentials not configured');
+    console.error('GOOGLE_API_KEY exists:', !!apiKey);
+    console.error('GOOGLE_CSE_ID exists:', !!cseId);
+    throw new Error('Google API credentials not configured - check GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables');
   }
 
   const searchVariations = createSearchVariations(productName);
@@ -173,8 +175,22 @@ async function searchGoogleCSEWithVariations(productName: string, maxResults: nu
     try {
       const response = await fetch(searchUrl);
       if (!response.ok) {
+        const errorText = await response.text();
         console.error(`❌ Google CSE API error for variation ${i + 1}: ${response.status} ${response.statusText}`);
-        continue; // Try next variation
+        console.error(`❌ Response body:`, errorText);
+        
+        // For API quota/authentication errors, don't continue trying other variations
+        if (response.status === 429) {
+          throw new Error('Google API quota exceeded. Please check your Google API usage limits.');
+        }
+        if (response.status === 403) {
+          throw new Error('Google API access forbidden. Please check your API key and Custom Search Engine configuration.');
+        }
+        if (response.status === 400) {
+          throw new Error(`Google API request error: ${errorText}`);
+        }
+        
+        continue; // Try next variation for other errors
       }
       
       const data = await response.json();
@@ -351,13 +367,39 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Enhanced SDS document search error:', error);
+    
+    // Determine appropriate status code based on error type
+    let statusCode = 500;
+    let errorMessage = 'Enhanced document search failed';
+    
+    if (error.message.includes('Google API credentials not configured')) {
+      statusCode = 503; // Service Unavailable
+      errorMessage = 'Search service configuration error';
+    } else if (error.message.includes('quota exceeded')) {
+      statusCode = 429; // Too Many Requests
+      errorMessage = 'Search service temporarily unavailable due to quota limits';
+    } else if (error.message.includes('access forbidden')) {
+      statusCode = 503; // Service Unavailable
+      errorMessage = 'Search service access error';
+    }
+    
+    // Enhanced error logging for better debugging
+    console.error('🔧 Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      statusCode,
+      timestamp: new Date().toISOString()
+    });
+    
     return new Response(
       JSON.stringify({ 
-        error: 'Enhanced document search failed',
-        details: error.message 
+        error: errorMessage,
+        details: error.message,
+        timestamp: new Date().toISOString()
       }),
       { 
-        status: 500,
+        status: statusCode,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
