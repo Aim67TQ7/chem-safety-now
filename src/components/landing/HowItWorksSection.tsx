@@ -13,7 +13,7 @@ const HowItWorksSection = () => {
               <span className="text-2xl font-bold text-white">1</span>
             </div>
             <h3 className="text-xl font-semibold mb-3 text-white">Scan & Access Instantly</h3>
-            <p className="text-gray-200">
+            <p className="text-gray-700 dark:text-gray-100">
               Workers scan QR codes with their phones — instantly access safety information instead of searching through filing systems for 10+ minutes.
             </p>
           </div>
@@ -23,7 +23,7 @@ const HowItWorksSection = () => {
               <span className="text-2xl font-bold text-white">2</span>
             </div>
             <h3 className="text-xl font-semibold mb-3 text-white">Report Digitally</h3>
-            <p className="text-gray-200">
+            <p className="text-gray-700 dark:text-gray-100">
               Submit incident reports and access procedures digitally — eliminate paper forms and speed up response times from hours to minutes.
             </p>
           </div>
@@ -33,7 +33,7 @@ const HowItWorksSection = () => {
               <span className="text-2xl font-bold text-white">3</span>
             </div>
             <h3 className="text-xl font-semibold mb-3 text-white">Auto-Track Compliance</h3>
-            <p className="text-gray-200">
+            <p className="text-gray-700 dark:text-gray-100">
               All activity auto-logs for compliance — eliminate manual documentation and be audit-ready without hours of preparation.
             </p>
           </div>
