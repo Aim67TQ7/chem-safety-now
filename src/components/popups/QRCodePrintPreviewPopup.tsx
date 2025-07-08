@@ -103,27 +103,15 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
           </h2>
         </div>
 
-        {/* QR Code with logo overlay */}
+        {/* QR Code */}
         <div className="text-center mb-4">
-          <div className="relative inline-block">
+          <div className="inline-block">
             {qrCodeDataUrl && (
-              <div className="relative">
-                <img 
-                  src={qrCodeDataUrl} 
-                  alt="Facility QR Code"
-                  className="w-32 h-32 mx-auto border-2 border-gray-800 rounded"
-                />
-                {/* Company logo overlay */}
-                {facilityData.logo_url && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-1 rounded border border-gray-800">
-                    <img 
-                      src={facilityData.logo_url} 
-                      alt={`${facilityDisplayName} Logo`}
-                      className="w-6 h-6 object-contain"
-                    />
-                  </div>
-                )}
-              </div>
+              <img 
+                src={qrCodeDataUrl} 
+                alt="Facility QR Code"
+                className="w-32 h-32 mx-auto border-2 border-gray-800 rounded"
+              />
             )}
           </div>
         </div>
@@ -156,35 +144,37 @@ const QRCodePrintPreviewPopup = ({ isOpen, onClose, facilityData }: QRCodePrintP
         </div>
 
         {/* Facility Info */}
-        {(facilityData.address || facilityData.contact_name || facilityData.email) && (
+        {(facilityData.address || facilityData.contact_name || facilityData.email || facilityData.logo_url) && (
           <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-3">
-            <h4 className="text-xs font-bold text-blue-900 mb-1">Facility Information</h4>
-            <div className="space-y-1 text-xs text-blue-800">
-              {facilityData.contact_name && (
-                <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
+            <div className="flex items-start gap-3">
+              {/* Company logo in facility info */}
+              {facilityData.logo_url && (
+                <div className="flex-shrink-0">
+                  <img 
+                    src={facilityData.logo_url} 
+                    alt={`${facilityDisplayName} Logo`}
+                    className="w-12 h-12 object-contain border border-gray-300 rounded bg-white p-1"
+                  />
+                </div>
               )}
-              {facilityData.address && (
-                <p><span className="font-medium">Address:</span> {facilityData.address}</p>
-              )}
-              {facilityData.email && (
-                <p><span className="font-medium">Email:</span> {facilityData.email}</p>
-              )}
+              <div className="flex-1">
+                <h4 className="text-xs font-bold text-blue-900 mb-1">Facility Information</h4>
+                <div className="space-y-1 text-xs text-blue-800">
+                  {facilityData.contact_name && (
+                    <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
+                  )}
+                  {facilityData.address && (
+                    <p><span className="font-medium">Address:</span> {facilityData.address}</p>
+                  )}
+                  {facilityData.email && (
+                    <p><span className="font-medium">Email:</span> {facilityData.email}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* QRsafetyapp.com branding */}
-        <div className="text-center">
-          <div className="flex items-center justify-center space-x-1 mb-1">
-            <img 
-              src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-              alt="QRsafetyapp.com Logo" 
-              className="w-3 h-3 object-contain"
-            />
-            <p className="text-xs text-gray-800 font-bold">QRsafetyapp.com</p>
-          </div>
-          <p className="text-xs text-gray-500">No app required • Works with any smartphone</p>
-        </div>
       </div>
     </div>
   );

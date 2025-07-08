@@ -183,19 +183,6 @@ const QRCodePrintPage = () => {
                 className="w-40 h-40 mx-auto border-4 border-gray-800 rounded-lg"
               />
             )}
-            
-            {/* Company logo below QR code */}
-            {facilityData.logo_url && (
-              <div className="flex justify-center">
-                <div className="bg-white p-2 rounded-lg shadow-md border-2 border-gray-400">
-                  <img 
-                    src={facilityData.logo_url} 
-                    alt={`${facilityDisplayName} Logo`}
-                    className="w-6 h-6 object-contain"
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Instructions */}
@@ -225,39 +212,39 @@ const QRCodePrintPage = () => {
             </div>
 
             {/* Facility Information */}
-            {(facilityData.address || facilityData.contact_name || facilityData.email) && (
+            {(facilityData.address || facilityData.contact_name || facilityData.email || facilityData.logo_url) && (
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-bold text-blue-900 mb-2">Facility Information</h4>
-                <div className="space-y-1 text-xs text-blue-800">
-                  {facilityData.contact_name && (
-                    <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
+                <div className="flex items-start gap-4">
+                  {/* Company logo in facility info */}
+                  {facilityData.logo_url && (
+                    <div className="flex-shrink-0">
+                      <img 
+                        src={facilityData.logo_url} 
+                        alt={`${facilityDisplayName} Logo`}
+                        className="w-16 h-16 object-contain border border-gray-300 rounded bg-white p-2"
+                      />
+                    </div>
                   )}
-                  {facilityData.address && (
-                    <p><span className="font-medium">Address:</span> {facilityData.address}</p>
-                  )}
-                  {facilityData.email && (
-                    <p><span className="font-medium">Email:</span> {facilityData.email}</p>
-                  )}
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-blue-900 mb-2">Facility Information</h4>
+                    <div className="space-y-1 text-xs text-blue-800">
+                      {facilityData.contact_name && (
+                        <p><span className="font-medium">Contact:</span> {facilityData.contact_name}</p>
+                      )}
+                      {facilityData.address && (
+                        <p><span className="font-medium">Address:</span> {facilityData.address}</p>
+                      )}
+                      {facilityData.email && (
+                        <p><span className="font-medium">Email:</span> {facilityData.email}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* QRSafetyApp branding in lower center of outlined box */}
-        <div className="text-center mt-4">
-          <div className="flex items-center justify-center space-x-2">
-            <img 
-              src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-              alt="QRSafetyApp Logo" 
-              className="w-5 h-5 object-contain"
-            />
-            <div className="text-center">
-              <p className="text-sm text-gray-800 font-bold">QRSafetyApp</p>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">No app required • Works with any smartphone • Real-time compliance tracking</p>
-        </div>
 
       </div>
     </div>

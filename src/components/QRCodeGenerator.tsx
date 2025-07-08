@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { QrCode, Printer, Download, Eye } from 'lucide-react';
+import { QrCode, Printer, Download } from 'lucide-react';
 import QRCodeLib from 'qrcode';
 import { useToast } from '@/hooks/use-toast';
-import QRCodePrintPreviewPopup from './popups/QRCodePrintPreviewPopup';
+
 
 interface QRCodeGeneratorProps {
   facilityData: {
@@ -22,7 +22,7 @@ interface QRCodeGeneratorProps {
 const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showPreviewPopup, setShowPreviewPopup] = useState(false);
+  
   const { toast } = useToast();
 
   const facilityDisplayName = facilityData.facility_name || 'Facility';
@@ -132,18 +132,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
           </div>
 
           <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Button
-                onClick={() => setShowPreviewPopup(true)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                disabled={!qrCodeDataUrl}
-              >
-                <Eye className="w-4 h-4" />
-                Preview
-              </Button>
-              
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button
                 onClick={openPrintView}
                 variant="outline"
@@ -176,11 +165,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
         </CardContent>
       </Card>
 
-      <QRCodePrintPreviewPopup
-        isOpen={showPreviewPopup}
-        onClose={() => setShowPreviewPopup(false)}
-        facilityData={facilityData}
-      />
     </>
   );
 };
