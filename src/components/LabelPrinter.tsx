@@ -16,6 +16,7 @@ import jsPDF from 'jspdf';
 import { PrintAlignmentFix } from './PrintPreviewWithAlignmentFixes';
 import { AuditService } from '@/services/auditService';
 import { interactionLogger } from '@/services/interactionLogger';
+import { useDemoPrintActions } from '@/hooks/useDemoPrintActions';
 
 interface LabelPrinterProps {
   initialProductName?: string;
@@ -30,6 +31,7 @@ const LabelPrinter = ({
 }: LabelPrinterProps) => {
   // Extract SDS data automatically
   const sdsData = selectedDocument ? extractEnhancedSDSData(selectedDocument) : null;
+  const { handlePrintAction, handleDownloadAction } = useDemoPrintActions();
   
   // State for label customization (non-safety critical fields only)
   const [labelWidth, setLabelWidth] = useState(288);
@@ -110,24 +112,32 @@ const LabelPrinter = ({
       toast.error('Product name is required');
       return;
     }
-    setShowPrintPreview(true);
     
-    // Log label preview generation
-    interactionLogger.logLabelGeneration({
-      productName,
-      manufacturer,
-      actionType: 'generate',
-      labelType: 'secondary_container',
-      hazardCodes: selectedHazards,
-      pictograms: selectedPictograms,
-      metadata: {
-        sdsDocumentId: selectedDocument?.id,
-        labelDimensions: `${labelWidth}x${labelHeight}`
-      }
+    const canShowPreview = handlePrintAction('Print Preview', () => {
+      setShowPrintPreview(true);
     });
+    
+    if (canShowPreview) {
+      // Log label preview generation for real facilities
+      interactionLogger.logLabelGeneration({
+        productName,
+        manufacturer,
+        actionType: 'generate',
+        labelType: 'secondary_container',
+        hazardCodes: selectedHazards,
+        pictograms: selectedPictograms,
+        metadata: {
+          sdsDocumentId: selectedDocument?.id,
+          labelDimensions: `${labelWidth}x${labelHeight}`
+        }
+      });
+    }
   };
 
   const handleDownloadPDF = async () => {
+    const canDownload = handleDownloadAction('PDF Poster Download');
+    if (!canDownload) return;
+    
     const labelElement = document.getElementById('safety-label-preview');
     if (!labelElement) {
       toast.error('Label element not found');

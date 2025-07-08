@@ -8,8 +8,10 @@ import FacilityNavbar from '@/components/FacilityNavbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { DemoProvider } from '@/contexts/DemoContext';
+import DemoIndicator from '@/components/DemoIndicator';
 
-const LabelPrinterPage = () => {
+const LabelPrinterPageContent = () => {
   const { facilitySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -199,12 +201,13 @@ const LabelPrinterPage = () => {
 
       {/* Product Selection */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <Card className="mb-6">
-          <CardHeader>
+         <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               Select Product for Label Printing
               {isDocumentLoading && <Loader2 className="w-4 h-4 animate-spin" />}
             </CardTitle>
+            <DemoIndicator action="Interactive Demo" />
           </CardHeader>
           <CardContent>
             <ProductSelector
@@ -235,6 +238,14 @@ const LabelPrinterPage = () => {
         )}
       </div>
     </div>
+  );
+};
+
+const LabelPrinterPage = () => {
+  return (
+    <DemoProvider>
+      <LabelPrinterPageContent />
+    </DemoProvider>
   );
 };
 

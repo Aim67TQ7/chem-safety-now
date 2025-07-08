@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from "@/components/ui/card";
 import DemoFacilityDashboard from '@/components/DemoFacilityDashboard';
+import { DemoProvider } from '@/contexts/DemoContext';
 import { interactionLogger } from '@/services/interactionLogger';
 import { AuditService } from '@/services/auditService';
 
@@ -115,7 +116,11 @@ const DemoFacilityPage = () => {
     );
   }
 
-  return <DemoFacilityDashboard facility={facility} />;
+  return (
+    <DemoProvider>
+      <DemoFacilityDashboard facility={facility} />
+    </DemoProvider>
+  );
 };
 
 export default DemoFacilityPage;

@@ -76,34 +76,6 @@ const DemoFacilityDashboard: React.FC<DemoFacilityDashboardProps> = ({ facility 
         <FacilityDashboard facility={facility} />
       </div>
 
-      {/* Demo Override Styles */}
-      <style>{`
-        .demo-mode-wrapper .upgrade-button,
-        .demo-mode-wrapper [data-testid="upgrade-button"] {
-          display: none !important;
-        }
-        
-        .demo-mode-wrapper button[type="submit"],
-        .demo-mode-wrapper .print-button,
-        .demo-mode-wrapper .download-button {
-          position: relative;
-          cursor: not-allowed;
-          opacity: 0.6;
-        }
-        
-        .demo-mode-wrapper button[type="submit"]::after,
-        .demo-mode-wrapper .print-button::after,
-        .demo-mode-wrapper .download-button::after {
-          content: "";
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0,0,0,0.1);
-          pointer-events: all;
-        }
-      `}</style>
 
       {/* Floating CTA */}
       <div className="fixed bottom-6 right-6 z-50">

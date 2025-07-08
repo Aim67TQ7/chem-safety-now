@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Crown, Clock, Shield } from "lucide-react";
+import { Crown, Clock, Shield, UserPlus } from "lucide-react";
 import { FacilitySubscription } from "@/services/subscriptionService";
+import { useDemoContext } from "@/contexts/DemoContext";
 
 interface SubscriptionBadgeProps {
   subscription: FacilitySubscription | null;
@@ -10,6 +11,8 @@ interface SubscriptionBadgeProps {
 }
 
 const SubscriptionBadge = ({ subscription, onUpgrade, loading }: SubscriptionBadgeProps) => {
+  const { isDemo, navigateToSignup } = useDemoContext();
+
   if (loading || !subscription) {
     return (
       <div className="flex items-center space-x-2">
@@ -25,14 +28,21 @@ const SubscriptionBadge = ({ subscription, onUpgrade, loading }: SubscriptionBad
         className="bg-trial-foreground text-trial border-trial/20 flex items-center gap-1"
       >
         <Clock className="w-3 h-3" />
-        Trial - {subscription.trial_days_remaining} days left
+        {isDemo ? 'Demo Mode' : `Trial - ${subscription.trial_days_remaining} days left`}
       </Badge>
       <Button 
         size="sm" 
-        onClick={onUpgrade}
+        onClick={isDemo ? navigateToSignup : onUpgrade}
         className="bg-trial hover:bg-trial/90 text-trial-foreground font-medium px-4 py-1 h-8"
       >
-        UPGRADE
+        {isDemo ? (
+          <>
+            <UserPlus className="w-3 h-3 mr-1" />
+            Create Your Site
+          </>
+        ) : (
+          'UPGRADE'
+        )}
       </Button>
     </div>
   );

@@ -15,6 +15,8 @@ import {
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
 import SubscriptionPlansModal from '@/components/SubscriptionPlansModal';
+import DemoIndicator from '@/components/DemoIndicator';
+import { useDemoContext } from '@/contexts/DemoContext';
 
 
 interface FacilityNavbarProps {
@@ -31,6 +33,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
   const { subscription, loading, hasFeatureAccess } = useFeatureAccess(facilityId || '');
+  const { isDemo } = useDemoContext();
   
 
   // Dynamic navigation based on subscription level
@@ -92,9 +95,12 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
               />
             )}
             <div className="flex flex-col">
-              <span className="text-3xl font-bold text-gray-900 tracking-tight">
-                {facilityName || 'Facility Dashboard'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-3xl font-bold text-gray-900 tracking-tight">
+                  {facilityName || 'Facility Dashboard'}
+                </span>
+                <DemoIndicator />
+              </div>
               {facilityAddress && (
                 <div className="flex items-center text-sm text-gray-700 font-medium">
                   <MapPin className="w-4 h-4 mr-2 text-blue-600" />

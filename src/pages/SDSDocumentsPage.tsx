@@ -17,6 +17,9 @@ import SDSSearchInput from '@/components/SDSSearchInput';
 import SDSResultCard from '@/components/SDSResultCard';
 import SDSEvaluationButton from '@/components/SDSEvaluationButton';
 import { getSDSDocumentStatus } from '@/utils/sdsStatusUtils';
+import { DemoProvider } from '@/contexts/DemoContext';
+import DemoIndicator from '@/components/DemoIndicator';
+import { useDemoPrintActions } from '@/hooks/useDemoPrintActions';
 
 interface SDSDocument {
   id: string;
@@ -37,7 +40,7 @@ interface SDSDocument {
   ai_extracted_data?: any;
 }
 
-const SDSDocumentsPage = () => {
+const SDSDocumentsPageContent = () => {
   const { facilitySlug } = useParams<{ facilitySlug: string }>();
   const navigate = useNavigate();
   const [sdsViewerOpen, setSDSViewerOpen] = useState(false);
@@ -46,6 +49,8 @@ const SDSDocumentsPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearchingNewDocs, setIsSearchingNewDocs] = useState(false);
+  
+  const { handlePrintAction, handleDownloadAction } = useDemoPrintActions();
   
   // Determine if this is admin context
   const isAdminContext = !facilitySlug;
@@ -96,16 +101,19 @@ const SDSDocumentsPage = () => {
   };
 
   const handleDownloadPDF = async (doc: SDSDocument) => {
-    try {
-      console.log('📥 Opening PDF for:', doc.product_name);
-      
-      // Open PDF in new tab
-      const url = doc.bucket_url || doc.source_url;
-      window.open(url, '_blank');
-      toast.success(`Opening PDF for ${doc.product_name}`);
-    } catch (error) {
-      console.error('❌ Error opening document:', error);
-      toast.error(`Failed to open PDF: ${error.message}`);
+    const canDownload = handleDownloadAction('PDF Download');
+    if (canDownload) {
+      try {
+        console.log('📥 Opening PDF for:', doc.product_name);
+        
+        // Open PDF in new tab
+        const url = doc.bucket_url || doc.source_url;
+        window.open(url, '_blank');
+        toast.success(`Opening PDF for ${doc.product_name}`);
+      } catch (error) {
+        console.error('❌ Error opening document:', error);
+        toast.error(`Failed to open PDF: ${error.message}`);
+      }
     }
   };
 
@@ -124,10 +132,13 @@ const SDSDocumentsPage = () => {
   };
 
   const handlePrintLabel = (doc: SDSDocument) => {
-    const labelPrinterUrl = isAdminContext 
-      ? `/admin/label-printer?documentId=${doc.id}`
-      : `/facility/${facilitySlug}/label-printer?documentId=${doc.id}`;
-    window.location.href = labelPrinterUrl;
+    const canPrint = handlePrintAction('Label Print');
+    if (canPrint) {
+      const labelPrinterUrl = isAdminContext 
+        ? `/admin/label-printer?documentId=${doc.id}`
+        : `/facility/${facilitySlug}/label-printer?documentId=${doc.id}`;
+      window.location.href = labelPrinterUrl;
+    }
   };
 
   const handleSearchResults = (results: any[]) => {
@@ -235,11 +246,14 @@ const SDSDocumentsPage = () => {
       <div className="container mx-auto p-4 max-w-7xl">
         {/* Facility header for non-admin context */}
         {!isAdminContext && (
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground mb-2">SDS Document Library</h1>
-            <p className="text-sm text-muted-foreground">
-              Search and manage your Safety Data Sheet documents with real-time filtering.
-            </p>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">SDS Document Library</h1>
+              <p className="text-sm text-muted-foreground">
+                Search and manage your Safety Data Sheet documents with real-time filtering.
+              </p>
+            </div>
+            <DemoIndicator action="Interactive Demo" />
           </div>
         )}
 
@@ -490,6 +504,14 @@ const SDSDocumentsPage = () => {
         sdsDocument={selectedDocumentForViewer}
       />
     </div>
+  );
+};
+
+const SDSDocumentsPage = () => {
+  return (
+    <DemoProvider>
+      <SDSDocumentsPageContent />
+    </DemoProvider>
   );
 };
 

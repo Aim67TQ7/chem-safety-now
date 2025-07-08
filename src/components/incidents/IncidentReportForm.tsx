@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { WitnessFields } from './WitnessFields';
 import { BodyPartsSelector } from './BodyPartsSelector';
-import { useIncidentSubmission } from '@/hooks/useIncidentSubmission';
+import { useDemoIncidentSubmission } from '@/hooks/useDemoIncidentSubmission';
 import ImageUpload, { ImageUploadRef } from './ImageUpload';
 
 const baseIncidentSchema = z.object({
@@ -79,7 +79,7 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
   onCancel
 }) => {
   const schema = incidentType === 'near_miss' ? nearMissSchema : reportableSchema;
-  const { submitIncident, isSubmitting } = useIncidentSubmission();
+  const { submitIncident, isSubmitting } = useDemoIncidentSubmission();
   const imageUploadRef = useRef<ImageUploadRef>(null);
 
   const form = useForm<IncidentFormData>({

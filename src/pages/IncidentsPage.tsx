@@ -8,6 +8,8 @@ import { AlertTriangle, FileText, Plus } from 'lucide-react';
 import { IncidentReportForm } from '@/components/incidents/IncidentReportForm';
 import { IncidentsList } from '@/components/incidents/IncidentsList';
 import FacilityNavbar from '@/components/FacilityNavbar';
+import { DemoProvider } from '@/contexts/DemoContext';
+import DemoIndicator from '@/components/DemoIndicator';
 import { supabase } from '@/integrations/supabase/client';
 
 const IncidentsPage = () => {
@@ -40,25 +42,29 @@ const IncidentsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <FacilityNavbar 
-        facilityName={facilityData?.facility_name || undefined}
-        facilityLogo={facilityData?.logo_url}
-        facilityId={facilityData?.id}
-      />
-      
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Incident Reporting System
-            </h1>
-            <p className="text-gray-600">
-              Report and track workplace incidents, near-misses, and safety concerns
-            </p>
-          </div>
+    <DemoProvider>
+      <div className="min-h-screen bg-gray-50">
+        <FacilityNavbar 
+          facilityName={facilityData?.facility_name || undefined}
+          facilityLogo={facilityData?.logo_url}
+          facilityId={facilityData?.id}
+        />
+        
+        <div className="container mx-auto py-8 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Incident Reporting System
+                </h1>
+                <p className="text-gray-600">
+                  Report and track workplace incidents, near-misses, and safety concerns
+                </p>
+              </div>
+              <DemoIndicator action="Interactive Demo" />
+            </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list">View Incidents</TabsTrigger>
               <TabsTrigger value="report">Report Incident</TabsTrigger>
@@ -113,10 +119,11 @@ const IncidentsPage = () => {
                 </Card>
               )}
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          </div>
         </div>
       </div>
-    </div>
+    </DemoProvider>
   );
 };
 
