@@ -12,7 +12,7 @@ const UpgradePage = () => {
   const plans = [
     {
       name: "Professional",
-      price: "$49/month",
+      price: "$196/month",
       features: [
         "Unlimited SDS documents",
         "Advanced AI extraction",
@@ -23,7 +23,7 @@ const UpgradePage = () => {
     },
     {
       name: "Enterprise",
-      price: "$199/month",
+      price: "$796/month",
       features: [
         "Everything in Professional",
         "Multi-facility management",

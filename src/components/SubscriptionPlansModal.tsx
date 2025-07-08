@@ -170,7 +170,7 @@ const SubscriptionPlansModal = ({ isOpen, onClose, facilityId, currentPlan, faci
                 <div className="space-y-1">
                   {plan.name === 'Basic' && billingCycle === 'monthly' ? (
                     <div className="text-3xl font-bold">
-                      $5<span className="text-lg font-normal text-gray-600">/month</span>
+                      $20<span className="text-lg font-normal text-gray-600">/month</span>
                     </div>
                   ) : (
                     <>

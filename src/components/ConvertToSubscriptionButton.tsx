@@ -80,13 +80,13 @@ const ConvertToSubscriptionButton = ({
                 <SelectItem value="monthly">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    Monthly - $39/month
+                    Monthly - $156/month
                   </div>
                 </SelectItem>
                 <SelectItem value="annual">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    Annual - $399/year (Save $69!)
+                    Annual - $1,596/year (Save $276!)
                   </div>
                 </SelectItem>
               </SelectContent>
