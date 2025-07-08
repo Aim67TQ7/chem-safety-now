@@ -4,6 +4,8 @@ import HeroSection from "@/components/landing/HeroSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ComparisonSection from "@/components/landing/ComparisonSection";
 import ProblemStatementSection from "@/components/landing/ProblemStatementSection";
+import FAQSection from "@/components/landing/FAQSection";
+import TrustSection from "@/components/landing/TrustSection";
 import CTASection from "@/components/landing/CTASection";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
@@ -18,8 +20,10 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col w-full">
       <LandingHeader />
       <HeroSection />
+      <TrustSection />
       <HowItWorksSection />
       <ComparisonSection />
+      <FAQSection />
       <ProblemStatementSection />
       <CTASection />
       <LandingFooter />

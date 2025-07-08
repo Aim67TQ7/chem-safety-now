@@ -89,13 +89,20 @@ const HeroSection = () => {
     <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
       <div className="w-full max-w-4xl">
         {/* Hero Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-6xl md:text-7xl font-bold text-foreground mb-8 leading-tight">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
             Convert your entire system in 24 hours, not 24 months
           </h1>
-          <p className="text-2xl md:text-3xl text-muted-foreground mb-8 max-w-3xl mx-auto font-medium">
-            Replace your filing cabinet with QR codes. Workers scan, safety data appears instantly.
-          </p>
+          
+          {/* Killer Statement */}
+          <div className="bg-gradient-to-r from-primary/10 to-blue-600/10 border border-primary/20 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-primary mb-2">
+              Find any SDS in under 10 seconds — or we'll add it for you.
+            </h2>
+            <p className="text-muted-foreground">
+              Try our free search below. No signup required for your first PDF view.
+            </p>
+          </div>
           
           {/* Trial Status Badge */}
           <div className="flex items-center justify-center gap-2 mb-8">
