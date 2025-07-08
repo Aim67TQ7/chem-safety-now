@@ -45,7 +45,7 @@ const HeroSection = () => {
     <section className="relative flex-1 flex items-center justify-center min-h-screen overflow-hidden">
       {/* Full Screen Hero Background */}
       <div 
-        className="absolute inset-0 opacity-[0.18] blur-xl"
+        className="absolute inset-0 opacity-[0.38] blur-xl"
         style={{
           backgroundImage: 'url("/lovable-uploads/6e64701e-e92f-46b9-a9d7-53670d1b19b3.png")',
           backgroundSize: 'cover',

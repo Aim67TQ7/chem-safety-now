@@ -8,6 +8,7 @@ import { navItems } from "./nav-items";
 import SDSDocumentsPage from "./pages/SDSDocumentsPage";
 import SEOHelmet from "./components/SEOHelmet";
 import ErrorBoundary from "./components/ErrorBoundary";
+import GlobalHeader from "./components/GlobalHeader";
 import { APIErrorHandler } from "./utils/apiErrorHandler";
 import { ErrorTrackingService } from "./services/errorTrackingService";
 import { useEffect } from "react";
@@ -56,6 +57,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <SEOHelmet />
+            <GlobalHeader />
             <Routes>
               {navItems.map(({ to, page }) => (
                 <Route key={to} path={to} element={page} />

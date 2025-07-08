@@ -7,7 +7,6 @@ import ProblemStatementSection from "@/components/landing/ProblemStatementSectio
 import FAQSection from "@/components/landing/FAQSection";
 import TrustSection from "@/components/landing/TrustSection";
 import CTASection from "@/components/landing/CTASection";
-import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
 import AnalyticsService from "@/services/analytics";
 
@@ -18,7 +17,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col w-full">
-      <LandingHeader />
       <HeroSection />
       <TrustSection />
       <HowItWorksSection />
