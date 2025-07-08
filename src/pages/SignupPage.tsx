@@ -179,7 +179,7 @@ const SignupPage = () => {
               <div className="w-10 h-10">
                 <img 
                   src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-                  alt="ChemLabel-GPT Logo" 
+                  alt="QRSafetyApp Logo" 
                   className="w-full h-full object-contain"
                 />
               </div>
