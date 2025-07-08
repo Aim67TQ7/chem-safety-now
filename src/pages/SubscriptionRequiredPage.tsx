@@ -156,7 +156,7 @@ const SubscriptionRequiredPage = () => {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">ChemLabel-GPT</h1>
+              <h1 className="text-2xl font-bold text-gray-900">QRSafetyApp</h1>
               <p className="text-gray-600">
                 {facilityExists && facilityName ? 
                   `Subscription for ${facilityName}` : 
@@ -178,7 +178,7 @@ const SubscriptionRequiredPage = () => {
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
             <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {facilityExists ? "Your 7-Day Trial Has Ended" : "Subscribe to ChemLabel-GPT"}
+              {facilityExists ? "Your 7-Day Trial Has Ended" : "Subscribe to QRSafetyApp"}
             </h2>
             <p className="text-gray-700 mb-4">
               {facilityExists ? 
