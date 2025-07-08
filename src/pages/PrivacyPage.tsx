@@ -201,8 +201,8 @@ const PrivacyPage = () => {
                 <strong>Data Protection Officer:</strong> privacy@qrsafetyapp.com<br />
                 <strong>General Contact:</strong> support@qrsafetyapp.com<br />
                 <strong>Address:</strong> QRsafetyapp.com Privacy Department<br />
-                123 Safety Boulevard, Suite 100<br />
-                Industrial City, IC 12345<br />
+                539 W Commerce- Suite 6144<br />
+                Dallas, TX 75208<br />
                 <strong>EU Representative:</strong> Available upon request for EU residents
               </p>
             </div>

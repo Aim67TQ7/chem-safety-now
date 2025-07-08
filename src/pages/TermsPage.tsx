@@ -136,10 +136,10 @@ const TermsPage = () => {
             </p>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-700">
-                <strong>Email:</strong> legal@qrsafetyapp.com<br />
-                <strong>Address:</strong> QRsafetyapp.com Legal Department<br />
-                123 Safety Boulevard, Suite 100<br />
-                Industrial City, IC 12345
+                <strong>Email:</strong> support@QRSafetyapp.com<br />
+                <strong>Address:</strong> QRSafetyapp.com Legal Department<br />
+                539 W Commerce- Suite 6144<br />
+                Dallas, TX 75208
               </p>
             </div>
           </section>
