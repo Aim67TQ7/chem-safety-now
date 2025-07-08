@@ -304,16 +304,74 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { product_name, max_results = 3 }: SearchRequest = await req.json();
-    
-    console.log('🔍 Enhanced SDS document search request:', { product_name, max_results });
+    // Parse and validate request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      console.error('❌ Failed to parse request JSON:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request format',
+          details: 'Request body must be valid JSON'
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
+    // Validate required fields
+    if (!requestBody || typeof requestBody !== 'object') {
+      console.error('❌ Request body is not an object:', requestBody);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request body',
+          details: 'Request body must be a JSON object'
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const { product_name, max_results = 3 } = requestBody;
+
+    // Validate product_name
+    if (!product_name || typeof product_name !== 'string' || !product_name.trim()) {
+      console.error('❌ Invalid product_name:', { product_name, type: typeof product_name });
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid product name',
+          details: 'product_name must be a non-empty string'
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Validate max_results
+    const validMaxResults = typeof max_results === 'number' && max_results > 0 ? max_results : 3;
+    
+    console.log('🔍 Enhanced SDS document search request:', { 
+      product_name: product_name.trim(), 
+      max_results: validMaxResults,
+      original_max_results: max_results 
+    });
+
+    // Use trimmed product name for all operations
+    const cleanProductName = product_name.trim();
+    
     // Step 1: Search existing documents in database
     const { data: existingDocs, error: searchError } = await supabase
       .from('sds_documents')
       .select('*')
-      .or(`product_name.ilike.%${product_name}%,manufacturer.ilike.%${product_name}%,cas_number.ilike.%${product_name}%`)
-      .limit(max_results);
+      .or(`product_name.ilike.%${cleanProductName}%,manufacturer.ilike.%${cleanProductName}%,cas_number.ilike.%${cleanProductName}%`)
+      .limit(validMaxResults);
 
     if (searchError) {
       console.error('❌ Database search error:', searchError);
@@ -323,7 +381,7 @@ Deno.serve(async (req) => {
     console.log('📊 Found existing documents:', existingDocs?.length || 0);
 
     // Step 2: Get web search results (without auto-saving)
-    const webResults = await scrapeSDSDocuments(product_name, Math.max(1, max_results - (existingDocs?.length || 0)));
+    const webResults = await scrapeSDSDocuments(cleanProductName, Math.max(1, validMaxResults - (existingDocs?.length || 0)));
     
     // Step 3: Combine and rank all results
     const allResults = [...(existingDocs || []), ...webResults];
@@ -343,10 +401,10 @@ Deno.serve(async (req) => {
     }
 
     // Step 4: Rank by confidence
-    const rankedResults = confidenceScorer.rankDocuments(product_name, allResults);
+    const rankedResults = confidenceScorer.rankDocuments(cleanProductName, allResults);
     
     // Limit to requested number of results
-    const topResults = rankedResults.slice(0, max_results);
+    const topResults = rankedResults.slice(0, validMaxResults);
     
     // Log confidence scores for debugging
     topResults.forEach((doc, index) => {
