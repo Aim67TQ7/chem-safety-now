@@ -14,6 +14,8 @@ interface LoggingStats {
   sdsInteractionsCount: number;
   labelGenerationsCount: number;
   aiConversationsCount: number;
+  uniqueIpCount: number;
+  recentIpAddresses: any[];
   recentAuditEvents: any[];
   recentActivity: any[];
 }
@@ -55,12 +57,56 @@ export const LoggingVerificationPanel: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // Get unique IP addresses from all tables that track IPs
+      const [
+        errorIps,
+        feedbackIps,
+        qrIps
+      ] = await Promise.all([
+        supabase.from('error_tracking').select('ip_address').not('ip_address', 'is', null),
+        supabase.from('facility_feedback').select('ip_address').not('ip_address', 'is', null),
+        supabase.from('qr_code_interactions').select('ip_address').not('ip_address', 'is', null)
+      ]);
+
+      // Combine all IP addresses and get unique ones
+      const allIps = [
+        ...(errorIps.data || []),
+        ...(feedbackIps.data || []),
+        ...(qrIps.data || [])
+      ].map(item => item.ip_address).filter(ip => ip !== null);
+
+      const uniqueIps = [...new Set(allIps)];
+
+      // Get recent unique IP addresses with metadata
+      const { data: recentIpData } = await supabase
+        .from('qr_code_interactions')
+        .select('ip_address, created_at, metadata')
+        .not('ip_address', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Process recent IPs to show unique ones with latest activity
+      const ipMap = new Map();
+      recentIpData?.forEach(item => {
+        if (!ipMap.has(item.ip_address)) {
+          ipMap.set(item.ip_address, {
+            ip_address: item.ip_address,
+            last_seen: item.created_at,
+            metadata: item.metadata
+          });
+        }
+      });
+
+      const recentUniqueIps = Array.from(ipMap.values()).slice(0, 5);
+
       setStats({
         auditTrailCount: auditTrailResult.count || 0,
         facilityUsageCount: facilityUsageResult.count || 0,
         sdsInteractionsCount: sdsInteractionsResult.count || 0,
         labelGenerationsCount: labelGenerationsResult.count || 0,
         aiConversationsCount: aiConversationsResult.count || 0,
+        uniqueIpCount: uniqueIps.length,
+        recentIpAddresses: recentUniqueIps,
         recentAuditEvents: recentAudit || [],
         recentActivity: recentActivity || []
       });
@@ -172,7 +218,7 @@ export const LoggingVerificationPanel: React.FC = () => {
             </AlertDescription>
           </Alert>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
                 {stats?.auditTrailCount || 0}
@@ -202,6 +248,12 @@ export const LoggingVerificationPanel: React.FC = () => {
                 {stats?.aiConversationsCount || 0}
               </div>
               <div className="text-sm text-gray-600">AI Events</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {stats?.uniqueIpCount || 0}
+              </div>
+              <div className="text-sm text-gray-600">Unique IPs</div>
             </div>
           </div>
 
@@ -245,6 +297,34 @@ export const LoggingVerificationPanel: React.FC = () => {
                   </div>
                   <Badge variant="outline" className="text-xs">
                     {event.action_type}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {stats && stats.recentIpAddresses.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recent Unique IP Addresses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {stats.recentIpAddresses.map((ipData, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex-1">
+                    <div className="font-medium text-sm font-mono">{ipData.ip_address}</div>
+                    <div className="text-xs text-gray-500">
+                      Last seen: {new Date(ipData.last_seen).toLocaleString()}
+                      {ipData.metadata?.event_detail?.facilityName && 
+                        ` • ${ipData.metadata.event_detail.facilityName}`
+                      }
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    Active
                   </Badge>
                 </div>
               ))}
