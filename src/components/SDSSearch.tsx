@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Search, FileText, AlertCircle, ExternalLink, CheckCircle, Bot } from 'lucide-react';
+import { Loader2, Search, FileText, AlertCircle, ExternalLink, CheckCircle, Bot, Library } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import SDSResultCard from './SDSResultCard';
@@ -13,6 +13,7 @@ import PDFViewerPopup from './popups/PDFViewerPopup';
 import { useLocation } from 'react-router-dom';
 import { AuditService } from '@/services/auditService';
 import { interactionLogger } from '@/services/interactionLogger';
+import { useNavigate } from 'react-router-dom';
 
 interface SDSSearchProps {
   facilityId?: string;
@@ -28,6 +29,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
   onSearchComplete 
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -153,6 +155,14 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
     }
   };
 
+  const handleGoToSDSLibrary = () => {
+    if (facilitySlug) {
+      navigate(`/facility/${facilitySlug}/sds-documents`);
+    } else {
+      navigate('/admin/sds-documents');
+    }
+  };
+
   if (showOnlyResults && searchResults.length === 0 && !hasSearched) {
     return null;
   }
@@ -186,9 +196,20 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
             <h3 className="text-lg font-semibold">
               Search Results ({searchResults.length})
             </h3>
-            <Badge variant="secondary">
-              Found {searchResults.length} documents
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary">
+                Found {searchResults.length} documents
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGoToSDSLibrary}
+                className="flex items-center space-x-1"
+              >
+                <Library className="h-4 w-4" />
+                <span>Go to SDS Library</span>
+              </Button>
+            </div>
           </div>
           
           <div className="grid gap-4">
