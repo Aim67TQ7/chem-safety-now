@@ -13,7 +13,7 @@ const SalesPartnerPage = () => {
         <div className="text-center mb-8">
           <HandshakeIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Sales Partner Program</h1>
-          <p className="text-gray-600">Join our partner network and grow your business with ChemLabel-GPT</p>
+          <p className="text-gray-600">Join our partner network and grow your business with QRSafetyApp</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
