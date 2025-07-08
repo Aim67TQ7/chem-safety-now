@@ -15,7 +15,7 @@ const ComparisonSection = () => {
               <Clock className="w-6 h-6 mr-3" />
               Paper-Based Problems
             </h3>
-            <ul className="space-y-4 text-red-100">
+            <ul className="space-y-4 text-black">
               <li className="flex items-start">
                 <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
                 <span><strong>15+ hours weekly</strong> spent filing, searching, and updating paper documents</span>
@@ -44,7 +44,7 @@ const ComparisonSection = () => {
               <TrendingUp className="w-6 h-6 mr-3" />
               Digital Advantages
             </h3>
-            <ul className="space-y-4 text-green-100">
+            <ul className="space-y-4 text-black">
               <li className="flex items-start">
                 <Award className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
                 <span><strong>Seconds to access</strong> any safety document or incident report</span>

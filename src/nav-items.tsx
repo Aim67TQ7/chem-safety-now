@@ -1,6 +1,7 @@
 import { HomeIcon, Building2, FileText, AlertTriangle, Settings, Users, BarChart3, HelpCircle, ShieldCheck, UserCheck, Phone, Crown, Wrench, Printer } from "lucide-react";
 import Index from "@/pages/Index";
 import FacilityPageWrapper from "@/pages/FacilityPageWrapper";
+import DemoFacilityPage from "@/pages/DemoFacilityPage";
 import FacilitySettingsPage from "@/pages/FacilitySettingsPage";
 import SDSDocumentsPage from "@/pages/SDSDocumentsPage";
 import IncidentsPage from "@/pages/IncidentsPage";
@@ -26,6 +27,12 @@ export const navItems = [
     to: "/",
     icon: <HomeIcon className="h-4 w-4" />,
     page: <Index />,
+  },
+  {
+    title: "Demo Facility",
+    to: "/facility/demo",
+    icon: <Building2 className="h-4 w-4" />,
+    page: <DemoFacilityPage />,
   },
   {
     title: "Facility",
