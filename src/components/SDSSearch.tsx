@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import SDSResultCard from './SDSResultCard';
 import SDSSearchInput from './SDSSearchInput';
 import { Badge } from '@/components/ui/badge';
-import PDFViewerPopup from './popups/PDFViewerPopup';
 import { useLocation } from 'react-router-dom';
 import { AuditService } from '@/services/auditService';
 import { interactionLogger } from '@/services/interactionLogger';
@@ -33,8 +32,6 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
-  const [showPDFViewer, setShowPDFViewer] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
   // Auto-search if URL contains search parameter
@@ -112,23 +109,62 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
     }
   };
 
-  const handleViewDocument = (document: any) => {
-    setSelectedDocument(document);
-    setShowPDFViewer(true);
-    
-    // Log SDS document access for OSHA compliance
-    if (facilityId) {
-      AuditService.logSDSAccess(facilityId, document.product_name, document.id);
+  const handleViewDocument = async (document: any) => {
+    try {
+      // First, save the document to database for OSHA compliance
+      const documentData = {
+        product_name: document.product_name,
+        manufacturer: document.manufacturer || 'Unknown',
+        source_url: document.source_url,
+        bucket_url: document.bucket_url || document.source_url,
+        file_name: `${document.product_name}_SDS.pdf`,
+        file_type: 'application/pdf',
+        document_type: 'sds',
+        extraction_status: 'pending',
+        is_readable: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Save to database first
+      const { data: savedDoc, error: saveError } = await supabase
+        .from('sds_documents')
+        .insert([documentData])
+        .select()
+        .single();
+
+      if (saveError) {
+        console.log('Document may already exist, continuing with view...');
+      } else {
+        console.log('✅ Document saved to database:', savedDoc.id);
+      }
+
+      // Open the PDF in a new tab instead of popup (avoids CORS issues)
+      const url = document.bucket_url || document.source_url;
+      window.open(url, '_blank');
       
-      interactionLogger.logSDSInteraction({
-        sdsDocumentId: document.id,
-        actionType: 'view_sds',
-        metadata: {
-          productName: document.product_name,
-          manufacturer: document.manufacturer,
-          accessMethod: 'search_results'
-        }
-      });
+      // Log SDS document access for OSHA compliance
+      if (facilityId) {
+        AuditService.logSDSAccess(facilityId, document.product_name, document.id);
+        
+        interactionLogger.logSDSInteraction({
+          sdsDocumentId: document.id,
+          actionType: 'view_sds',
+          metadata: {
+            productName: document.product_name,
+            manufacturer: document.manufacturer,
+            accessMethod: 'search_results'
+          }
+        });
+      }
+
+      toast.success(`Opening ${document.product_name} SDS in new tab`);
+      
+    } catch (error: any) {
+      console.error('❌ Error viewing document:', error);
+      // Fallback: just open the URL
+      const url = document.bucket_url || document.source_url;
+      window.open(url, '_blank');
     }
   };
 
@@ -218,7 +254,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                 key={document.id || `${document.source_url}-${index}`}
                 document={document}
                 onView={handleViewDocument}
-                onDownload={handleDownloadDocument}
+                onDownload={handleViewDocument}
                 isSelected={false}
                 onSelect={() => {}}
                 showSelection={false}
@@ -247,14 +283,6 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
           </CardContent>
         </Card>
       )}
-
-      {/* PDF Viewer Popup */}
-      <PDFViewerPopup
-        isOpen={showPDFViewer}
-        onClose={() => setShowPDFViewer(false)}
-        pdfUrl={selectedDocument?.bucket_url || selectedDocument?.source_url}
-        documentName={selectedDocument?.product_name || 'SDS Document'}
-      />
     </div>
   );
 };
