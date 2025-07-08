@@ -45,9 +45,9 @@ const HeroSection = () => {
     <section className="relative flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 overflow-hidden">
       {/* Subtle Hero Background */}
       <div 
-        className="absolute inset-0 opacity-[0.03] blur-3xl"
+        className="absolute inset-0 opacity-[0.08] blur-2xl"
         style={{
-          backgroundImage: 'url("/lovable-uploads/906a5858-4278-496a-b72f-849e51561f57.png")',
+          backgroundImage: 'url("/lovable-uploads/6e64701e-e92f-46b9-a9d7-53670d1b19b3.png")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
@@ -58,7 +58,7 @@ const HeroSection = () => {
         {/* Hero Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Update your entire safety program in minutes, not months
+            Update your entire safety program in minutes, not months with one simple scan
           </h1>
           
           {/* Killer Statement */}
