@@ -7,6 +7,7 @@ import ProblemStatementSection from "@/components/landing/ProblemStatementSectio
 import CTASection from "@/components/landing/CTASection";
 import LandingHeader from "@/components/landing/LandingHeader";
 import LandingFooter from "@/components/landing/LandingFooter";
+import FreeSdsTrialSection from "@/components/landing/FreeSdsTrialSection";
 import AnalyticsService from "@/services/analytics";
 
 const Index = () => {
@@ -32,6 +33,7 @@ const Index = () => {
       <LandingHeader />
 
       <HeroSection />
+      <FreeSdsTrialSection />
       <HowItWorksSection />
       <ComparisonSection />
       <ProblemStatementSection />
