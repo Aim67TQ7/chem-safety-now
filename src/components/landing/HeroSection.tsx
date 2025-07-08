@@ -14,7 +14,7 @@ const HeroSection = () => {
     <section className="flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
       <div className="text-center">
         <h1 className="text-7xl font-bold text-white mb-8 drop-shadow-2xl leading-tight">
-          Get OSHA-ready in 24 hours, not 24 months
+          Convert your entire system in 24 hours, not 24 months
         </h1>
         <p className="text-3xl text-gray-100 mb-16 max-w-3xl mx-auto drop-shadow-lg font-medium">
           Replace your filing cabinet with QR codes. Workers scan, safety data appears instantly.
@@ -36,7 +36,7 @@ const HeroSection = () => {
           </div>
           <div className="flex items-center">
             <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
-            Pass Your First OSHA Visit
+            Digital in 24 Hours
           </div>
           <div className="flex items-center">
             <CheckCircle className="w-6 h-6 text-green-400 mr-3" />
