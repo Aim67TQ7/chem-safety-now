@@ -24,11 +24,11 @@ const TermsPage = () => {
               <div className="w-8 h-8">
                 <img 
                   src="/lovable-uploads/7cbd0a20-15f0-43f7-9877-126cab0c631c.png" 
-                  alt="ChemLabel-GPT Logo" 
+                  alt="QRSafetyApp Logo" 
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="text-lg font-bold text-gray-900">ChemLabel-GPT</span>
+              <span className="text-lg font-bold text-gray-900">QRSafetyApp</span>
             </div>
           </div>
         </div>
@@ -46,7 +46,7 @@ const TermsPage = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-700 mb-4">
-              By accessing and using ChemLabel-GPT ("Service"), you accept and agree to be bound by the terms and provision of this agreement. 
+              By accessing and using QRSafetyApp ("Service"), you accept and agree to be bound by the terms and provision of this agreement. 
               If you do not agree to abide by the above, please do not use this service.
             </p>
           </section>
@@ -54,7 +54,7 @@ const TermsPage = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Service Description</h2>
             <p className="text-gray-700 mb-4">
-              ChemLabel-GPT is an AI-powered chemical safety management platform that provides:
+              QRSafetyApp is an AI-powered chemical safety management platform that provides:
             </p>
             <ul className="list-disc pl-6 text-gray-700 mb-4">
               <li>Safety Data Sheet (SDS) management and access via QR codes</li>
@@ -94,7 +94,7 @@ const TermsPage = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Limitation of Liability</h2>
             <p className="text-gray-700 mb-4">
-              ChemLabel-GPT is a tool to assist with safety management but does not replace professional safety expertise or regulatory compliance obligations. 
+              QRSafetyApp is a tool to assist with safety management but does not replace professional safety expertise or regulatory compliance obligations. 
               You remain solely responsible for:
             </p>
             <ul className="list-disc pl-6 text-gray-700 mb-4">
