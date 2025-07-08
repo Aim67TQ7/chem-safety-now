@@ -42,19 +42,22 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative flex-1 flex items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 overflow-hidden">
-      {/* Subtle Hero Background */}
+    <section className="relative flex-1 flex items-center justify-center min-h-screen overflow-hidden">
+      {/* Full Screen Hero Background */}
       <div 
-        className="absolute inset-0 opacity-[0.08] blur-2xl"
+        className="absolute inset-0 opacity-[0.18] blur-xl"
         style={{
           backgroundImage: 'url("/lovable-uploads/6e64701e-e92f-46b9-a9d7-53670d1b19b3.png")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
         }}
       />
       
-      <div className="w-full max-w-4xl relative z-10">
+      {/* Content Container */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 relative z-10">
+        <div className="w-full max-w-4xl mx-auto relative z-10">
         {/* Hero Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
@@ -186,6 +189,7 @@ const HeroSection = () => {
           <p className="text-sm text-muted-foreground mt-2">
             Set up takes 2 minutes • No credit card required
           </p>
+        </div>
         </div>
       </div>
     </section>
