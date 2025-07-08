@@ -115,7 +115,7 @@ export const SDSDocumentCard = ({
                 className="flex-1 h-9"
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                View SDS
+                View PDF
               </Button>
               <Button
                 variant="default"

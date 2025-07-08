@@ -110,9 +110,17 @@ const SDSDocumentsPage = () => {
   };
 
   const handleViewDocument = (doc: SDSDocument) => {
-    console.log('👁️ Viewing document:', doc.product_name);
-    setSelectedDocumentForViewer(doc);
-    setSDSViewerOpen(true);
+    try {
+      console.log('📥 Opening PDF for:', doc.product_name);
+      
+      // Open PDF directly in new tab
+      const url = doc.bucket_url || doc.source_url;
+      window.open(url, '_blank');
+      toast.success(`Opening PDF for ${doc.product_name}`);
+    } catch (error) {
+      console.error('❌ Error opening document:', error);
+      toast.error(`Failed to open PDF: ${error.message}`);
+    }
   };
 
   const handlePrintLabel = (doc: SDSDocument) => {
