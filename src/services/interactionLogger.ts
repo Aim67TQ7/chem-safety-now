@@ -52,20 +52,22 @@ class InteractionLogger {
     durationMs?: number;
   }) {
     try {
-      // Validate UUIDs before database operation
+      // Validate facility ID if provided
       if (this.currentFacilityId && !this.isValidUUID(this.currentFacilityId)) {
         console.error('Invalid facility ID for logging:', this.currentFacilityId);
         return;
       }
 
+      // User ID is optional for facility-based operations
       if (this.currentUserId && !this.isValidUUID(this.currentUserId)) {
-        console.error('Invalid user ID for logging:', this.currentUserId);
-        return;
+        console.warn('Invalid user ID for logging, proceeding without user:', this.currentUserId);
+        this.currentUserId = null;
       }
 
+      // Session ID validation with fallback
       if (!this.isValidUUID(this.sessionId)) {
-        console.error('Invalid session ID for logging:', this.sessionId);
-        return;
+        console.warn('Invalid session ID, generating new one:', this.sessionId);
+        this.sessionId = generateSessionId();
       }
 
       // Use qr_code_interactions table as a general event log since facility_usage_logs doesn't exist

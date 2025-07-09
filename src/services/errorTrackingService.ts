@@ -63,10 +63,10 @@ export class ErrorTrackingService {
     try {
       const facilityId = this.getCurrentFacilityId();
       
-      // Validate facilityId if it exists (should be a valid UUID)
+      // Validate facilityId if it exists (should be a valid UUID) 
       if (facilityId && !this.isValidUUID(facilityId)) {
-        console.warn('Invalid facility ID detected:', facilityId);
-        // Continue without facility ID rather than failing
+        console.warn('Invalid facility ID detected, proceeding without:', facilityId);
+        // Continue without facility ID rather than failing - facility operations should work without users
       }
 
       const errorData = {

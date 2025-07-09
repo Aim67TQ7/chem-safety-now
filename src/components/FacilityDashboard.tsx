@@ -30,11 +30,13 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
     console.log('🏢 Setting facility context for logging:', facility.id);
     interactionLogger.setUserContext(null, facility.id);
     
-    // Log facility dashboard access
+    // Log facility dashboard access - non-blocking
     AuditService.logAction({
       facilityId: facility.id,
       actionType: 'facility_access',
       actionDescription: `Facility dashboard accessed: ${facility.facility_name}`,
+    }).catch(error => {
+      console.warn('Audit logging failed (non-critical):', error);
     });
 
     interactionLogger.logFacilityUsage({
@@ -43,6 +45,8 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
         facilityName: facility.facility_name,
         facilitySlug: facility.slug
       }
+    }).catch(error => {
+      console.warn('Interaction logging failed (non-critical):', error);
     });
   }, [facility.id, facility.facility_name, facility.slug]);
 

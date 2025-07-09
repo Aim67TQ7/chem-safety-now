@@ -28,10 +28,10 @@ export class AuditService {
         return false;
       }
 
-      // Validate record ID if provided
+      // Validate record ID if provided (optional)
       if (entry.recordId && !this.isValidUUID(entry.recordId)) {
-        console.error('Invalid record ID for audit logging:', entry.recordId);
-        return false;
+        console.warn('Invalid record ID for audit logging, proceeding without:', entry.recordId);
+        entry.recordId = undefined;
       }
 
       const { error } = await supabase
