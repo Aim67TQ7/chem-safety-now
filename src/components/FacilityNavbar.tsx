@@ -32,7 +32,13 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
-  const { subscription, loading, hasFeatureAccess } = useFeatureAccess(facilityId || '');
+  // Check if we're in demo mode
+  const isDemoMode = facilitySlug === 'demo';
+  
+  // Only fetch subscription data if not in demo mode
+  const { subscription, loading, hasFeatureAccess } = useFeatureAccess(
+    isDemoMode ? '' : (facilityId || '')
+  );
   const { isDemo } = useDemoContext();
   
 
@@ -59,8 +65,10 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
       },
     ];
 
-    // Only show Incidents for users with access to incidents feature
-    if (hasFeatureAccess('incidents')) {
+    // For demo mode, always show incidents. For normal mode, check feature access
+    const shouldShowIncidents = isDemoMode || hasFeatureAccess('incidents');
+    
+    if (shouldShowIncidents) {
       baseItems.splice(2, 0, {
         name: 'Incidents',
         path: `/facility/${facilitySlug}/incidents`,
@@ -110,8 +118,8 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
             </div>
           </div>
 
-          {/* Subscription Status */}
-          {!isDemo && (
+          {/* Subscription Status - Hidden in demo mode */}
+          {!isDemoMode && !isDemo && (
             <div className="hidden md:flex items-center">
               <SubscriptionBadge 
                 subscription={subscription}
@@ -170,8 +178,8 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-2">
             <div className="space-y-1">
-              {/* Mobile Subscription Status */}
-              {!isDemo && (
+              {/* Mobile Subscription Status - Hidden in demo mode */}
+              {!isDemoMode && !isDemo && (
                 <div className="px-3 py-2">
                   <SubscriptionBadge 
                     subscription={subscription}
@@ -219,14 +227,16 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
         )}
       </div>
 
-      {/* Subscription Plans Modal */}
-      <SubscriptionPlansModal
-        isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        facilityId={facilityId || ''}
-        currentPlan={subscription?.subscription_status}
-        facilitySlug={facilitySlug}
-      />
+      {/* Subscription Plans Modal - Hidden in demo mode */}
+      {!isDemoMode && !isDemo && (
+        <SubscriptionPlansModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          facilityId={facilityId || ''}
+          currentPlan={subscription?.subscription_status}
+          facilitySlug={facilitySlug}
+        />
+      )}
     </nav>
   );
 };
