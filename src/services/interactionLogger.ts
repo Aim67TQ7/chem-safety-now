@@ -1,9 +1,23 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Generate a proper UUID for session ID
+// Generate a proper UUID for session ID with validation
 const generateSessionId = (): string => {
-  return crypto.randomUUID();
+  try {
+    const uuid = crypto.randomUUID();
+    console.log('Generated session UUID:', uuid);
+    return uuid;
+  } catch (error) {
+    console.error('Failed to generate UUID with crypto.randomUUID():', error);
+    // Fallback UUID generation
+    const fallbackUuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+    console.log('Generated fallback UUID:', fallbackUuid);
+    return fallbackUuid;
+  }
 };
 
 class InteractionLogger {
@@ -23,6 +37,12 @@ class InteractionLogger {
     this.currentFacilityId = facilityId;
   }
 
+  // Validate UUID format
+  private isValidUUID(uuid: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  }
+
   // Log facility usage using QR code interactions table as fallback
   async logFacilityUsage(params: {
     eventType: string;
@@ -32,6 +52,22 @@ class InteractionLogger {
     durationMs?: number;
   }) {
     try {
+      // Validate UUIDs before database operation
+      if (this.currentFacilityId && !this.isValidUUID(this.currentFacilityId)) {
+        console.error('Invalid facility ID for logging:', this.currentFacilityId);
+        return;
+      }
+
+      if (this.currentUserId && !this.isValidUUID(this.currentUserId)) {
+        console.error('Invalid user ID for logging:', this.currentUserId);
+        return;
+      }
+
+      if (!this.isValidUUID(this.sessionId)) {
+        console.error('Invalid session ID for logging:', this.sessionId);
+        return;
+      }
+
       // Use qr_code_interactions table as a general event log since facility_usage_logs doesn't exist
       const payload = {
         session_id: this.sessionId,

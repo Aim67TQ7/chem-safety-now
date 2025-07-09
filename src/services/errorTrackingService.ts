@@ -30,11 +30,17 @@ export class ErrorTrackingService {
   private static sessionId = this.generateSessionId();
 
   private static generateSessionId(): string {
-    return 'xxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+    // Use crypto.randomUUID() for proper UUID generation
+    try {
+      return crypto.randomUUID();
+    } catch (error) {
+      // Fallback for environments without crypto.randomUUID()
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
   }
 
   private static getCurrentFacilityId(): string | undefined {
@@ -57,8 +63,14 @@ export class ErrorTrackingService {
     try {
       const facilityId = this.getCurrentFacilityId();
       
+      // Validate facilityId if it exists (should be a valid UUID)
+      if (facilityId && !this.isValidUUID(facilityId)) {
+        console.warn('Invalid facility ID detected:', facilityId);
+        // Continue without facility ID rather than failing
+      }
+
       const errorData = {
-        facility_id: facilityId,
+        facility_id: facilityId && this.isValidUUID(facilityId) ? facilityId : null,
         error_type: errorType,
         error_level: errorLevel,
         error_message: errorMessage.substring(0, 1000), // Limit message length
@@ -86,7 +98,7 @@ export class ErrorTrackingService {
       }
 
       // For critical errors, also create a high-priority feedback entry
-      if (errorLevel === 'critical') {
+      if (errorLevel === 'critical' && facilityId && this.isValidUUID(facilityId)) {
         await this.createCriticalErrorFeedback(facilityId, errorMessage, additionalContext);
       }
 
@@ -95,6 +107,11 @@ export class ErrorTrackingService {
       console.error('Error tracking service failed:', error);
       return false;
     }
+  }
+
+  private static isValidUUID(uuid: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
   }
 
   private static async createCriticalErrorFeedback(

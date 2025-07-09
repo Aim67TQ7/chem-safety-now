@@ -14,8 +14,26 @@ export interface AuditLogEntry {
 }
 
 export class AuditService {
+  // Validate UUID format
+  private static isValidUUID(uuid: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  }
+
   static async logAction(entry: AuditLogEntry): Promise<boolean> {
     try {
+      // Validate facility ID before attempting database operation
+      if (!entry.facilityId || !this.isValidUUID(entry.facilityId)) {
+        console.error('Invalid facility ID for audit logging:', entry.facilityId);
+        return false;
+      }
+
+      // Validate record ID if provided
+      if (entry.recordId && !this.isValidUUID(entry.recordId)) {
+        console.error('Invalid record ID for audit logging:', entry.recordId);
+        return false;
+      }
+
       const { error } = await supabase
         .from('facility_audit_trail')
         .insert({

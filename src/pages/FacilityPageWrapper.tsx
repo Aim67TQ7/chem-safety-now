@@ -36,14 +36,29 @@ const FacilityPageWrapper = () => {
           return;
         }
 
+        console.log('🔍 Fetching facility with slug:', facilitySlug);
+
         const { data, error } = await supabase
           .from('facilities')
           .select('*')
           .eq('slug', facilitySlug)
-          .single();
+          .maybeSingle(); // Use maybeSingle to avoid single() errors
 
         if (error) {
+          console.error('Database error:', error);
           throw new Error(`Failed to fetch facility: ${error.message}`);
+        }
+
+        if (!data) {
+          setError(`Facility not found with slug: ${facilitySlug}`);
+          return;
+        }
+
+        // Validate facility data
+        if (!data.id) {
+          console.error('Facility data missing ID:', data);
+          setError('Invalid facility data received.');
+          return;
         }
 
         // Ensure logo_url has a default value if null
@@ -52,22 +67,28 @@ const FacilityPageWrapper = () => {
           logo_url: data.logo_url || ''
         };
 
+        console.log('✅ Facility loaded successfully:', facilityData.id);
         setFacility(facilityData);
         
         // Set up logging context once facility is loaded
         console.log('🏢 Facility loaded, setting up logging context:', facilityData.id);
         interactionLogger.setUserContext(null, facilityData.id);
         
-        // Log page access
-        AuditService.logAction({
-          facilityId: facilityData.id,
-          actionType: 'page_access',
-          actionDescription: `Facility page accessed: ${facilityData.facility_name}`,
-        });
+        // Log page access with error handling
+        try {
+          await AuditService.logAction({
+            facilityId: facilityData.id,
+            actionType: 'page_access',
+            actionDescription: `Facility page accessed: ${facilityData.facility_name}`,
+          });
+        } catch (auditError) {
+          console.error('Failed to log audit action:', auditError);
+          // Don't fail the page load if audit logging fails
+        }
 
       } catch (err: any) {
+        console.error('Error in fetchFacility:', err);
         setError(err.message || 'Failed to load facility data.');
-        console.error(err);
       } finally {
         setLoading(false);
       }
