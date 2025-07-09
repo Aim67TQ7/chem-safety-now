@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import FacilitySettings from '@/components/FacilitySettings';
 import FacilityNavbar from '@/components/FacilityNavbar';
+import { DemoProvider } from '@/contexts/DemoContext';
 
 interface FacilityData {
   id: string;
@@ -104,21 +105,23 @@ const FacilitySettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
-      <FacilityNavbar 
-        facilityName={facilityData.facility_name || undefined}
-        facilityLogo={facilityData.logo_url}
-        facilityId={facilityData.id}
-      />
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto">
-          <FacilitySettings 
-            facilityData={facilityData}
-            onFacilityUpdate={handleFacilityUpdate}
-          />
+    <DemoProvider>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50">
+        <FacilityNavbar 
+          facilityName={facilityData.facility_name || undefined}
+          facilityLogo={facilityData.logo_url}
+          facilityId={facilityData.id}
+        />
+        <div className="p-6">
+          <div className="max-w-4xl mx-auto">
+            <FacilitySettings 
+              facilityData={facilityData}
+              onFacilityUpdate={handleFacilityUpdate}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </DemoProvider>
   );
 };
 
