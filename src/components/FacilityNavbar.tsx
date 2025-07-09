@@ -47,19 +47,19 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
     const baseItems = [
       {
         name: 'Dashboard',
-        path: `/facility/${facilitySlug}`,
+        path: `/facility/${facilitySlug || 'demo'}`,
         icon: <Building2 className="w-4 h-4" />,
         feature: 'dashboard'
       },
       {
         name: 'Access Tools',
-        path: `/facility/${facilitySlug}/access-tools`,
+        path: `/facility/${facilitySlug || 'demo'}/access-tools`,
         icon: <QrCode className="w-4 h-4" />,
         feature: 'basic_qr_codes'
       },
       {
         name: 'Settings',
-        path: `/facility/${facilitySlug}/settings`,
+        path: `/facility/${facilitySlug || 'demo'}/settings`,
         icon: <Settings className="w-4 h-4" />,
         feature: 'settings'
       },
@@ -71,7 +71,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
     if (shouldShowIncidents) {
       baseItems.splice(2, 0, {
         name: 'Incidents',
-        path: `/facility/${facilitySlug}/incidents`,
+        path: `/facility/${facilitySlug || 'demo'}/incidents`,
         icon: <AlertTriangle className="w-4 h-4" />,
         feature: 'incidents'
       });
@@ -83,7 +83,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
   const navItems = getNavItems();
 
   const isActive = (path: string) => {
-    if (path === `/facility/${facilitySlug}`) {
+    if (path === `/facility/${facilitySlug || 'demo'}`) {
       return location.pathname === path;
     }
     return location.pathname.startsWith(path);
@@ -147,7 +147,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
             ))}
             
             {/* Manage SDS Button */}
-            <Link to={`/facility/${facilitySlug}/sds-documents`}>
+            <Link to={`/facility/${facilitySlug || 'demo'}/sds-documents`}>
               <Button 
                 size="sm" 
                 className="flex items-center space-x-2 ml-2"
@@ -210,7 +210,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
               
               {/* Mobile Manage SDS Button */}
               <Link 
-                to={`/facility/${facilitySlug}/sds-documents`}
+                to={`/facility/${facilitySlug || 'demo'}/sds-documents`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full"
               >
