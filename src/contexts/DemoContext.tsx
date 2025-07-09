@@ -14,7 +14,13 @@ const DemoContext = createContext<DemoContextType | undefined>(undefined);
 export const useDemoContext = () => {
   const context = useContext(DemoContext);
   if (!context) {
-    throw new Error('useDemoContext must be used within a DemoProvider');
+    // Return default context for non-demo pages
+    return {
+      isDemo: false,
+      showDemoMessage: () => {},
+      handleDemoAction: () => true,
+      navigateToSignup: () => {},
+    };
   }
   return context;
 };
