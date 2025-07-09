@@ -31,6 +31,9 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
+  // Check if this is a demo route
+  const isDemo = facilitySlug === 'demo';
+  
   // Fetch subscription data for the facility
   const { subscription, loading, hasFeatureAccess } = useFeatureAccess(facilityId || '');
   
@@ -70,7 +73,8 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
       });
     }
 
-    return baseItems;
+    // Filter out Settings button in demo mode
+    return isDemo ? baseItems.filter(item => item.name !== 'Settings') : baseItems;
   };
 
   const navItems = getNavItems();
@@ -111,13 +115,15 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
           </div>
 
           {/* Subscription Status */}
-          <div className="hidden md:flex items-center">
-            <SubscriptionBadge 
-              subscription={subscription}
-              onUpgrade={() => setShowSubscriptionModal(true)}
-              loading={loading}
-            />
-          </div>
+          {!isDemo && (
+            <div className="hidden md:flex items-center">
+              <SubscriptionBadge 
+                subscription={subscription}
+                onUpgrade={() => setShowSubscriptionModal(true)}
+                loading={loading}
+              />
+            </div>
+          )}
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
@@ -169,16 +175,18 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
           <div className="md:hidden border-t border-gray-200 py-2">
             <div className="space-y-1">
               {/* Mobile Subscription Status */}
-              <div className="px-3 py-2">
-                <SubscriptionBadge 
-                  subscription={subscription}
-                  onUpgrade={() => {
-                    setIsMobileMenuOpen(false);
-                    setShowSubscriptionModal(true);
-                  }}
-                  loading={loading}
-                />
-              </div>
+              {!isDemo && (
+                <div className="px-3 py-2">
+                  <SubscriptionBadge 
+                    subscription={subscription}
+                    onUpgrade={() => {
+                      setIsMobileMenuOpen(false);
+                      setShowSubscriptionModal(true);
+                    }}
+                    loading={loading}
+                  />
+                </div>
+              )}
               
               {navItems.map((item) => (
                 <Link
