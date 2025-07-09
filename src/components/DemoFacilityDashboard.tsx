@@ -44,7 +44,7 @@ const DemoFacilityDashboard: React.FC<DemoFacilityDashboardProps> = ({ facility 
         <FacilityDashboard facility={{
           ...facility,
           facility_name: "Demo Mfg",
-          logo_url: "/lovable-uploads/694f89e5-8fd3-4f08-9855-ea2849f23102.png"
+          logo_url: "/lovable-uploads/e693ee78-a165-4208-819b-4972673e4366.png"
         }} />
       </div>
 
