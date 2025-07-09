@@ -37,7 +37,7 @@ const AuditTrail = ({ facilityId }: AuditTrailProps) => {
         .select('*')
         .eq('facility_id', facilityId)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(10);
 
       if (error) throw error;
       
@@ -127,7 +127,7 @@ const AuditTrail = ({ facilityId }: AuditTrailProps) => {
           OSHA Compliance Audit Trail
         </CardTitle>
         <p className="text-sm text-muted-foreground mt-2">
-          Complete record of all safety-related activities for regulatory compliance
+          Complete record of all safety-related activities for regulatory compliance (10 most recent)
         </p>
       </CardHeader>
       <CardContent>
