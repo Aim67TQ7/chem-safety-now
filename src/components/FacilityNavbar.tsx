@@ -10,7 +10,8 @@ import {
   X,
   QrCode,
   MapPin,
-  Database
+  Database,
+  Factory
 } from "lucide-react";
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
@@ -49,19 +50,22 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
         name: 'Dashboard',
         path: `/facility/${facilitySlug || 'demo'}`,
         icon: <Building2 className="w-4 h-4" />,
-        feature: 'dashboard'
+        feature: 'dashboard',
+        showInDemo: true
       },
       {
         name: 'Access Tools',
         path: `/facility/${facilitySlug || 'demo'}/access-tools`,
         icon: <QrCode className="w-4 h-4" />,
-        feature: 'basic_qr_codes'
+        feature: 'basic_qr_codes',
+        showInDemo: false // Hide in demo
       },
       {
         name: 'Settings',
         path: `/facility/${facilitySlug || 'demo'}/settings`,
         icon: <Settings className="w-4 h-4" />,
-        feature: 'settings'
+        feature: 'settings',
+        showInDemo: false // Hide in demo
       },
     ];
 
@@ -69,15 +73,17 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
     const shouldShowIncidents = isDemoMode || hasFeatureAccess('incidents');
     
     if (shouldShowIncidents) {
-      baseItems.splice(2, 0, {
+      baseItems.splice(1, 0, {
         name: 'Incidents',
         path: `/facility/${facilitySlug || 'demo'}/incidents`,
         icon: <AlertTriangle className="w-4 h-4" />,
-        feature: 'incidents'
+        feature: 'incidents',
+        showInDemo: true
       });
     }
 
-    return baseItems;
+    // Filter items based on demo mode
+    return isDemoMode ? baseItems.filter(item => item.showInDemo) : baseItems;
   };
 
   const navItems = getNavItems();
@@ -146,16 +152,30 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
               </Link>
             ))}
             
-            {/* Manage SDS Button */}
-            <Link to={`/facility/${facilitySlug || 'demo'}/sds-documents`}>
+            {/* Manage SDS Button - Hidden in demo mode */}
+            {!isDemoMode && (
+              <Link to={`/facility/${facilitySlug || 'demo'}/sds-documents`}>
+                <Button 
+                  size="sm" 
+                  className="flex items-center space-x-2 ml-2"
+                >
+                  <Database className="w-4 h-4" />
+                  <span>Manage SDS</span>
+                </Button>
+              </Link>
+            )}
+            
+            {/* Create Your Site Button - Only in demo mode */}
+            {isDemoMode && (
               <Button 
                 size="sm" 
-                className="flex items-center space-x-2 ml-2"
+                className="flex items-center space-x-2 ml-2 bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => window.open('/signup', '_blank')}
               >
-                <Database className="w-4 h-4" />
-                <span>Manage SDS</span>
+                <Factory className="w-4 h-4" />
+                <span>Create Your Site</span>
               </Button>
-            </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -208,20 +228,37 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
                 </Link>
               ))}
               
-              {/* Mobile Manage SDS Button */}
-              <Link 
-                to={`/facility/${facilitySlug || 'demo'}/sds-documents`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full"
-              >
-                <Button
-                  className="flex items-center space-x-2 w-full justify-start mt-2"
-                  size="sm"
+              {/* Mobile Manage SDS Button - Hidden in demo mode */}
+              {!isDemoMode && (
+                <Link 
+                  to={`/facility/${facilitySlug || 'demo'}/sds-documents`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full"
                 >
-                  <Database className="w-4 h-4" />
-                  <span>Manage SDS</span>
+                  <Button
+                    className="flex items-center space-x-2 w-full justify-start mt-2"
+                    size="sm"
+                  >
+                    <Database className="w-4 h-4" />
+                    <span>Manage SDS</span>
+                  </Button>
+                </Link>
+              )}
+              
+              {/* Mobile Create Your Site Button - Only in demo mode */}
+              {isDemoMode && (
+                <Button
+                  className="flex items-center space-x-2 w-full justify-start mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    window.open('/signup', '_blank');
+                  }}
+                >
+                  <Factory className="w-4 h-4" />
+                  <span>Create Your Site</span>
                 </Button>
-              </Link>
+              )}
             </div>
           </div>
         )}
