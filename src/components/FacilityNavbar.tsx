@@ -16,8 +16,6 @@ import {
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
 import SubscriptionPlansModal from '@/components/SubscriptionPlansModal';
-import DemoIndicator from '@/components/DemoIndicator';
-import { useDemoContext } from '@/contexts/DemoContext';
 
 
 interface FacilityNavbarProps {
@@ -33,14 +31,8 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
-  // Check if we're in demo mode
-  const isDemoMode = facilitySlug === 'demo';
-  
-  // Only fetch subscription data if not in demo mode
-  const { subscription, loading, hasFeatureAccess } = useFeatureAccess(
-    isDemoMode ? '' : (facilityId || '')
-  );
-  const { isDemo } = useDemoContext();
+  // Fetch subscription data for the facility
+  const { subscription, loading, hasFeatureAccess } = useFeatureAccess(facilityId || '');
   
 
   // Dynamic navigation based on subscription level
@@ -66,8 +58,8 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
       },
     ];
 
-    // For demo mode, always show incidents. For normal mode, check feature access
-    const shouldShowIncidents = isDemoMode || hasFeatureAccess('incidents');
+    // Check feature access for incidents
+    const shouldShowIncidents = hasFeatureAccess('incidents');
     
     if (shouldShowIncidents) {
       baseItems.splice(1, 0, {
@@ -108,7 +100,6 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
                 <span className="text-3xl font-bold text-gray-900 tracking-tight">
                   {facilityName || 'Facility Dashboard'}
                 </span>
-                <DemoIndicator />
               </div>
               {facilityAddress && (
                 <div className="flex items-center text-sm text-gray-700 font-medium">
@@ -119,16 +110,14 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
             </div>
           </div>
 
-          {/* Subscription Status - Hidden in demo mode */}
-          {!isDemoMode && !isDemo && (
-            <div className="hidden md:flex items-center">
-              <SubscriptionBadge 
-                subscription={subscription}
-                onUpgrade={() => setShowSubscriptionModal(true)}
-                loading={loading}
-              />
-            </div>
-          )}
+          {/* Subscription Status */}
+          <div className="hidden md:flex items-center">
+            <SubscriptionBadge 
+              subscription={subscription}
+              onUpgrade={() => setShowSubscriptionModal(true)}
+              loading={loading}
+            />
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
@@ -179,19 +168,17 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-2">
             <div className="space-y-1">
-              {/* Mobile Subscription Status - Hidden in demo mode */}
-              {!isDemoMode && !isDemo && (
-                <div className="px-3 py-2">
-                  <SubscriptionBadge 
-                    subscription={subscription}
-                    onUpgrade={() => {
-                      setIsMobileMenuOpen(false);
-                      setShowSubscriptionModal(true);
-                    }}
-                    loading={loading}
-                  />
-                </div>
-              )}
+              {/* Mobile Subscription Status */}
+              <div className="px-3 py-2">
+                <SubscriptionBadge 
+                  subscription={subscription}
+                  onUpgrade={() => {
+                    setIsMobileMenuOpen(false);
+                    setShowSubscriptionModal(true);
+                  }}
+                  loading={loading}
+                />
+              </div>
               
               {navItems.map((item) => (
                 <Link
@@ -228,16 +215,14 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
         )}
       </div>
 
-      {/* Subscription Plans Modal - Hidden in demo mode */}
-      {!isDemoMode && !isDemo && (
-        <SubscriptionPlansModal
-          isOpen={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)}
-          facilityId={facilityId || ''}
-          currentPlan={subscription?.subscription_status}
-          facilitySlug={facilitySlug}
-        />
-      )}
+      {/* Subscription Plans Modal */}
+      <SubscriptionPlansModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        facilityId={facilityId || ''}
+        currentPlan={subscription?.subscription_status}
+        facilitySlug={facilitySlug}
+      />
     </nav>
   );
 };

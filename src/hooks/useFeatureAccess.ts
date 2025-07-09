@@ -34,10 +34,6 @@ export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
   }, [facilityId]);
 
   const hasFeatureAccess = (feature: string): boolean => {
-    // Special handling for demo facility - grant access to all features for demo purposes
-    if (facilitySlug === 'demo') {
-      return true;
-    }
     
     if (!subscription) return false;
     
