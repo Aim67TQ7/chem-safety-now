@@ -38,42 +38,14 @@ const DemoFacilityDashboard: React.FC<DemoFacilityDashboardProps> = ({ facility 
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Demo Mode Banner */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Play className="w-5 h-5" />
-            <span className="font-semibold">DEMO MODE</span>
-            <Badge variant="secondary" className="bg-white/20 text-white">
-              Interactive Preview
-            </Badge>
-          </div>
-          <Button 
-            onClick={handleCreateSite}
-            variant="secondary"
-            size="sm"
-            className="bg-white text-blue-600 hover:bg-gray-100"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Create Your Own Site
-          </Button>
-        </div>
-      </div>
-
-      {/* Demo Notice */}
-      <div className="max-w-7xl mx-auto p-4">
-        <Alert className="mb-6 border-blue-200 bg-blue-50">
-          <Eye className="h-4 w-4" />
-          <AlertDescription className="text-blue-800">
-            <strong>You're viewing a live demo.</strong> Explore all features! 
-            Create your own site to enable full functionality including printing and downloads.
-          </AlertDescription>
-        </Alert>
-      </div>
 
       {/* Wrap the original dashboard with demo restrictions */}
       <div className="demo-mode-wrapper">
-        <FacilityDashboard facility={facility} />
+        <FacilityDashboard facility={{
+          ...facility,
+          facility_name: "Demo Mfg",
+          logo_url: "/lovable-uploads/694f89e5-8fd3-4f08-9855-ea2849f23102.png"
+        }} />
       </div>
 
 
