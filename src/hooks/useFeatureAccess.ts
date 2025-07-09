@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { SubscriptionService, FacilitySubscription } from '@/services/subscriptionService';
 
 interface FeatureAccessHook {
@@ -11,6 +12,7 @@ interface FeatureAccessHook {
 export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
   const [subscription, setSubscription] = useState<FacilitySubscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const { facilitySlug } = useParams<{ facilitySlug: string }>();
 
   const fetchSubscription = async () => {
     if (!facilityId) return;
@@ -32,6 +34,11 @@ export const useFeatureAccess = (facilityId: string): FeatureAccessHook => {
   }, [facilityId]);
 
   const hasFeatureAccess = (feature: string): boolean => {
+    // Special handling for demo facility - grant access to all features for demo purposes
+    if (facilitySlug === 'demo') {
+      return true;
+    }
+    
     if (!subscription) return false;
     
     const basicFeatures = ['sds_search'];

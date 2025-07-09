@@ -4,12 +4,13 @@ import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, FileText, Plus } from 'lucide-react';
+import { AlertTriangle, FileText, Plus, Shield } from 'lucide-react';
 import { IncidentReportForm } from '@/components/incidents/IncidentReportForm';
 import { IncidentsList } from '@/components/incidents/IncidentsList';
 import FacilityNavbar from '@/components/FacilityNavbar';
-import { DemoProvider } from '@/contexts/DemoContext';
+import { DemoProvider, useDemoContext } from '@/contexts/DemoContext';
 import DemoIndicator from '@/components/DemoIndicator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 
 const IncidentsPage = () => {
@@ -41,6 +42,23 @@ const IncidentsPage = () => {
     setActiveTab('report');
   };
 
+  const DemoWarningBanner = () => {
+    const { isDemo } = useDemoContext();
+    
+    if (!isDemo) return null;
+    
+    return (
+      <Alert className="border-amber-200 bg-amber-50">
+        <Shield className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          <strong>Demo Mode:</strong> This is a demonstration of our incident reporting system. 
+          Any incident reports submitted here will not be saved or stored. 
+          <span className="font-semibold"> Create your own site to enable full incident tracking and OSHA compliance reporting.</span>
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
   return (
     <DemoProvider>
       <div className="min-h-screen bg-gray-50">
@@ -52,6 +70,11 @@ const IncidentsPage = () => {
         
         <div className="container mx-auto py-8 px-4">
           <div className="max-w-6xl mx-auto">
+            {/* Demo Warning Banner */}
+            <div className="mb-6">
+              <DemoWarningBanner />
+            </div>
+            
             <div className="mb-8 flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
