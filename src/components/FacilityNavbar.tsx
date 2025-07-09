@@ -57,17 +57,13 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
         icon: <QrCode className="w-4 h-4" />,
         feature: 'basic_qr_codes'
       },
-    ];
-
-    // Only add settings if not in demo mode
-    if (!isDemoMode) {
-      baseItems.push({
+      {
         name: 'Settings',
         path: `/facility/${facilitySlug || 'demo'}/settings`,
         icon: <Settings className="w-4 h-4" />,
         feature: 'settings'
-      });
-    }
+      },
+    ];
 
     // For demo mode, always show incidents. For normal mode, check feature access
     const shouldShowIncidents = isDemoMode || hasFeatureAccess('incidents');
