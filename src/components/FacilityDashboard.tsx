@@ -22,9 +22,10 @@ interface FacilityProps {
 interface FacilityDashboardProps {
   facility: FacilityProps;
   hideActivityCard?: boolean;
+  hideAuditTrail?: boolean;
 }
 
-const FacilityDashboard = ({ facility, hideActivityCard = false }: FacilityDashboardProps) => {
+const FacilityDashboard = ({ facility, hideActivityCard = false, hideAuditTrail = false }: FacilityDashboardProps) => {
 
   // Set facility context for all logging
   useEffect(() => {
@@ -76,7 +77,7 @@ const FacilityDashboard = ({ facility, hideActivityCard = false }: FacilityDashb
             {!hideActivityCard && <FacilityActivityCard facilityId={facility.id} />}
 
             {/* Audit Trail */}
-            <AuditTrail facilityId={facility.id} />
+            {!hideAuditTrail && <AuditTrail facilityId={facility.id} />}
           </div>
         </div>
 

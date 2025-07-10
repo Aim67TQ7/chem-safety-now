@@ -50,6 +50,7 @@ const DemoFacilityDashboard: React.FC<DemoFacilityDashboardProps> = ({ facility 
             logo_url: "/lovable-uploads/e693ee78-a165-4208-819b-4972673e4366.png"
           }}
           hideActivityCard={true}
+          hideAuditTrail={true}
         />
       </div>
 
