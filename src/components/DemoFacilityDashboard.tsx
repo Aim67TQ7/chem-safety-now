@@ -117,23 +117,55 @@ const DemoFacilityDashboard: React.FC<DemoFacilityDashboardProps> = ({ facility 
       </div>
 
 
-      {/* Floating CTA */}
+      {/* Enhanced Interactive CTA */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Card className="shadow-2xl border-blue-200">
-          <CardContent className="p-4">
-            <div className="text-center space-y-3">
-              <div className="text-sm font-medium text-blue-800">
+        <Card className="shadow-2xl border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 max-w-xs">
+          <CardContent className="p-6">
+            <div className="text-center space-y-4">
+              <div className="text-lg font-bold text-blue-900">
                 Ready to get started?
               </div>
+              <div className="text-sm text-gray-700 space-y-2">
+                <p className="font-medium">Test all functions with your branded SDS site:</p>
+                <ul className="text-xs space-y-1 text-left">
+                  <li className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                    <span>AI-powered SDS search & extraction</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                    <span>Professional safety label printing</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                    <span>Incident reporting & tracking</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                    <span>QR code generation & access tools</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                    <span>Custom facility branding</span>
+                  </li>
+                </ul>
+              </div>
+              
               <Button 
                 onClick={handleCreateSite}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 font-semibold py-3"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Create Your Site
               </Button>
-              <div className="text-xs text-gray-500">
-                2-minute setup • No credit card required
+              
+              <div className="space-y-1">
+                <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+                  7-Day Free Trial
+                </Badge>
+                <div className="text-xs text-gray-600">
+                  No credit card required • 2-minute setup
+                </div>
               </div>
             </div>
           </CardContent>
