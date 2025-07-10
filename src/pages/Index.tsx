@@ -17,10 +17,10 @@ const Index = () => {
   useEffect(() => {
     AnalyticsService.initializeGoogleAnalytics('AW-17319034937');
     
-    // Auto-redirect to demo after 2.5 seconds
+    // Auto-redirect to demo after 6 seconds
     const timer = setTimeout(() => {
       navigate('/facility/demo');
-    }, 2500);
+    }, 6000);
 
     return () => clearTimeout(timer);
   }, [navigate]);

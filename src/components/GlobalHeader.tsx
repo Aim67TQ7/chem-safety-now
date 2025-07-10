@@ -17,13 +17,10 @@ const GlobalHeader = () => {
         >
           <img 
             src="/lovable-uploads/18c1efed-2e96-48a0-a62a-d5887c53ac30.png" 
-            alt="QRSafetyApp Logo" 
+            alt="Logo" 
             className="h-10 w-10 object-contain"
           />
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-foreground">QRSafetyApp</h1>
-            <p className="text-sm text-muted-foreground">Digital Safety Management</p>
-          </div>
+          {/* Removed app name and tagline for white-label flexibility */}
         </div>
       </div>
     </header>
