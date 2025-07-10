@@ -91,14 +91,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Enhanced Facility Name and Address for White-Label Prominence */}
-          <div className="flex items-center space-x-4 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 rounded-lg border border-blue-200">
-            {facilityLogo && (
-              <img 
-                src={facilityLogo} 
-                alt={facilityName || 'Facility'} 
-                className="h-12 w-12 rounded-lg object-cover border-2 border-white shadow-sm"
-              />
-            )}
+          <div className="flex items-center bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 rounded-lg border border-blue-200">
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-3xl font-bold text-gray-900 tracking-tight">
