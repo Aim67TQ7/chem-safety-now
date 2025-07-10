@@ -147,33 +147,25 @@ const SDSEvaluationButton: React.FC<SDSEvaluationButtonProps> = ({
   const StatusIcon = status.icon;
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant={status.variant}
-        size="sm"
-        onClick={handleEvaluate}
-        disabled={isEvaluating}
-        className="text-xs h-6 px-2"
-      >
-        {isEvaluating ? (
-          <>
-            <Loader2 className="h-2 w-2 mr-1 animate-spin" />
-            Analyzing...
-          </>
-        ) : (
-          <>
-            <StatusIcon className="h-2 w-2 mr-1" />
-            {status.action}
-          </>
-        )}
-      </Button>
-      
-      {document.ai_extraction_date && (
-        <span className="text-xs text-gray-500">
-          {new Date(document.ai_extraction_date).toLocaleDateString()}
-        </span>
+    <Button
+      variant={status.variant}
+      size="sm"
+      onClick={handleEvaluate}
+      disabled={isEvaluating}
+      className="h-8 px-3 text-xs"
+    >
+      {isEvaluating ? (
+        <>
+          <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+          Analyzing...
+        </>
+      ) : (
+        <>
+          <StatusIcon className="h-3 w-3 mr-1.5" />
+          {status.action}
+        </>
       )}
-    </div>
+    </Button>
   );
 };
 

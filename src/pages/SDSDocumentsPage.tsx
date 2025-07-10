@@ -374,9 +374,9 @@ const SDSDocumentsPageContent = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewDocument(document)}
-                              className="flex items-center gap-2"
+                              className="h-8 px-3 text-xs"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-3 w-3 mr-1.5" />
                               View PDF
                             </Button>
                             
@@ -384,9 +384,9 @@ const SDSDocumentsPageContent = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleAskAI(document)}
-                              className="flex items-center gap-2"
+                              className="h-8 px-3 text-xs"
                             >
-                              <Bot className="h-4 w-4" />
+                              <Bot className="h-3 w-3 mr-1.5" />
                               Use AI
                             </Button>
                             
@@ -395,9 +395,9 @@ const SDSDocumentsPageContent = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handlePrintLabel(document)}
-                                className="flex items-center gap-2"
+                                className="h-8 px-3 text-xs"
                               >
-                                <Printer className="h-4 w-4" />
+                                <Printer className="h-3 w-3 mr-1.5" />
                                 Print Label
                               </Button>
                             )}

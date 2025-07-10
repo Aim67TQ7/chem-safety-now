@@ -107,51 +107,47 @@ export const SDSDocumentCard = ({
             </div>
           )}
 
-          {/* Action buttons - mobile-optimized */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="flex gap-2 flex-1">
+          {/* Action buttons - streamlined layout */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onView(document)}
+              className="h-8 px-3 text-xs"
+            >
+              <ExternalLink className="h-3 w-3 mr-1.5" />
+              View PDF
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onPrintLabel(document)}
+              className={`h-8 px-3 text-xs ${
+                document.extraction_status === 'osha_compliant' 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : document.extraction_status === 'manual_review_required'
+                  ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                  : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+              }`}
+            >
+              <Printer className="h-3 w-3 mr-1.5" />
+              Print Label
+            </Button>
+            {onAskAI && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onView(document)}
-                className="flex-1 h-9"
+                onClick={() => onAskAI(document)}
+                className="h-8 px-3 text-xs"
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View PDF
+                <Bot className="h-3 w-3 mr-1.5" />
+                Use AI
               </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => onPrintLabel(document)}
-                className={`flex-1 h-9 text-white ${
-                  document.extraction_status === 'osha_compliant' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : document.extraction_status === 'manual_review_required'
-                    ? 'bg-orange-600 hover:bg-orange-700'
-                    : 'bg-primary hover:bg-primary/90'
-                }`}
-              >
-                <Printer className="h-4 w-4 mr-2" />
-                Print Label
-              </Button>
-            </div>
-            <div className="flex gap-2 sm:w-auto">
-              {onAskAI && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAskAI(document)}
-                  className="h-9"
-                >
-                  <Bot className="h-4 w-4 mr-2" />
-                  Use AI
-                </Button>
-              )}
-              <SDSEvaluationButton 
-                document={document} 
-                onEvaluationComplete={onEvaluationComplete}
-              />
-            </div>
+            )}
+            <SDSEvaluationButton 
+              document={document} 
+              onEvaluationComplete={onEvaluationComplete}
+            />
           </div>
 
           {/* Footer with date */}
