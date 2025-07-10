@@ -21,9 +21,10 @@ interface FacilityProps {
 
 interface FacilityDashboardProps {
   facility: FacilityProps;
+  hideActivityCard?: boolean;
 }
 
-const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
+const FacilityDashboard = ({ facility, hideActivityCard = false }: FacilityDashboardProps) => {
 
   // Set facility context for all logging
   useEffect(() => {
@@ -72,7 +73,7 @@ const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
           {/* Dashboard Cards Section */}
           <div className="grid grid-cols-1 gap-6">
             {/* Facility Activity Card */}
-            <FacilityActivityCard facilityId={facility.id} />
+            {!hideActivityCard && <FacilityActivityCard facilityId={facility.id} />}
 
             {/* Audit Trail */}
             <AuditTrail facilityId={facility.id} />
