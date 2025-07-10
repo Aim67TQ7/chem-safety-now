@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, FileText, ChevronLeft, ChevronRight, ArrowLeft, Search, Plus, Eye, Printer } from 'lucide-react';
+import { AlertCircle, FileText, ChevronLeft, ChevronRight, ArrowLeft, Search, Plus, Eye, Printer, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import SDSViewerPopup from '@/components/popups/SDSViewerPopup';
+import AIAssistantPopup from '@/components/popups/AIAssistantPopup';
 import { useSDSDocuments } from '@/hooks/useSDSDocuments';
 import { SDSDocumentCard } from '@/components/sds/SDSDocumentCard';
 import { SDSSearchFilters } from '@/components/sds/SDSSearchFilters';
@@ -49,6 +50,8 @@ const SDSDocumentsPageContent = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearchingNewDocs, setIsSearchingNewDocs] = useState(false);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [selectedDocumentForAI, setSelectedDocumentForAI] = useState<SDSDocument | null>(null);
   
   const { handlePrintAction, handleDownloadAction } = useDemoPrintActions();
   
@@ -152,6 +155,11 @@ const SDSDocumentsPageContent = () => {
 
   const handleViewSearchResult = (document: any) => {
     window.open(document.source_url, '_blank');
+  };
+
+  const handleAskAI = (document: SDSDocument) => {
+    setSelectedDocumentForAI(document);
+    setAiChatOpen(true);
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -372,6 +380,16 @@ const SDSDocumentsPageContent = () => {
                               View PDF
                             </Button>
                             
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAskAI(document)}
+                              className="flex items-center gap-2"
+                            >
+                              <Bot className="h-4 w-4" />
+                              Use AI
+                            </Button>
+                            
                             {(document.ai_extraction_confidence || 0) > 0 && (
                               <Button
                                 variant="outline"
@@ -405,6 +423,7 @@ const SDSDocumentsPageContent = () => {
                     onView={handleViewDocument}
                     onPrintLabel={handlePrintLabel}
                     onEvaluationComplete={handleEvaluationComplete}
+                    onAskAI={handleAskAI}
                     searchTerm={searchTerm}
                   />
                 ))}
@@ -502,6 +521,18 @@ const SDSDocumentsPageContent = () => {
           setSelectedDocumentForViewer(null);
         }}
         sdsDocument={selectedDocumentForViewer}
+        onAskAI={handleAskAI}
+      />
+
+      {/* AI Assistant Popup */}
+      <AIAssistantPopup
+        isOpen={aiChatOpen}
+        onClose={() => {
+          setAiChatOpen(false);
+          setSelectedDocumentForAI(null);
+        }}
+        facilityData={facilityData}
+        selectedDocument={selectedDocumentForAI}
       />
     </div>
   );

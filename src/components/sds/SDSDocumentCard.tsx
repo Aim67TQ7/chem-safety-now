@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Printer, AlertTriangle } from 'lucide-react';
+import { ExternalLink, Printer, AlertTriangle, Bot } from 'lucide-react';
 import { getSDSDocumentStatus, getComplianceStatusBadge } from '@/utils/sdsStatusUtils';
 import SDSEvaluationButton from '@/components/SDSEvaluationButton';
 
@@ -30,6 +30,7 @@ interface SDSDocumentCardProps {
   onView: (doc: SDSDocument) => void;
   onPrintLabel: (doc: SDSDocument) => void;
   onEvaluationComplete: () => void;
+  onAskAI?: (doc: SDSDocument) => void;
   searchTerm?: string;
 }
 
@@ -53,6 +54,7 @@ export const SDSDocumentCard = ({
   onView, 
   onPrintLabel, 
   onEvaluationComplete,
+  onAskAI,
   searchTerm = ''
 }: SDSDocumentCardProps) => {
   const statusInfo = getSDSDocumentStatus(document);
@@ -133,7 +135,18 @@ export const SDSDocumentCard = ({
                 Print Label
               </Button>
             </div>
-            <div className="sm:w-auto">
+            <div className="flex gap-2 sm:w-auto">
+              {onAskAI && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAskAI(document)}
+                  className="h-9"
+                >
+                  <Bot className="h-4 w-4 mr-2" />
+                  Use AI
+                </Button>
+              )}
               <SDSEvaluationButton 
                 document={document} 
                 onEvaluationComplete={onEvaluationComplete}
