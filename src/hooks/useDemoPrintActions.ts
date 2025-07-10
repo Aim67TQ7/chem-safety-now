@@ -1,19 +1,16 @@
 import { useDemoContext } from '@/contexts/DemoContext';
 
 export const useDemoPrintActions = () => {
-  const { isDemo, showDemoMessage } = useDemoContext();
+  const { isDemo, showCreateSitePopup } = useDemoContext();
 
   const handlePrintAction = (actionType: string, callback?: () => void) => {
     if (isDemo) {
       // Execute the callback to show print preview/dialog
       if (callback) callback();
       
-      // Show demo message after a brief delay
+      // Show create site popup after a brief delay
       setTimeout(() => {
-        showDemoMessage(
-          'Print Action',
-          `✅ In your real site, this ${actionType} would be sent to your printer. Create your own site to enable printing.`
-        );
+        showCreateSitePopup('printing');
       }, 500);
       
       return false; // Prevent actual printing
@@ -24,10 +21,7 @@ export const useDemoPrintActions = () => {
 
   const handleDownloadAction = (actionType: string) => {
     if (isDemo) {
-      showDemoMessage(
-        'Download Action',
-        `✅ In your real site, this ${actionType} would be downloaded to your device. Create your own site to enable downloads.`
-      );
+      showCreateSitePopup('download');
       return false;
     }
     

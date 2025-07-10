@@ -1,10 +1,12 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { CreateFreeSitePopup } from '@/components/popups/CreateFreeSitePopup';
 
 interface DemoContextType {
   isDemo: boolean;
   showDemoMessage: (action: string, description?: string) => void;
+  showCreateSitePopup: (actionType?: string) => void;
   handleDemoAction: (action: string, callback?: () => void) => void;
   navigateToSignup: () => void;
 }
@@ -18,6 +20,7 @@ export const useDemoContext = () => {
     return {
       isDemo: false,
       showDemoMessage: () => {},
+      showCreateSitePopup: () => {},
       handleDemoAction: () => true,
       navigateToSignup: () => {},
     };
@@ -33,6 +36,9 @@ export const DemoProvider: React.FC<DemoProviderProps> = ({ children }) => {
   const { facilitySlug } = useParams();
   const navigate = useNavigate();
   const isDemo = facilitySlug === 'demo';
+  
+  const [showPopup, setShowPopup] = useState(false);
+  const [currentActionType, setCurrentActionType] = useState('printing');
 
   const showDemoMessage = (action: string, description?: string) => {
     toast({
@@ -40,6 +46,11 @@ export const DemoProvider: React.FC<DemoProviderProps> = ({ children }) => {
       description: description || `In your real site, this ${action.toLowerCase()} would work fully. Create your own site to enable all features.`,
       duration: 4000,
     });
+  };
+
+  const showCreateSitePopup = (actionType: string = 'printing') => {
+    setCurrentActionType(actionType);
+    setShowPopup(true);
   };
 
   const handleDemoAction = (action: string, callback?: () => void) => {
@@ -59,6 +70,7 @@ export const DemoProvider: React.FC<DemoProviderProps> = ({ children }) => {
   const value: DemoContextType = {
     isDemo,
     showDemoMessage,
+    showCreateSitePopup,
     handleDemoAction,
     navigateToSignup,
   };
@@ -66,6 +78,11 @@ export const DemoProvider: React.FC<DemoProviderProps> = ({ children }) => {
   return (
     <DemoContext.Provider value={value}>
       {children}
+      <CreateFreeSitePopup 
+        isOpen={showPopup}
+        onClose={() => setShowPopup(false)}
+        actionType={currentActionType}
+      />
     </DemoContext.Provider>
   );
 };
