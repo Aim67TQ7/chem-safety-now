@@ -925,6 +925,42 @@ export type Database = {
           },
         ]
       }
+      sales_partner_applications: {
+        Row: {
+          application_status: string
+          business_description: string
+          company_name: string
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_status?: string
+          business_description: string
+          company_name: string
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_status?: string
+          business_description?: string
+          company_name?: string
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sales_reps: {
         Row: {
           commission_rate: number | null
