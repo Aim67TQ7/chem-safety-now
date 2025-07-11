@@ -63,7 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 text-center">
-                We've encountered an unexpected error. The issue has been automatically reported to our team.
+                We've encountered an unexpected error. Please try refreshing the page or going back to the homepage.
               </p>
               
               {process.env.NODE_ENV === 'development' && this.state.error && (

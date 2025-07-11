@@ -46,7 +46,10 @@ const FacilityPageWrapper = () => {
 
         if (error) {
           console.error('Database error:', error);
-          throw new Error(`Failed to fetch facility: ${error.message}`);
+          // Don't throw error for PGRST116 (no rows) - handle as facility not found
+          if (error.code !== 'PGRST116') {
+            throw new Error(`Failed to fetch facility: ${error.message}`);
+          }
         }
 
         if (!data) {

@@ -16,14 +16,7 @@ const Index = () => {
 
   useEffect(() => {
     AnalyticsService.initializeGoogleAnalytics('AW-17319034937');
-    
-    // Auto-redirect to demo after 6 seconds
-    const timer = setTimeout(() => {
-      navigate('/facility/demo');
-    }, 6000);
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col w-full">
