@@ -27,34 +27,29 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    // For facility-based subscriptions, we don't require user authentication
+    // Instead, we'll use the facility's email from the facilitySlug
+    logStep("Processing facility-based checkout");
 
     const { planId, billingCycle, facilitySlug } = await req.json();
     logStep("Request data", { planId, billingCycle, facilitySlug });
 
-    // Get facility data if facilitySlug is provided
-    let facilityData = null;
-    if (facilitySlug) {
-      const { data: facility, error: facilityError } = await supabaseClient
-        .from('facilities')
-        .select('id, facility_name, email')
-        .eq('slug', facilitySlug)
-        .single();
-      
-      if (facility && !facilityError) {
-        facilityData = facility;
-        logStep("Facility found", { facilityId: facility.id, facilityName: facility.facility_name });
-      }
+    // Get facility data - required for facility-based subscriptions
+    if (!facilitySlug) {
+      throw new Error("Facility slug is required for facility subscriptions");
     }
+
+    const { data: facilityData, error: facilityError } = await supabaseClient
+      .from('facilities')
+      .select('id, facility_name, email')
+      .eq('slug', facilitySlug)
+      .single();
+    
+    if (facilityError || !facilityData) {
+      throw new Error("Facility not found");
+    }
+    
+    logStep("Facility found", { facilityId: facilityData.id, facilityName: facilityData.facility_name, email: facilityData.email });
 
     // Get plan details from database
     const { data: plan, error: planError } = await supabaseClient
@@ -70,14 +65,14 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Check if customer exists using facility email
+    const customers = await stripe.customers.list({ email: facilityData.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
     } else {
-      logStep("Creating new customer");
+      logStep("Creating new customer for facility");
     }
 
     // Determine price based on billing cycle
@@ -97,20 +92,16 @@ serve(async (req) => {
 
     // Create checkout session with metadata to link facility
     const metadata: any = {
-      user_id: user.id,
+      facility_id: facilityData.id,
+      facility_slug: facilitySlug,
+      facility_name: facilityData.facility_name,
       plan_name: plan.name,
       billing_cycle: billingCycle
     };
 
-    if (facilityData) {
-      metadata.facility_id = facilityData.id;
-      metadata.facility_slug = facilitySlug;
-      metadata.facility_name = facilityData.facility_name;
-    }
-
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : facilityData.email,
       line_items: [
         {
           price: priceId,
