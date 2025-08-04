@@ -95,8 +95,14 @@
     <meta name="author" content="QRsafetyapp.com">
     <meta name="publisher" content="QRsafetyapp.com">
 
-    <!-- AMP Analytics Script -->
-    <script async custom-element="amp-analytics" src="https://cdn.ampproject.org/v0/amp-analytics-0.1.js"></script>
+    <!-- Google Ads Tracking -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17319034937"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-17319034937');
+    </script>
 
     <!-- ── Optional: silence Sentry / Lovable noise in local dev ──────────── -->
     <script>
@@ -132,20 +138,6 @@ Emphasize saved hours and better regulatory readiness.`
   </head>
 
   <body>
-    <!-- AMP Analytics Configuration -->
-    <amp-analytics type="gtag" data-credentials="include">
-      <script type="application/json">
-      {
-        "vars" : {
-          "gtag_id": "AW-17319034937",
-          "config" : {
-            "AW-17319034937": { "groups": "default" }
-          }
-        }
-      }
-      </script>
-    </amp-analytics>
-
     <div id="root"></div>
 
     <!-- Your React / Vite entry -->

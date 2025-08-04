@@ -13,35 +13,70 @@ import { APIErrorHandler } from "./utils/apiErrorHandler";
 import { ErrorTrackingService } from "./services/errorTrackingService";
 import { useEffect } from "react";
 
+// Declare global gtag function for TypeScript
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 const queryClient = new QueryClient();
 
 // Global error event handlers
 const setupGlobalErrorHandlers = () => {
   // Handle unhandled JavaScript errors
   window.addEventListener('error', (event) => {
+    // Don't track errors from external tracking scripts as critical
+    const isTrackingScript = event.filename && (
+      event.filename.includes('googletagmanager.com') ||
+      event.filename.includes('google-analytics.com') ||
+      event.filename.includes('doubleclick.net') ||
+      event.filename.includes('googlesyndication.com')
+    );
+    
     ErrorTrackingService.trackJSError(event.error || new Error(event.message), {
       filename: event.filename,
       lineno: event.lineno,
       colno: event.colno,
-      global_error: true
+      global_error: true,
+      is_tracking_script: isTrackingScript
     });
   });
 
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
+    // Check if the rejection is from a tracking script
+    const reason = String(event.reason);
+    const isTrackingScript = reason.includes('googletagmanager') || 
+                            reason.includes('google-analytics') ||
+                            reason.includes('doubleclick') ||
+                            reason.includes('googlesyndication');
+    
     ErrorTrackingService.trackError(
       'client_error',
       `Unhandled Promise Rejection: ${event.reason}`,
-      'error',
+      isTrackingScript ? 'error' : 'error',
       {
         reason: event.reason,
-        promise_rejection: true
+        promise_rejection: true,
+        is_tracking_script: isTrackingScript
       }
     );
   });
 
   // Setup API error tracking
   APIErrorHandler.setupSupabaseErrorTracking();
+  
+  // Add fallback for Google Analytics if it fails to load
+  setTimeout(() => {
+    if (typeof window.gtag === 'undefined') {
+      console.warn('Google Analytics failed to load, continuing without tracking');
+      // Create a noop gtag function to prevent errors
+      window.gtag = function() {
+        console.log('gtag called but GA not loaded:', arguments);
+      };
+    }
+  }, 5000);
 };
 
 const App = () => {
