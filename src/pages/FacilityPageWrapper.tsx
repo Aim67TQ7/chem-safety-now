@@ -76,18 +76,6 @@ const FacilityPageWrapper = () => {
         // Set up logging context once facility is loaded
         console.log('🏢 Facility loaded, setting up logging context:', facilityData.id);
         interactionLogger.setUserContext(null, facilityData.id);
-        
-        // Log page access with error handling
-        try {
-          await AuditService.logAction({
-            facilityId: facilityData.id,
-            actionType: 'page_access',
-            actionDescription: `Facility page accessed: ${facilityData.facility_name}`,
-          });
-        } catch (auditError) {
-          console.error('Failed to log audit action:', auditError);
-          // Don't fail the page load if audit logging fails
-        }
 
       } catch (err: any) {
         console.error('Error in fetchFacility:', err);
