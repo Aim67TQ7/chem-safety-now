@@ -514,32 +514,25 @@ const LabelPrinter = ({
       {showPrintPreview && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">Print Preview - {productName}</h2>
-                <Button variant="outline" onClick={() => setShowPrintPreview(false)}>
-                  Close
-                </Button>
-              </div>
-              <PrintAlignmentFix
-                productName={productName}
-                manufacturer={manufacturer}
-                chemicalFormula={chemicalFormula}
-                chemicalCompound={chemicalCompound}
-                casNumber={casNumber}
-                productId={productId}
-                hmisHealth={hmisHealth}
-                hmisFlammability={hmisFlammability}
-                hmisPhysical={hmisPhysical}
-                hmisSpecial={hmisSpecial}
-                selectedPictograms={selectedPictograms}
-                selectedHazards={selectedHazards}
-                ppeRequirements={ppeRequirements}
-                labelWidth={labelWidth}
-                labelHeight={labelHeight}
-                signalWord={signalWord}
-              />
-            </div>
+            <PrintAlignmentFix
+              productName={productName}
+              manufacturer={manufacturer}
+              chemicalFormula={chemicalFormula}
+              chemicalCompound={chemicalCompound}
+              casNumber={casNumber}
+              productId={productId}
+              hmisHealth={hmisHealth}
+              hmisFlammability={hmisFlammability}
+              hmisPhysical={hmisPhysical}
+              hmisSpecial={hmisSpecial}
+              selectedPictograms={selectedPictograms}
+              selectedHazards={selectedHazards}
+              ppeRequirements={ppeRequirements}
+              labelWidth={labelWidth}
+              labelHeight={labelHeight}
+              signalWord={signalWord}
+              onClose={() => setShowPrintPreview(false)}
+            />
           </div>
         </div>
       )}

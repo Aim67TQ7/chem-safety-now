@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Printer, Download, Grid2X2, AlertTriangle, ZoomIn, ZoomOut } from "lucide-react";
+import { Printer, Download, Grid2X2, AlertTriangle, ZoomIn, ZoomOut, ArrowLeft, X } from "lucide-react";
 import { useImprovedPrintHandler } from './ImprovedPrintHandler';
 import { SafetyLabel } from './SafetyLabel';
 
@@ -27,6 +27,7 @@ interface PrintAlignmentFixProps {
   labelWidth?: number;
   labelHeight?: number;
   signalWord?: string;
+  onClose?: () => void;
 }
 
 export const PrintAlignmentFix: React.FC<PrintAlignmentFixProps> = ({
@@ -45,7 +46,8 @@ export const PrintAlignmentFix: React.FC<PrintAlignmentFixProps> = ({
   ppeRequirements,
   labelWidth = 288,
   labelHeight = 192,
-  signalWord
+  signalWord,
+  onClose
 }) => {
   const [activeTab, setActiveTab] = useState<string>('preview');
   const [zoom, setZoom] = useState<number>(1.5);
@@ -98,6 +100,28 @@ export const PrintAlignmentFix: React.FC<PrintAlignmentFixProps> = ({
   
   return (
     <div className="w-full flex flex-col space-y-4">
+      {/* Navigation Header */}
+      {onClose && (
+        <div className="flex items-center justify-between p-4 border-b">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Label Creator
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      
       <Card className="w-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Safety Label Preview</CardTitle>
