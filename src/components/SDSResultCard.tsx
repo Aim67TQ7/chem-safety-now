@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Eye, ExternalLink } from 'lucide-react';
+import { FileText, Eye, ExternalLink, Printer, Bot } from 'lucide-react';
 import { RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import SDSEvaluationButton from '@/components/SDSEvaluationButton';
 
 interface SDSResultCardProps {
   document: {
@@ -16,20 +17,37 @@ interface SDSResultCardProps {
       score: number;
       reasons: string[];
     };
+    extraction_quality_score?: number | null;
+    is_readable?: boolean | null;
+    created_at?: string;
+    h_codes?: any;
+    signal_word?: string | null;
+    pictograms?: any;
+    ai_extraction_confidence?: number | null;
+    extraction_status?: string | null;
+    ai_extracted_data?: any;
+    file_name?: string;
+    cas_number?: string | null;
   };
   onView: (document: any) => void;
   onDownload: (document: any) => void;
+  onPrintLabel?: (document: any) => void;
+  onAskAI?: (document: any) => void;
+  onEvaluationComplete?: () => void;
   isSelected: boolean;
   onSelect: (document: any) => void;
   showSelection: boolean;
   facilitySlug?: string;
-  isAdminContext?: boolean; // Add admin context prop
+  isAdminContext?: boolean;
 }
 
 const SDSResultCard: React.FC<SDSResultCardProps> = ({
   document,
   onView,
   onDownload,
+  onPrintLabel,
+  onAskAI,
+  onEvaluationComplete,
   isSelected,
   onSelect,
   showSelection,
@@ -88,16 +106,44 @@ const SDSResultCard: React.FC<SDSResultCardProps> = ({
         </CardHeader>
         
         <CardContent className="pt-0">
-          <div className="flex justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={() => onView(document)}
-              className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
+              className="h-8 px-3 text-xs"
             >
-              <Eye className="h-4 w-4" />
-              <span>View</span>
+              <ExternalLink className="h-3 w-3 mr-1.5" />
+              View PDF
             </Button>
+            {onPrintLabel && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => onPrintLabel(document)}
+                className="h-8 px-3 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <Printer className="h-3 w-3 mr-1.5" />
+                Print Label
+              </Button>
+            )}
+            {onAskAI && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onAskAI(document)}
+                className="h-8 px-3 text-xs"
+              >
+                <Bot className="h-3 w-3 mr-1.5" />
+                Use AI
+              </Button>
+            )}
+            {onEvaluationComplete && (
+              <SDSEvaluationButton 
+                document={document} 
+                onEvaluationComplete={onEvaluationComplete}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

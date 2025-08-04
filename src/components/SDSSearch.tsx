@@ -255,6 +255,18 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                 document={document}
                 onView={handleViewDocument}
                 onDownload={handleViewDocument}
+                onPrintLabel={(doc) => {
+                  // Navigate to print label page with document data
+                  window.open(`/facility/${facilitySlug}/print-label?productName=${encodeURIComponent(doc.product_name)}&manufacturer=${encodeURIComponent(doc.manufacturer || '')}`, '_blank');
+                }}
+                onAskAI={(doc) => {
+                  // Handle Ask AI functionality - this would typically open an AI assistant
+                  toast.info("AI Assistant feature coming soon!");
+                }}
+                onEvaluationComplete={() => {
+                  // Refresh search or handle evaluation completion
+                  toast.success("Document evaluation completed");
+                }}
                 isSelected={false}
                 onSelect={() => {}}
                 showSelection={false}

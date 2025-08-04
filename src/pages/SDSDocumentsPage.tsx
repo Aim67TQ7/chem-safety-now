@@ -489,6 +489,9 @@ const SDSDocumentsPageContent = () => {
                         document={result}
                         onView={handleViewSearchResult}
                         onDownload={handleViewSearchResult}
+                        onPrintLabel={handlePrintLabel}
+                        onAskAI={handleAskAI}
+                        onEvaluationComplete={refetch}
                         isSelected={false}
                         onSelect={() => {}}
                         showSelection={false}
