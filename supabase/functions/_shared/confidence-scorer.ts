@@ -163,7 +163,7 @@ export class ConfidenceScorer {
     if (document.h_codes && Array.isArray(document.h_codes)) {
       const searchUpper = searchTerm.toUpperCase();
       const hasHCodeMatch = document.h_codes.some((hCode: any) => 
-        searchUpper.includes(hCode.code) || (hCode.description && searchUpper.includes(hCode.description.toUpperCase()))
+        searchUpper.includes(hCode.code) || (hCode.description && searchUpper.includes(hCode.description?.toLowerCase?.() || ''))
       );
       
       if (hasHCodeMatch) {
