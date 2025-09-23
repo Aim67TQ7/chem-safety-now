@@ -395,7 +395,11 @@ export function SafetyLabel({
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    lineHeight: '1' 
+                    lineHeight: '1',
+                    fontFamily: 'Arial, sans-serif',
+                    textAlign: 'center' as const,
+                    verticalAlign: 'middle',
+                    paddingTop: '1px' // Fine-tune vertical centering
                   }}
                 >
                   {value}

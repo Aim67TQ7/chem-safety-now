@@ -93,16 +93,29 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       });
     }
 
-    // Extract HMIS ratings with fallbacks to ensure we always have values
+    // Extract HMIS ratings with proper field mapping and debugging
+    console.log('🔍 HMIS extraction - selectedDocument.hmis_codes:', selectedDocument.hmis_codes);
+    console.log('🔍 HMIS extraction - oshaData.hmis:', oshaData.hmis);
+    
     const hmisRatings = {
       health: selectedDocument.hmis_codes?.health?.toString() || 
-               (oshaData.hmis?.health?.value?.toString()) || '2',
+                (oshaData.hmis?.health?.value?.toString()) ||
+                (oshaData.hmis?.health?.toString()) || '2',
       flammability: selectedDocument.hmis_codes?.flammability?.toString() || 
-                   (oshaData.hmis?.flammability?.value?.toString()) || '1',
+                    (oshaData.hmis?.flammability?.value?.toString()) ||
+                    (oshaData.hmis?.flammability?.toString()) || '1',
       physical: selectedDocument.hmis_codes?.physical?.toString() || 
-               (oshaData.hmis?.physical?.value?.toString()) || '0',
+                selectedDocument.hmis_codes?.physical_hazard?.toString() ||
+                (oshaData.hmis?.physical?.value?.toString()) ||
+                (oshaData.hmis?.physical?.toString()) ||
+                (oshaData.hmis?.physical_hazard?.value?.toString()) ||
+                (oshaData.hmis?.physical_hazard?.toString()) || '0',
       special: selectedDocument.hmis_codes?.special || 
-              (oshaData.hmis?.ppe?.value) || 'A'
+              selectedDocument.hmis_codes?.ppe ||
+              (oshaData.hmis?.ppe?.value) ||
+              (oshaData.hmis?.ppe) ||
+              (oshaData.hmis?.special?.value) ||
+              (oshaData.hmis?.special) || 'A'
     };
 
     console.log('🏥 OSHA HMIS ratings:', hmisRatings);
@@ -188,12 +201,29 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       });
     }
 
-    // Ensure HMIS ratings are always present with safe defaults
+    // Ensure HMIS ratings are always present with safe defaults and proper field mapping
+    console.log('🔍 Manual Review - selectedDocument.hmis_codes:', selectedDocument.hmis_codes);
+    console.log('🔍 Manual Review - reviewData.hmis:', reviewData?.hmis);
+    
     const hmisRatings = {
-      health: selectedDocument.hmis_codes?.health?.toString() || '2',
-      flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
-      physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
-      special: selectedDocument.hmis_codes?.special || 'A'
+      health: selectedDocument.hmis_codes?.health?.toString() || 
+              (reviewData?.hmis?.health?.value?.toString()) ||
+              (reviewData?.hmis?.health?.toString()) || '2',
+      flammability: selectedDocument.hmis_codes?.flammability?.toString() || 
+                    (reviewData?.hmis?.flammability?.value?.toString()) ||
+                    (reviewData?.hmis?.flammability?.toString()) || '1',
+      physical: selectedDocument.hmis_codes?.physical?.toString() || 
+                selectedDocument.hmis_codes?.physical_hazard?.toString() ||
+                (reviewData?.hmis?.physical?.value?.toString()) ||
+                (reviewData?.hmis?.physical?.toString()) ||
+                (reviewData?.hmis?.physical_hazard?.value?.toString()) ||
+                (reviewData?.hmis?.physical_hazard?.toString()) || '0',
+      special: selectedDocument.hmis_codes?.special || 
+              selectedDocument.hmis_codes?.ppe ||
+              (reviewData?.hmis?.ppe?.value) ||
+              (reviewData?.hmis?.ppe) ||
+              (reviewData?.hmis?.special?.value) ||
+              (reviewData?.hmis?.special) || 'A'
     };
 
     console.log('🔍 Manual review HMIS ratings:', hmisRatings);
@@ -288,12 +318,29 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
       });
     }
 
-    // HMIS ratings with safe defaults
+    // HMIS ratings with safe defaults and comprehensive field mapping
+    console.log('🔍 AI Enhanced - selectedDocument.hmis_codes:', selectedDocument.hmis_codes);
+    console.log('🔍 AI Enhanced - aiData.hmis:', aiData.hmis);
+    
     const hmisRatings = {
-      health: selectedDocument.hmis_codes?.health?.toString() || '2',
-      flammability: selectedDocument.hmis_codes?.flammability?.toString() || '1',
-      physical: selectedDocument.hmis_codes?.physical?.toString() || '0',
-      special: selectedDocument.hmis_codes?.special || 'A'
+      health: selectedDocument.hmis_codes?.health?.toString() || 
+              (aiData.hmis?.health?.value?.toString()) ||
+              (aiData.hmis?.health?.toString()) || '2',
+      flammability: selectedDocument.hmis_codes?.flammability?.toString() || 
+                    (aiData.hmis?.flammability?.value?.toString()) ||
+                    (aiData.hmis?.flammability?.toString()) || '1',
+      physical: selectedDocument.hmis_codes?.physical?.toString() || 
+                selectedDocument.hmis_codes?.physical_hazard?.toString() ||
+                (aiData.hmis?.physical?.value?.toString()) ||
+                (aiData.hmis?.physical?.toString()) ||
+                (aiData.hmis?.physical_hazard?.value?.toString()) ||
+                (aiData.hmis?.physical_hazard?.toString()) || '0',
+      special: selectedDocument.hmis_codes?.special || 
+              selectedDocument.hmis_codes?.ppe ||
+              (aiData.hmis?.ppe?.value) ||
+              (aiData.hmis?.ppe) ||
+              (aiData.hmis?.special?.value) ||
+              (aiData.hmis?.special) || 'A'
     };
 
     console.log('🎯 AI-enhanced HMIS ratings:', hmisRatings);
@@ -349,13 +396,15 @@ export const extractEnhancedSDSData = (selectedDocument: any): EnhancedSDSData =
     .map((code: string) => pictogramMapping[code] || code)
     .filter((id: string) => Object.values(pictogramMapping).includes(id));
 
-  // HMIS ratings with conservative defaults for safety
+  // HMIS ratings with conservative defaults for safety and comprehensive field mapping
   const hmisData = selectedDocument.hmis_codes || {};
+  console.log('🔍 Basic Extraction - hmisData:', hmisData);
+  
   const hmisRatings = {
     health: hmisData.health?.toString() || '2', // Default to moderate health hazard
     flammability: hmisData.flammability?.toString() || '1', // Default to slight fire hazard  
-    physical: hmisData.physical?.toString() || '0', // Default to minimal physical hazard
-    special: hmisData.special || 'A' // Default to standard PPE
+    physical: hmisData.physical?.toString() || hmisData.physical_hazard?.toString() || '0', // Default to minimal physical hazard
+    special: hmisData.special || hmisData.ppe || 'A' // Default to standard PPE
   };
 
   console.log('🔧 Basic extraction HMIS ratings:', hmisRatings);
