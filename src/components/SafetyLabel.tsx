@@ -357,43 +357,47 @@ export function SafetyLabel({
           )}
         </div>
 
-        {/* HMIS - BLACK TEXT ON YELLOW */}
+        {/* HMIS - Improved Alignment */}
         <div 
-          className="flex justify-between items-center" 
+          className="flex justify-center items-center" 
           style={{ 
             minHeight: `${hmisHeight}px`, 
             padding: `${Math.floor(padding)}px 0 ${Math.floor(padding/2)}px 0`
           }}
         >
-          <div className="flex" style={{ gap: `${Math.floor(padding/2)}px` }}>
+          <div className="flex justify-center" style={{ gap: `${Math.floor(padding/3)}px`, width: '100%' }}>
             {[
               ['H', hmisHealth, 'health'], 
               ['F', hmisFlammability, 'flammability'], 
               ['R', hmisPhysical, 'reactivity'], 
               ['PPE', hmisSpecial || 'A', null]
             ].map(([label, value, type], i) => (
-              <div className="text-center" key={i}>
+              <div className="text-center flex-1" key={i}>
                 <div 
                   className="font-bold" 
                   style={{ 
                     fontSize: `${smallFontSize}px`, 
-                    marginBottom: `${Math.floor(padding/4)}px`, 
-                    lineHeight: '1.2', 
-                    marginTop: '6px' // Increased top margin
+                    marginBottom: `${Math.floor(padding/3)}px`, 
+                    lineHeight: '1.1', 
+                    height: `${Math.floor(smallFontSize * 1.3)}px`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   {label}
                 </div>
                 <div 
-                  className={`hmis-box ${type ? getHazardColor(value as string, type as any) : 'bg-white'} ${type === 'reactivity' ? 'text-black' : type ? 'text-white' : 'text-black'} font-bold border border-black`} 
+                  className={`hmis-box ${type ? getHazardColor(value as string, type as any) : 'bg-white'} ${type === 'reactivity' ? 'text-black' : type ? 'text-white' : 'text-black'} font-bold border-2 border-black`} 
                   style={{ 
-                    width: `${hmisWidthEach - padding}px`, 
+                    width: `${Math.floor((labelWidth - (padding * 2) - (padding)) / 4)}px`, 
                     height: `${hmisBoxHeight}px`, 
                     fontSize: `${hmisFontSize}px`, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    lineHeight: '1' 
+                    lineHeight: '1',
+                    margin: '0 auto'
                   }}
                 >
                   {value}
@@ -455,7 +459,7 @@ export function SafetyLabel({
               </div>
             )}
 
-            {/* Pictograms */}
+            {/* Pictograms - Improved Alignment */}
             {selectedPictograms.length > 0 && (
               <div 
                 style={{ 
@@ -464,7 +468,8 @@ export function SafetyLabel({
                   flexWrap: 'wrap', 
                   gap: `${Math.floor(padding/2)}px`, 
                   justifyContent: 'flex-start', 
-                  alignItems: 'center' 
+                  alignItems: 'flex-start',
+                  minHeight: `${pictogramSize}px`
                 }}
               >
                 {selectedPictograms.slice(0, 4).map((pictogramId, index) => (
@@ -476,7 +481,10 @@ export function SafetyLabel({
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      border: '1px solid #d1d5db',
+                      borderRadius: '2px',
+                      backgroundColor: 'white'
                     }}
                   >
                     {getHazardIcon(pictogramId, pictogramSize)}
@@ -487,28 +495,26 @@ export function SafetyLabel({
           </div>
         </div>
 
-        {/* Footer - SMALLER TEXT AND ANCHORED TO BOTTOM */}
+        {/* Footer - Better Positioning */}
         <div 
           style={{ 
             borderTop: '2px solid black',
-            position: 'absolute',
-            bottom: `${padding}px`,
-            left: `${padding}px`,
-            right: `${padding}px`,
+            marginTop: 'auto',
+            padding: `${Math.floor(padding/2)}px 0`,
             display: 'flex',
             alignItems: 'center',
-            height: `${footerHeight}px`,
-            minHeight: '15px'
+            justifyContent: 'center',
+            minHeight: `${footerHeight}px`,
+            width: '100%'
           }}
         >
           <div 
-            className="font-bold" 
+            className="font-bold text-center" 
             style={{ 
-              fontSize: `${Math.floor(smallFontSize * 0.8)}px`, // Reduced font size
-              textAlign: 'left',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              fontSize: `${Math.floor(smallFontSize * 0.9)}px`,
+              lineHeight: '1.1',
+              maxWidth: '100%',
+              wordBreak: 'break-word'
             }}
           >
             {getSpecificPPE()} • VENTILATION REQUIRED
