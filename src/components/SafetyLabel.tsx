@@ -137,12 +137,12 @@ export function SafetyLabel({
   selectedPictograms,
   selectedHazards,
   ppeRequirements,
-  labelWidth = 288, 
-  labelHeight = 192,
+  labelWidth = 300, 
+  labelHeight = 225,
   signalWord 
 }: SafetyLabelProps) {
   // Calculate proportional sizes based on label dimensions
-  const scaleFactor = Math.min(labelWidth / 288, labelHeight / 192);
+  const scaleFactor = Math.min(labelWidth / 300, labelHeight / 225);
   
   // Proportional spacing and sizing
   const padding = Math.max(2, Math.floor(labelWidth * 0.02));
