@@ -255,9 +255,67 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                 document={document}
                 onView={handleViewDocument}
                 onDownload={handleViewDocument}
-                onPrintLabel={(doc) => {
-                  // Navigate to print label page with document data
-                  window.open(`/facility/${facilitySlug}/print-label?productName=${encodeURIComponent(doc.product_name)}&manufacturer=${encodeURIComponent(doc.manufacturer || '')}`, '_blank');
+                onPrintLabel={async (doc) => {
+                  try {
+                    // Save the document to database first (same as handleViewDocument)
+                    const documentData = {
+                      product_name: doc.product_name,
+                      manufacturer: doc.manufacturer || 'Unknown',
+                      source_url: doc.source_url,
+                      bucket_url: doc.bucket_url || doc.source_url,
+                      file_name: `${doc.product_name}_SDS.pdf`,
+                      file_type: 'application/pdf',
+                      document_type: 'sds',
+                      extraction_status: 'pending',
+                      is_readable: true,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    };
+
+                    let documentId = doc.id;
+                    
+                    // Save to database if not already saved
+                    if (!documentId) {
+                      const { data: savedDoc, error: saveError } = await supabase
+                        .from('sds_documents')
+                        .insert([documentData])
+                        .select()
+                        .single();
+
+                      if (saveError && !saveError.message.includes('duplicate')) {
+                        throw saveError;
+                      }
+                      
+                      if (savedDoc) {
+                        documentId = savedDoc.id;
+                      }
+                    }
+
+                    // Navigate to label printer with document ID
+                    if (documentId) {
+                      navigate(`/facility/${facilitySlug}/label-printer?documentId=${documentId}`);
+                    } else {
+                      // Fallback: navigate with basic parameters
+                      navigate(`/facility/${facilitySlug}/label-printer?productName=${encodeURIComponent(doc.product_name)}&manufacturer=${encodeURIComponent(doc.manufacturer || '')}`);
+                    }
+                    
+                    // Log the action
+                    if (facilityId) {
+                      interactionLogger.logSDSInteraction({
+                        sdsDocumentId: documentId,
+                        actionType: 'generate_label',
+                        metadata: {
+                          productName: doc.product_name,
+                          manufacturer: doc.manufacturer,
+                          accessMethod: 'search_results'
+                        }
+                      });
+                    }
+                    
+                  } catch (error: any) {
+                    console.error('❌ Error preparing document for printing:', error);
+                    toast.error('Failed to prepare document for printing');
+                  }
                 }}
                 onAskAI={(doc) => {
                   // Handle Ask AI functionality - this would typically open an AI assistant
