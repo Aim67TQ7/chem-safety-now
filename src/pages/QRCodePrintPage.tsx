@@ -6,6 +6,8 @@ import QRCodeLib from 'qrcode';
 import { Button } from "@/components/ui/button";
 import { Printer, Download, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface FacilityData {
   id: string;
@@ -98,14 +100,41 @@ const QRCodePrintPage = () => {
 
     try {
       const facilityDisplayName = facilityData.facility_name || 'Facility';
-      const link = document.createElement('a');
-      link.download = `${facilityDisplayName}-Safety-Poster-${layoutMode}.png`;
-      link.href = qrCodeDataUrl;
-      link.click();
+      const element = document.querySelector('.print-page') as HTMLElement;
+      
+      if (!element) {
+        throw new Error('Print content not found');
+      }
+
+      // Capture the poster content as canvas
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: element.offsetWidth,
+        height: element.offsetHeight
+      });
+
+      // Create PDF with appropriate size
+      const imgWidth = layoutMode === 'dual' ? 11 : 8.5; // inches
+      const imgHeight = layoutMode === 'dual' ? 8.5 : 11; // inches
+      const pdf = new jsPDF({
+        orientation: layoutMode === 'dual' ? 'landscape' : 'portrait',
+        unit: 'in',
+        format: posterSize === 'letter' ? 'letter' : 'a4'
+      });
+
+      // Add the canvas image to PDF
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0.25, 0.25, imgWidth - 0.5, imgHeight - 0.5);
+
+      // Download the PDF
+      pdf.save(`${facilityDisplayName}-Safety-Poster-${layoutMode}.pdf`);
 
       toast({
         title: "Poster Downloaded",
-        description: "Your safety poster has been saved to downloads.",
+        description: "Your safety poster PDF has been saved to downloads.",
       });
     } catch (err) {
       console.error('Download error:', err);
@@ -255,29 +284,39 @@ const QRCodePrintPage = () => {
       {/* Print styles */}
       <style>{`
         @media print {
-          body { margin: 0; padding: 0; background: white !important; }
+          * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+          html, body { 
+            margin: 0; 
+            padding: 0; 
+            background: white !important; 
+            width: 100%;
+            height: 100%;
+          }
           .no-print { display: none !important; }
           .print-page { 
-            width: 100vw; 
-            height: 100vh; 
-            page-break-after: avoid;
-            display: flex;
-            flex-direction: ${layoutMode === 'dual' ? 'row' : 'column'};
-            justify-content: center;
-            align-items: center;
+            width: 100% !important; 
+            height: 100% !important; 
+            margin: 0 !important;
+            padding: 0.25in !important;
+            display: flex !important;
+            flex-direction: ${layoutMode === 'dual' ? 'row' : 'column'} !important;
+            justify-content: center !important;
+            align-items: center !important;
             background: white !important;
-            gap: ${layoutMode === 'dual' ? '0.5rem' : layoutMode === 'stacked' ? '1rem' : '0'};
-            padding: ${layoutMode === 'dual' ? '0.25in' : layoutMode === 'stacked' ? '0.5in' : '0.5in'};
+            gap: ${layoutMode === 'dual' ? '0.5rem' : layoutMode === 'stacked' ? '1rem' : '0'} !important;
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
           }
           .poster-content {
             max-width: none !important;
             width: ${layoutMode === 'dual' ? '48%' : '100%'} !important;
-            height: ${layoutMode === 'stacked' ? '45%' : '100%'} !important;
+            height: ${layoutMode === 'stacked' ? '45%' : 'auto'} !important;
             ${layoutMode === 'dual' ? 'border-right: 2px dashed #ccc; padding-right: 0.25rem;' : ''}
             ${layoutMode === 'stacked' ? 'border-bottom: 2px dashed #ccc; padding-bottom: 0.5rem; margin-bottom: 0.5rem;' : ''}
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
           }
           .poster-content:last-child {
             ${layoutMode === 'dual' ? 'border-right: none; padding-right: 0; padding-left: 0.25rem;' : ''}
@@ -326,7 +365,7 @@ const QRCodePrintPage = () => {
             
             <Button onClick={downloadPoster} variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
-              Download PNG
+              Download PDF
             </Button>
             
             <Button onClick={handlePrint} size="sm" className="bg-gray-800 hover:bg-gray-900">
