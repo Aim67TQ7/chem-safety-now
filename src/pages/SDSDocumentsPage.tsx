@@ -257,7 +257,7 @@ const SDSDocumentsPageContent = () => {
         {!isAdminContext && (
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">SDS Document Library</h1>
+              <h1 className="text-2xl font-bold text-foreground mb-2">SDS Library</h1>
               <p className="text-sm text-muted-foreground">
                 Search and manage your Safety Data Sheet documents with real-time filtering.
               </p>

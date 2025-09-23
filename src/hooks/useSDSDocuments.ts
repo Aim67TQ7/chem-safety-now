@@ -62,7 +62,7 @@ export const useSDSDocuments = ({
             sds_interactions!inner(facility_id, created_at as interaction_date)
           `, { count: 'exact' })
           .eq('sds_interactions.facility_id', facilityId)
-          .order('sds_interactions.created_at', { ascending: false });
+          .order('created_at', { ascending: false });
       } else {
         // For admin context: show all documents
         console.log('📋 Fetching all documents (admin context)');
