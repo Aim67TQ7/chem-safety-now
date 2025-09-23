@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import FacilitySettings from '@/components/FacilitySettings';
 import FacilityNavbar from '@/components/FacilityNavbar';
+import FacilityActivityCard from '@/components/FacilityActivityCard';
 
 
 interface FacilityData {
@@ -84,7 +85,7 @@ const FacilitySettingsPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading facility settings...</p>
+          <p className="text-gray-600">Loading facility admin panel...</p>
         </div>
       </div>
     );
@@ -94,7 +95,7 @@ const FacilitySettingsPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-2">Settings Error</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Admin Panel Error</h2>
           <p className="text-gray-600 mb-4">{error || 'Facility not found'}</p>
           <Button onClick={() => navigate(`/facility/${facilitySlug}`)}>
             Return to Facility
@@ -112,7 +113,8 @@ const FacilitySettingsPage = () => {
         facilityId={facilityData.id}
       />
       <div className="p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <FacilityActivityCard facilityId={facilityData.id} />
           <FacilitySettings 
             facilityData={facilityData}
             onFacilityUpdate={handleFacilityUpdate}

@@ -1,7 +1,5 @@
 
 import { useState, useEffect } from "react";
-import FacilityActivityCard from "./FacilityActivityCard";
-import AuditTrail from "./AuditTrail";
 import SDSSearch from "./SDSSearch";
 import FacilityNavbar from "./FacilityNavbar";
 import { interactionLogger } from "@/services/interactionLogger";
@@ -21,11 +19,9 @@ interface FacilityProps {
 
 interface FacilityDashboardProps {
   facility: FacilityProps;
-  hideActivityCard?: boolean;
-  hideAuditTrail?: boolean;
 }
 
-const FacilityDashboard = ({ facility, hideActivityCard = false, hideAuditTrail = false }: FacilityDashboardProps) => {
+const FacilityDashboard = ({ facility }: FacilityDashboardProps) => {
 
   // Set facility context for all logging
   useEffect(() => {
@@ -71,14 +67,6 @@ const FacilityDashboard = ({ facility, hideActivityCard = false, hideAuditTrail 
             </div>
           </div>
 
-          {/* Dashboard Cards Section */}
-          <div className="grid grid-cols-1 gap-6">
-            {/* Facility Activity Card */}
-            {!hideActivityCard && <FacilityActivityCard facilityId={facility.id} />}
-
-            {/* Audit Trail */}
-            {!hideAuditTrail && <AuditTrail facilityId={facility.id} />}
-          </div>
         </div>
 
     </div>

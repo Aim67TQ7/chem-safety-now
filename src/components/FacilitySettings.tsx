@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings, Upload, Save, Building2, Calendar } from "lucide-react";
+import { Settings, Upload, Save, Building2, Calendar, Lock } from "lucide-react";
 
 interface FacilityData {
   id: string;
@@ -30,6 +30,8 @@ interface FacilitySettingsProps {
 const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [passcode, setPasscode] = useState("");
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     facility_name: facilityData.facility_name || "",
@@ -39,6 +41,17 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
     logo_url: facilityData.logo_url || "",
     last_incident_date: facilityData.last_incident_date || ""
   });
+
+  const handlePasscodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passcode === "2030") {
+      setIsUnlocked(true);
+      toast.success("Admin access granted");
+    } else {
+      toast.error("Invalid passcode");
+      setPasscode("");
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -214,8 +227,37 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
     <div className="space-y-6">
       <div className="flex items-center space-x-3 mb-6">
         <Settings className="w-6 h-6 text-gray-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Facility Settings</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Admin Panel</h2>
       </div>
+
+      {!isUnlocked ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Lock className="w-5 h-5" />
+              <span>Admin Access Required</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasscodeSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="passcode">Enter Admin Passcode</Label>
+                <Input
+                  id="passcode"
+                  type="password"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="Enter passcode"
+                  className="max-w-xs"
+                />
+              </div>
+              <Button type="submit">
+                Unlock Admin Panel
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      ) : (
 
       <Card>
         <CardHeader>
@@ -242,7 +284,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 <Button 
                   variant="outline" 
                   onClick={handleUploadClick}
-                  disabled={isUploading || isLoading}
+                  disabled={isUploading || isLoading || !isUnlocked}
                   type="button"
                 >
                   <Upload className="w-4 h-4 mr-2" />
@@ -254,7 +296,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                   accept="image/*"
                   onChange={handleLogoUpload}
                   className="hidden"
-                  disabled={isUploading || isLoading}
+                  disabled={isUploading || isLoading || !isUnlocked}
                 />
                 <p className="text-xs text-gray-500">
                   Recommended: Square image, max 2MB (JPG, PNG)
@@ -278,7 +320,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 onChange={(e) => handleInputChange('facility_name', e.target.value)}
                 placeholder="Enter facility name"
                 required
-                disabled={isLoading}
+                disabled={isLoading || !isUnlocked}
               />
             </div>
 
@@ -290,7 +332,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 onChange={(e) => handleInputChange('contact_name', e.target.value)}
                 placeholder="Enter contact person name"
                 required
-                disabled={isLoading}
+                disabled={isLoading || !isUnlocked}
               />
             </div>
 
@@ -303,7 +345,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter email address"
                 required
-                disabled={isLoading}
+                disabled={isLoading || !isUnlocked}
               />
             </div>
 
@@ -314,7 +356,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 placeholder="Enter facility address"
-                disabled={isLoading}
+                disabled={isLoading || !isUnlocked}
               />
             </div>
 
@@ -328,7 +370,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
                 type="date"
                 value={formData.last_incident_date}
                 onChange={(e) => handleInputChange('last_incident_date', e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || !isUnlocked}
               />
               <p className="text-xs text-gray-500">
                 Leave blank if no incidents have occurred
@@ -346,7 +388,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
             <div className="ml-auto">
               <Button 
                 onClick={handleSave}
-                disabled={!hasChanges || isLoading || isUploading}
+                disabled={!hasChanges || isLoading || isUploading || !isUnlocked}
                 className="min-w-24"
               >
                 {isLoading ? (
@@ -362,6 +404,7 @@ const FacilitySettings = ({ facilityData, onFacilityUpdate }: FacilitySettingsPr
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 };

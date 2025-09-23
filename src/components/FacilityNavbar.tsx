@@ -42,7 +42,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
   const getNavItems = () => {
     const baseItems = [
       {
-        name: 'Dashboard',
+        name: 'SDS Search',
         path: `/facility/${facilitySlug || 'demo'}`,
         icon: <Building2 className="w-4 h-4" />,
         feature: 'dashboard'
@@ -54,7 +54,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
         feature: 'basic_qr_codes'
       },
       {
-        name: 'Settings',
+        name: 'Admin',
         path: `/facility/${facilitySlug || 'demo'}/settings`,
         icon: <Settings className="w-4 h-4" />,
         feature: 'settings'
@@ -73,8 +73,8 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
       });
     }
 
-    // Filter out Settings button in demo mode
-    return isDemo ? baseItems.filter(item => item.name !== 'Settings') : baseItems;
+    // Filter out Admin button in demo mode
+    return isDemo ? baseItems.filter(item => item.name !== 'Admin') : baseItems;
   };
 
   const navItems = getNavItems();
