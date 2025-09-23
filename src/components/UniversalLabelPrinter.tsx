@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,17 +19,17 @@ interface UniversalLabelPrinterProps {
   selectedDocument?: any;
 }
 
-const UniversalLabelPrinter = ({
-  initialProductName = '',
+const UniversalLabelPrinter = ({ 
+  initialProductName = '', 
   initialManufacturer = '',
   selectedDocument
 }: UniversalLabelPrinterProps) => {
   const labelRef = useRef<HTMLDivElement>(null);
   const sdsData = selectedDocument ? extractEnhancedSDSData(selectedDocument) : null;
   const { handleDownloadAction } = useDemoPrintActions();
-
+  
   const [productId, setProductId] = useState(sdsData?.productId || '');
-
+  
   // Safety-critical data (read-only from SDS)
   const productName = sdsData?.productName || initialProductName;
   const manufacturer = sdsData?.manufacturer || initialManufacturer;
@@ -48,46 +47,46 @@ const UniversalLabelPrinter = ({
 
   const getComplianceStatus = () => {
     if (!selectedDocument) {
-      return {
-        status: 'no_document',
-        message: 'No SDS document selected',
-        icon: AlertTriangle,
-        color: 'text-red-600'
+      return { 
+        status: 'no_document', 
+        message: 'No SDS document selected', 
+        icon: AlertTriangle, 
+        color: 'text-red-600' 
       };
     }
 
     if (sdsData?.oshaCompliant) {
-      return {
-        status: 'osha_compliant',
-        message: 'OSHA Compliant - All safety data automatically extracted',
-        icon: Shield,
-        color: 'text-green-600'
+      return { 
+        status: 'osha_compliant', 
+        message: 'OSHA Compliant - All safety data automatically extracted', 
+        icon: Shield, 
+        color: 'text-green-600' 
       };
     }
 
     if (sdsData?.requiresManualReview) {
-      return {
-        status: 'manual_review',
-        message: 'Manual Review Required - Use with caution for labeling',
-        icon: AlertTriangle,
-        color: 'text-orange-600'
+      return { 
+        status: 'manual_review', 
+        message: 'Manual Review Required - Use with caution for labeling', 
+        icon: AlertTriangle, 
+        color: 'text-orange-600' 
       };
     }
 
     if (sdsData?.extractionConfidence && sdsData.extractionConfidence >= 80) {
-      return {
-        status: 'high_confidence',
-        message: 'High confidence extraction - Safety data automatically applied',
-        icon: CheckCircle,
-        color: 'text-blue-600'
+      return { 
+        status: 'high_confidence', 
+        message: 'High confidence extraction - Safety data automatically applied', 
+        icon: CheckCircle, 
+        color: 'text-blue-600' 
       };
     }
 
-    return {
-      status: 'basic',
-      message: 'Basic extraction - Verify safety information manually',
-      icon: AlertTriangle,
-      color: 'text-yellow-600'
+    return { 
+      status: 'basic', 
+      message: 'Basic extraction - Verify safety information manually', 
+      icon: AlertTriangle, 
+      color: 'text-yellow-600' 
     };
   };
 
@@ -96,6 +95,7 @@ const UniversalLabelPrinter = ({
       toast.error('Label not found for capture');
       return;
     }
+
     if (!productName.trim()) {
       toast.error('Product name is required');
       return;
@@ -107,43 +107,30 @@ const UniversalLabelPrinter = ({
     try {
       toast.info(`Generating ${scale}x resolution PNG...`);
 
-      // Ensure fonts are fully loaded to prevent baseline/line-height shifts
-      if ('fonts' in document && (document as any).fonts?.ready) {
-        await (document as any).fonts.ready;
-        await new Promise(res => setTimeout(res, 30));
-      }
-
-      const target = labelRef.current;
-      const WIDTH = 300;
-      const HEIGHT = 225;
-
-      // Force exact px size during capture (avoid subpixel rounding)
-      const prevStyle = target.getAttribute('style') || '';
-      target.setAttribute('style', `${prevStyle};width:${WIDTH}px;height:${HEIGHT}px;`);
-
-      const canvas = await html2canvas(target, {
+      // Enhanced html2canvas options for perfect quality
+      const canvas = await html2canvas(labelRef.current, {
         backgroundColor: '#ffffff',
-        scale,
+        scale: scale,
+        logging: false,
         useCORS: true,
         allowTaint: false,
-        width: WIDTH,
-        height: HEIGHT,
-        scrollX: 0,
-        scrollY: 0,
-        foreignObjectRendering: true,
-        logging: false,
+        width: 300,
+        height: 225,
+        windowWidth: 300,
+        windowHeight: 225,
+        // High quality rendering options
+        foreignObjectRendering: false,
         imageTimeout: 15000,
         removeContainer: true
       });
 
-      // Restore original style
-      target.setAttribute('style', prevStyle);
-
+      // Convert to blob and download
       canvas.toBlob((blob) => {
         if (!blob) {
           toast.error('Failed to generate image');
           return;
         }
+
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -152,8 +139,10 @@ const UniversalLabelPrinter = ({
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        
         toast.success(`${scale}x PNG downloaded successfully`);
       }, 'image/png', 1.0);
+
     } catch (error) {
       console.error('PNG generation error:', error);
       toast.error('Failed to generate PNG');
@@ -197,7 +186,7 @@ const UniversalLabelPrinter = ({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header with Compliance Status */}
-      <div className="flex-1 overflow-y-auto" style={{ marginTop: "-50px" }}>
+      <div className="flex-shrink-0 p-4 border-b bg-gray-50">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h3 className="text-lg font-semibold mb-2">Universal GHS Label Printer</h3>
@@ -207,7 +196,7 @@ const UniversalLabelPrinter = ({
                 <strong>{compliance.status.replace(/_/g, ' ').toUpperCase()}:</strong> {compliance.message}
               </AlertDescription>
             </Alert>
-
+            
             {selectedDocument && (
               <div className="flex flex-wrap gap-2 mb-3">
                 <Badge variant="outline" className="text-xs">
@@ -356,11 +345,11 @@ const UniversalLabelPrinter = ({
                     </Button>
                   ))}
                 </div>
-
+                
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription className="text-xs">
-                    <strong>Universal Compatibility:</strong> Download PNG files work with any label software,
+                    <strong>Universal Compatibility:</strong> Download PNG files work with any label software, 
                     printer driver, or professional print service. No alignment issues.
                   </AlertDescription>
                 </Alert>
@@ -384,7 +373,7 @@ const UniversalLabelPrinter = ({
                   )}
                   <div>
                     <span className="font-medium">Extraction Date:</span>{' '}
-                    {selectedDocument.ai_extraction_date
+                    {selectedDocument.ai_extraction_date 
                       ? new Date(selectedDocument.ai_extraction_date).toLocaleDateString()
                       : new Date(selectedDocument.created_at).toLocaleDateString()
                     }
@@ -403,11 +392,7 @@ const UniversalLabelPrinter = ({
               <CardContent>
                 <div className="flex flex-col items-center space-y-6">
                   <div className="border-2 border-dashed border-gray-300 p-4 rounded-lg bg-gray-50">
-                    <div
-                      ref={labelRef}
-                      className="bg-white rounded shadow-sm"
-                      style={{ width: 300, height: 225 }}
-                    >
+                    <div ref={labelRef} className="bg-white rounded shadow-sm">
                       <SafetyLabel
                         productName={productName}
                         manufacturer={manufacturer}
@@ -428,11 +413,11 @@ const UniversalLabelPrinter = ({
                       />
                     </div>
                   </div>
-
+                  
                   <Alert className="w-full">
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription className="text-sm">
-                      <strong>What you see is exactly what prints.</strong> Download PNG files at different
+                      <strong>What you see is exactly what prints.</strong> Download PNG files at different 
                       resolutions and import them into your label software for perfect results every time.
                     </AlertDescription>
                   </Alert>

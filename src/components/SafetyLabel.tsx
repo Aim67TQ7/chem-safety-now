@@ -11,153 +11,119 @@ interface SafetyLabelProps {
   hmisFlammability: string;
   hmisPhysical: string;
   hmisSpecial?: string;
-  selectedPictograms: string[]; // e.g., ['flame', 'exclamation']
-  selectedHazards: string[];    // e.g., ['H225', 'H315']
+  selectedPictograms: string[];
+  selectedHazards: string[];
   ppeRequirements: string[];
-  labelWidth?: number;          // ignored: fixed 300x225 for pixel-perfect capture
-  labelHeight?: number;         // ignored: fixed 300x225 for pixel-perfect capture
-  signalWord?: string;          // e.g., 'DANGER' | 'WARNING'
+  labelWidth?: number;
+  labelHeight?: number;
+  signalWord?: string;
 }
 
-// --- Inline GHS SVGs -------------------------------------------------------
-// NOTE: All shapes are inline to avoid CORS/network issues with html2canvas.
-// Each pictogram is drawn inside a 100x100 viewBox and scaled by size prop.
-
-const Diamond: React.FC<{ children?: React.ReactNode }>
-  = ({ children }) => (
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    {/* Red diamond border */}
-    <polygon points="50,5 95,50 50,95 5,50" fill="#fff" stroke="#d00000" strokeWidth="10" />
-    {/* Content slot */}
-    {children}
-  </svg>
-);
-
-const Pictos = {
-  exclamation: () => (
-    <Diamond>
-      <text x="50" y="64" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontWeight="bold" fontSize="64">!</text>
-    </Diamond>
-  ),
-  health_hazard: () => (
-    <Diamond>
-      {/* simplified torso/star symbol */}
-      <path d="M50 25 a14 14 0 1 0 0.1 0Z" fill="#000" />
-      <path d="M50 40 l-18 28 h36Z" fill="#000" />
-      <path d="M50 40 l0 30" stroke="#fff" strokeWidth="4" />
-    </Diamond>
-  ),
-  gas_cylinder: () => (
-    <Diamond>
-      <rect x="30" y="45" width="40" height="12" rx="2" ry="2" fill="#000" />
-      <rect x="26" y="48" width="6" height="6" fill="#000" />
-    </Diamond>
-  ),
-  corrosion: () => (
-    <Diamond>
-      {/* test tube */}
-      <rect x="30" y="25" width="10" height="20" fill="#000" />
-      <rect x="60" y="25" width="10" height="20" fill="#000" />
-      {/* hand & surface */}
-      <rect x="20" y="70" width="60" height="6" fill="#000" />
-      <rect x="40" y="62" width="30" height="6" transform="rotate(-20 40 62)" fill="#000" />
-      <rect x="28" y="58" width="12" height="10" fill="#000" />
-    </Diamond>
-  ),
-  skull_crossbones: () => (
-    <Diamond>
-      <circle cx="50" cy="44" r="12" fill="#000" />
-      <circle cx="45" cy="42" r="2" fill="#fff" />
-      <circle cx="55" cy="42" r="2" fill="#fff" />
-      <path d="M35 60 l30 0" stroke="#000" strokeWidth="10" />
-      <path d="M35 60 l30 0" stroke="#fff" strokeWidth="4" />
-      <path d="M35 60 l30 0" stroke="#000" strokeWidth="2" transform="rotate(25 50 60)" />
-      <path d="M35 60 l30 0" stroke="#000" strokeWidth="2" transform="rotate(-25 50 60)" />
-    </Diamond>
-  ),
-  exploding_bomb: () => (
-    <Diamond>
-      <circle cx="45" cy="55" r="12" fill="#000" />
-      <rect x="53" y="41" width="20" height="6" transform="rotate(30 53 41)" fill="#000" />
-      <polygon points="72,37 85,28 80,40" fill="#000" />
-      <line x1="62" y1="45" x2="85" y2="28" stroke="#000" strokeWidth="3" />
-    </Diamond>
-  ),
-  flame: () => (
-    <Diamond>
-      <path d="M50 70c10-8 10-16 2-24-3 6-7 8-10 5-3-3-3-8 1-14-12 7-15 22-5 31 5 4 8 5 12 2Z" fill="#000" />
-    </Diamond>
-  ),
-  flame_over_circle: () => (
-    <Diamond>
-      <circle cx="50" cy="62" r="12" fill="none" stroke="#000" strokeWidth="6" />
-      <path d="M50 50c8-6 8-12 2-18-3 5-6 6-8 4-2-2-2-6 0-10-9 6-11 16-3 22 4 3 6 3 9 2Z" fill="#000" />
-    </Diamond>
-  ),
-  environment: () => (
-    <Diamond>
-      <path d="M25 70 h50 v6 h-50z" fill="#000" />
-      <polygon points="35,70 65,70 50,45" fill="#000" />
-      <circle cx="38" cy="50" r="3" fill="#fff" />
-    </Diamond>
-  )
-} as const;
-
-// Map loose names to canonical ids
-const normalizePictogramId = (id: string): keyof typeof Pictos | null => {
-  const x = id.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (x.includes('exclam') || x.includes('harmful') || x === 'ghs07') return 'exclamation';
-  if (x.includes('health') || x.includes('carcin') || x === 'ghs08') return 'health_hazard';
-  if (x.includes('gas') || x.includes('cylinder') || x === 'ghs04') return 'gas_cylinder';
-  if (x.includes('corros') || x.includes('acid') || x === 'ghs05') return 'corrosion';
-  if (x.includes('skull') || x.includes('toxic') || x === 'ghs06') return 'skull_crossbones';
-  if (x.includes('explod') || x.includes('bomb') || x === 'ghs01') return 'exploding_bomb';
-  if (x.includes('flameover') || x.includes('oxid') || x === 'ghs03') return 'flame_over_circle';
-  if (x.includes('flame') || x.includes('flamm') || x === 'ghs02') return 'flame';
-  if (x.includes('env') || x.includes('aquatic') || x === 'ghs09') return 'environment';
-  return null;
-};
-
-// --- Helpers ---------------------------------------------------------------
+// Helper function to get H-code explanations
 const getHCodeExplanation = (hCode: string) => {
-  const h = hCode.toUpperCase();
-  const map: Record<string,string> = {
-    H225: 'Highly flammable liquid and vapor',
-    H226: 'Flammable liquid and vapor',
-    H228: 'Flammable solid',
-    H301: 'Toxic if swallowed',
-    H302: 'Harmful if swallowed',
-    H304: 'May be fatal if swallowed and enters airways',
-    H311: 'Toxic in contact with skin',
-    H312: 'Harmful in contact with skin',
-    H314: 'Causes severe skin burns and eye damage',
-    H315: 'Causes skin irritation',
-    H319: 'Causes serious eye irritation',
-    H330: 'Fatal if inhaled',
-    H331: 'Toxic if inhaled',
-    H332: 'Harmful if inhaled',
-    H335: 'May cause respiratory irritation',
-    H336: 'May cause drowsiness or dizziness',
-    H351: 'Suspected of causing cancer',
-    H370: 'Causes damage to organs',
-    H372: 'Causes damage to organs through prolonged or repeated exposure',
-    H400: 'Very toxic to aquatic life',
-    H410: 'Very toxic to aquatic life with long lasting effects',
+  const hCodes: {[key: string]: string} = {
+    'H225': 'Highly flammable liquid and vapor',
+    'H226': 'Flammable liquid and vapor',
+    'H227': 'Combustible liquid',
+    'H228': 'Flammable solid',
+    'H229': 'Pressurized container: may burst if heated',
+    'H301': 'Toxic if swallowed',
+    'H302': 'Harmful if swallowed',
+    'H303': 'May be harmful if swallowed',
+    'H304': 'May be fatal if swallowed and enters airways',
+    'H305': 'May be harmful if swallowed and enters airways',
+    'H311': 'Toxic in contact with skin',
+    'H312': 'Harmful in contact with skin',
+    'H313': 'May be harmful in contact with skin',
+    'H314': 'Causes severe skin burns and eye damage',
+    'H315': 'Causes skin irritation',
+    'H316': 'Causes mild skin irritation',
+    'H317': 'May cause an allergic skin reaction',
+    'H318': 'Causes serious eye damage',
+    'H319': 'Causes serious eye irritation',
+    'H320': 'Causes eye irritation',
+    'H330': 'Fatal if inhaled',
+    'H331': 'Toxic if inhaled',
+    'H332': 'Harmful if inhaled',
+    'H333': 'May be harmful if inhaled',
+    'H334': 'May cause allergy or asthma symptoms or breathing difficulties if inhaled',
+    'H335': 'May cause respiratory irritation',
+    'H336': 'May cause drowsiness or dizziness',
+    'H340': 'May cause genetic defects',
+    'H341': 'Suspected of causing genetic defects',
+    'H350': 'May cause cancer',
+    'H351': 'Suspected of causing cancer',
+    'H360': 'May damage fertility or the unborn child',
+    'H361': 'Suspected of damaging fertility or the unborn child',
+    'H362': 'May cause harm to breast-fed children',
+    'H370': 'Causes damage to organs',
+    'H371': 'May cause damage to organs',
+    'H372': 'Causes damage to organs through prolonged or repeated exposure',
+    'H373': 'May cause damage to organs through prolonged or repeated exposure',
+    'H400': 'Very toxic to aquatic life',
+    'H401': 'Toxic to aquatic life',
+    'H402': 'Harmful to aquatic life',
+    'H410': 'Very toxic to aquatic life with long lasting effects',
+    'H411': 'Toxic to aquatic life with long lasting effects',
+    'H412': 'Harmful to aquatic life with long lasting effects',
+    'H413': 'May cause long lasting harmful effects to aquatic life'
   };
-  const match = h.match(/H\d{3}/);
-  return match ? `${match[0]}: ${map[match[0]] ?? 'Hazardous material'}` : hCode;
+  
+  // Match H-code pattern
+  const hCodeMatch = hCode.match(/H\d{3}/i);
+  if (hCodeMatch) {
+    const code = hCodeMatch[0].toUpperCase();
+    return `${code}: ${hCodes[code] || 'Hazardous material'}`;
+  }
+  
+  return hCode;
 };
 
-const getHazardBoxColor = (level: string, type: 'health'|'flammability'|'reactivity') => {
-  const n = parseInt(level, 10);
-  if (Number.isNaN(n)) return '#9ca3af';
-  if (type === 'health') return n >= 3 ? '#1d4ed8' : n >= 2 ? '#2563eb' : n >= 1 ? '#3b82f6' : '#60a5fa';
-  if (type === 'flammability') return n >= 3 ? '#b91c1c' : n >= 2 ? '#dc2626' : n >= 1 ? '#ef4444' : '#f87171';
-  return n >= 3 ? '#eab308' : n >= 2 ? '#facc15' : n >= 1 ? '#fde047' : '#fef08a';
-};
+// Helper function to deduplicate pictograms
+function getUniquePictograms(pictograms: any[]) {
+  const normalized = pictograms.map(p => {
+    const pictogramString = typeof p === 'string' ? p : (p as any)?.name || 'warning';
+    return pictogramString.toLowerCase().replace(/[^a-z0-9]/g, '');
+  });
+  
+  const unique = [];
+  const seen = new Set();
+  
+  for (let i = 0; i < pictograms.length; i++) {
+    const normalizedPictogram = normalized[i];
+    
+    // Map similar pictograms to canonical names
+    let canonicalName = normalizedPictogram;
+    if (normalizedPictogram.includes('flame') || normalizedPictogram.includes('flammable')) {
+      canonicalName = 'ghs02';
+    } else if (normalizedPictogram.includes('corros') || normalizedPictogram.includes('acid')) {
+      canonicalName = 'ghs05';
+    } else if (normalizedPictogram.includes('toxic') || normalizedPictogram.includes('skull')) {
+      canonicalName = 'ghs06';
+    } else if (normalizedPictogram.includes('health') || normalizedPictogram.includes('carcinogen')) {
+      canonicalName = 'ghs08';
+    } else if (normalizedPictogram.includes('exclamation') || normalizedPictogram.includes('irritant') || normalizedPictogram.includes('harmful')) {
+      canonicalName = 'ghs07';
+    } else if (normalizedPictogram.includes('explosive') || normalizedPictogram.includes('bomb')) {
+      canonicalName = 'ghs01';
+    } else if (normalizedPictogram.includes('oxidiz') || normalizedPictogram.includes('oxidis')) {
+      canonicalName = 'ghs03';
+    } else if (normalizedPictogram.includes('gas') || normalizedPictogram.includes('cylinder')) {
+      canonicalName = 'ghs04';
+    } else if (normalizedPictogram.includes('environment') || normalizedPictogram.includes('aquatic')) {
+      canonicalName = 'ghs09';
+    }
+    
+    if (!seen.has(canonicalName)) {
+      seen.add(canonicalName);
+      unique.push(pictograms[i]);
+    }
+  }
+  
+  return unique;
+}
 
-// --- Component -------------------------------------------------------------
-export function SafetyLabel({
+export function SafetyLabel({ 
   productName,
   manufacturer,
   chemicalFormula,
@@ -171,162 +137,392 @@ export function SafetyLabel({
   selectedPictograms,
   selectedHazards,
   ppeRequirements,
-  labelWidth = 300,
+  labelWidth = 300, 
   labelHeight = 225,
-  signalWord
+  signalWord 
 }: SafetyLabelProps) {
-  // Fixed canvas for pixel-perfect PNG capture
+  // Fixed dimensions for consistent output - always 300x225 (4:3 aspect ratio)
   const fixedWidth = 300;
   const fixedHeight = 225;
-
+  const scaleFactor = 1; // No scaling needed with fixed dimensions
+  
+  // Fixed spacing and sizing for 300x225 label
   const padding = 6;
+  const verticalSpacing = 4;
+  
+  // Section heights (optimized for 300x225)
   const headerHeight = 34;
   const hmisHeight = 27;
   const infoHeight = 108;
-  const footerHeight = 14;
+  const footerHeight = 12;
+
+  // HMIS box dimensions
+  const hmisWidthEach = 75;
+  const hmisBoxHeight = 18;
   const pictogramSize = 32;
+  
+  // Fixed font sizes for 300x225 label
+  const baseFontSize = 8;
+  const titleFontSize = 14;
+  const headerFontSize = 10;
+  const bodyFontSize = 9;
+  const smallFontSize = 8;
+  const hmisFontSize = 12;
 
-  const fontStack = 'Arial, Helvetica, sans-serif'; // System-safe; no async webfonts
+  // OSHA-compliant GHS pictogram mapping using Supabase storage
+  const pictograms = [
+    { id: "exclamation", name: "Exclamation Mark", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/exclamation.png" },
+    { id: "health_hazard", name: "Health Hazard", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/health_hazard.png" },
+    { id: "gas_cylinder", name: "Gas Cylinder", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/gas_cylinder.png" },
+    { id: "corrosion", name: "Corrosion", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/corrosion.png" },
+    { id: "skull_crossbones", name: "Skull and Crossbones", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/skull_crossbones.png" },
+    { id: "exploding_bomb", name: "Exploding Bomb", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/exploding_bomb.png" },
+    { id: "flame", name: "Flame", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/flame.png" },
+    { id: "flame_over_circle", name: "Flame Over Circle", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/flame_over_circle.png" },
+    { id: "environment", name: "Environment", imageUrl: "https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/pictograms/environment.png" }
+  ];
 
-  const renderPictogram = (rawId: string) => {
-    const id = normalizePictogramId(rawId);
-    if (!id) return null;
-    const Pic = Pictos[id];
+  const getSpecificPPE = () => {
+    if (ppeRequirements.length > 0) {
+      return ppeRequirements.join(" • ");
+    }
+    
+    // Generate PPE based on HMIS ratings if no specific PPE provided
+    const ppeItems = [];
+    const healthLevel = parseInt(hmisHealth);
+    const flammabilityLevel = parseInt(hmisFlammability);
+    const physicalLevel = parseInt(hmisPhysical);
+    
+    if (healthLevel >= 3) {
+      ppeItems.push("FULL FACE RESPIRATOR");
+    } else if (healthLevel >= 2) {
+      ppeItems.push("RESPIRATOR");
+    }
+    if (flammabilityLevel >= 3 || physicalLevel >= 3) {
+      ppeItems.push("FIRE RESISTANT CLOTHING");
+    }
+    
+    if (selectedPictograms.includes('corrosion')) {
+      ppeItems.push("CHEMICAL RESISTANT GLOVES");
+      ppeItems.push("FACE SHIELD");
+    } else {
+      ppeItems.push("SAFETY GLOVES");
+    }
+    
+    if (selectedPictograms.includes('skull_crossbones')) {
+      ppeItems.push("FULL BODY PROTECTION");
+    }
+    
+    if (!ppeItems.some(item => item.includes("GLOVES"))) {
+      ppeItems.push("SAFETY GLOVES");
+    }
+    ppeItems.push("SAFETY GLASSES");
+    return ppeItems.join(" • ");
+  };
+
+  // Updated HMIS colors - proper red, yellow, blue (not pastels)
+  const getHazardColor = (level: string, type: 'health' | 'flammability' | 'reactivity') => {
+    const levelNum = parseInt(level);
+    if (isNaN(levelNum)) return 'bg-gray-500';
+    
+    switch (type) {
+      case 'health':
+        return levelNum >= 3 ? 'bg-blue-700' : levelNum >= 2 ? 'bg-blue-600' : levelNum >= 1 ? 'bg-blue-500' : 'bg-blue-400';
+      case 'flammability':
+        return levelNum >= 3 ? 'bg-red-700' : levelNum >= 2 ? 'bg-red-600' : levelNum >= 1 ? 'bg-red-500' : 'bg-red-400';
+      case 'reactivity':
+        return levelNum >= 3 ? 'bg-yellow-500' : levelNum >= 2 ? 'bg-yellow-400' : levelNum >= 1 ? 'bg-yellow-300' : 'bg-yellow-200';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getHazardIcon = (pictogramId: string, size: number) => {
+    const pictogram = pictograms.find(p => p.id === pictogramId);
+    
+    if (!pictogram) {
+      // Try alternative matching
+      const alternativeMatch = pictograms.find(p => 
+        p.name.toLowerCase().includes(pictogramId.replace(/_/g, ' ')) ||
+        pictogramId.toLowerCase().includes(p.id.replace(/_/g, ' '))
+      );
+      
+      if (alternativeMatch) {
+        return (
+          <img 
+            src={alternativeMatch.imageUrl} 
+            alt={alternativeMatch.name}
+            style={{ 
+              width: `${size}px`, 
+              height: `${size}px`, 
+              objectFit: 'contain' as const,
+              aspectRatio: '1 / 1'
+            }}
+          />
+        );
+      }
+      
+      return (
+        <div 
+          style={{ 
+            width: `${size}px`, 
+            height: `${size}px`,
+            backgroundColor: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: `${Math.floor(size * 0.1)}px`,
+            color: '#6b7280'
+          }}
+        >
+          {pictogramId}
+        </div>
+      );
+    }
+    
     return (
-      <div style={{ width: pictogramSize, height: pictogramSize }}>
-        <Pic />
-      </div>
+      <img 
+        src={pictogram.imageUrl} 
+        alt={pictogram.name}
+        style={{ 
+          width: `${size}px`, 
+          height: `${size}px`, 
+          objectFit: 'contain' as const,
+          aspectRatio: '1 / 1'
+        }}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
     );
   };
 
-  const specificPPE = (() => {
-    if (ppeRequirements?.length) return ppeRequirements.join(' • ');
-    const items: string[] = [];
-    const h = parseInt(hmisHealth, 10) || 0;
-    const f = parseInt(hmisFlammability, 10) || 0;
-    const r = parseInt(hmisPhysical, 10) || 0;
-    if (h >= 3) items.push('FULL FACE RESPIRATOR');
-    else if (h >= 2) items.push('RESPIRATOR');
-    if (f >= 3 || r >= 3) items.push('FIRE RESISTANT CLOTHING');
-    items.push('SAFETY GLOVES', 'SAFETY GLASSES');
-    return items.join(' • ');
-  })();
-
   return (
-    <div
-      className="safety-label"
-      style={{
-        width: fixedWidth,
-        height: fixedHeight,
-        background: '#fff',
-        border: '2px solid #000',
-        padding: `2px ${padding}px ${padding}px ${padding}px`,
-        fontFamily: fontStack,
+    <div 
+      className="safety-label bg-white border-2 border-black print:border-black" 
+      style={{ 
+        width: `${fixedWidth}px`, 
+        height: `${fixedHeight}px`, 
+        padding: `${padding}px`, 
+        fontSize: `${bodyFontSize}px`, 
+        fontFamily: 'monospace',
+        position: 'relative',
         display: 'flex',
-        flexDirection: 'column',
-        boxSizing: 'border-box',
+        flexDirection: 'column'
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          minHeight: headerHeight,
-          borderBottom: '2px solid #000',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2, textTransform: 'uppercase' }}>{productName}</div>
-        {chemicalCompound && (
-          <div style={{ fontWeight: 600, fontSize: 10, lineHeight: 1.1 }}>{chemicalCompound}</div>
-        )}
-        {chemicalFormula && (
-          <div style={{ fontSize: 9, lineHeight: 1.1 }}>{chemicalFormula}</div>
-        )}
-      </div>
-
-      {/* HMIS */}
-      <div style={{ minHeight: hmisHeight, display: 'flex', alignItems: 'center', gap: 8, paddingTop: 2 }}>
-        {[['H', hmisHealth, 'health'], ['F', hmisFlammability, 'flammability'], ['R', hmisPhysical, 'reactivity'], ['PPE', hmisSpecial || 'A', 'none']].map(([label, value, type], i) => (
-          <div key={i} style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 8, marginBottom: 2 }}>{label}</div>
-            <div
-              style={{
-                width: 69,
-                height: 18,
-                border: '1px solid #000',
-                background: type === 'none' ? '#fff' : getHazardBoxColor(String(value), type as any),
-                color: type === 'reactivity' ? '#000' : type === 'none' ? '#000' : '#fff',
-                fontWeight: 700,
-                fontSize: 12,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                lineHeight: 1,
+      <div className="h-full flex flex-col">
+        {/* Header - REDUCED SPACE */}
+        <div 
+          className="text-center border-b-2 border-black" 
+          style={{ 
+            minHeight: `${headerHeight}px`, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'center', 
+            padding: `0px 0` // Removed padding to reduce space
+          }}
+        >
+          <h4 
+            className="font-bold uppercase" 
+            style={{ 
+              fontSize: `${titleFontSize}px`, 
+              lineHeight: '1.2', 
+              margin: 0 
+            }}
+          >
+            {productName}
+          </h4>
+          {chemicalCompound && (
+            <div 
+              className="font-medium" 
+              style={{ 
+                fontSize: `${headerFontSize}px`, 
+                lineHeight: '1.1', 
+                margin: 0 
               }}
             >
-              {value}
+              {chemicalCompound}
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Info + pictograms */}
-      <div style={{ height: infoHeight, padding: `${8}px ${padding}px ${padding}px`, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ fontSize: 9, lineHeight: 1.2 }}>
-          {casNumber && (
-            <div><span style={{ fontWeight: 700 }}>CAS:</span> {casNumber}</div>
           )}
-          {manufacturer && (
-            <div><span style={{ fontWeight: 700 }}>MFG:</span> {manufacturer}</div>
-          )}
-          {productId && (
-            <div><span style={{ fontWeight: 700 }}>ID:</span> {productId}</div>
+          {chemicalFormula && (
+            <div 
+              style={{ 
+                fontSize: `${bodyFontSize}px`, 
+                lineHeight: '1.1', 
+                margin: 0 
+              }}
+            >
+              {chemicalFormula}
+            </div>
           )}
         </div>
 
-        {selectedHazards?.length > 0 && (
-          <div>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: 9,
-                marginTop: 4,
-                marginBottom: 4,
-                color: signalWord === 'DANGER' ? '#b91c1c' : signalWord === 'WARNING' ? '#c2410c' : '#111827',
-              }}
-            >
-              {signalWord || 'HAZARDS'}:
-            </div>
-            <div style={{ fontSize: 8, lineHeight: 1.1 }}>
-              {selectedHazards.slice(0, 3).map((h, idx) => (
-                <div key={idx} style={{ marginBottom: 2 }}>{getHCodeExplanation(h)}</div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selectedPictograms?.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginTop: 4 }}>
-            {selectedPictograms.slice(0, 4).map((id, i) => (
-              <div key={`${id}-${i}`} style={{ width: pictogramSize, height: pictogramSize }}>
-                {renderPictogram(id)}
+        {/* HMIS - BLACK TEXT ON YELLOW */}
+        <div 
+          className="flex justify-between items-center" 
+          style={{ 
+            minHeight: `${hmisHeight}px`, 
+            padding: `${Math.floor(padding)}px 0 ${Math.floor(padding/2)}px 0`
+          }}
+        >
+          <div className="flex" style={{ gap: `${Math.floor(padding/2)}px` }}>
+            {[
+              ['H', hmisHealth, 'health'], 
+              ['F', hmisFlammability, 'flammability'], 
+              ['R', hmisPhysical, 'reactivity'], 
+              ['PPE', hmisSpecial || 'A', null]
+            ].map(([label, value, type], i) => (
+              <div className="text-center" key={i}>
+                <div 
+                  className="font-bold" 
+                  style={{ 
+                    fontSize: `${smallFontSize}px`, 
+                    marginBottom: `${Math.floor(padding/4)}px`, 
+                    lineHeight: '1.2', 
+                    marginTop: '6px' // Increased top margin
+                  }}
+                >
+                  {label}
+                </div>
+                <div 
+                  className={`hmis-box ${type ? getHazardColor(value as string, type as any) : 'bg-white'} ${type === 'reactivity' ? 'text-black' : type ? 'text-white' : 'text-black'} font-bold border border-black`} 
+                  style={{ 
+                    width: `${hmisWidthEach - padding}px`, 
+                    height: `${hmisBoxHeight}px`, 
+                    fontSize: `${hmisFontSize}px`, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    lineHeight: '0.9',
+                    fontFamily: 'Arial, sans-serif',
+                    textAlign: 'center' as const,
+                    verticalAlign: 'middle',
+                    marginTop: '-2px' // Shift text up to match webpage alignment
+                  }}
+                >
+                  {value}
+                </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Footer (flex-pinned to bottom) */}
-      <div style={{ borderTop: '2px solid #000', display: 'flex', alignItems: 'center', minHeight: footerHeight, paddingTop: 2, marginTop: 'auto' }}>
-        <div style={{ fontWeight: 700, fontSize: 7.5, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-          {specificPPE} • VENTILATION REQUIRED
+        {/* Info Zone */}
+        <div 
+          style={{ 
+            height: `${infoHeight}px`, 
+            padding: `${verticalSpacing * 2}px ${padding}px ${padding}px`, // Added top spacing after HMIS
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'flex-start' 
+          }}
+        >
+          <div style={{ fontSize: `${bodyFontSize}px`, lineHeight: '1.2' }}>
+            {casNumber && (
+              <div style={{ fontSize: `${bodyFontSize}px` }}>
+                <span className="font-bold">CAS:</span> {casNumber}
+              </div>
+            )}
+            {manufacturer && (
+              <div style={{ fontSize: `${bodyFontSize}px` }}>
+                <span className="font-bold">MFG:</span> {manufacturer}
+              </div>
+            )}
+            {productId && (
+              <div style={{ fontSize: `${bodyFontSize}px` }}>
+                <span className="font-bold">ID:</span> {productId}
+              </div>
+            )}
+            
+            {selectedHazards.length > 0 && (
+              <div style={{ marginTop: `${verticalSpacing}px` }}>
+                <div 
+                  className={`font-bold ${signalWord === 'DANGER' ? 'text-red-700' : signalWord === 'WARNING' ? 'text-orange-600' : ''}`}
+                  style={{ 
+                    marginBottom: `${Math.floor(padding/2)}px`,
+                    fontSize: `${bodyFontSize}px`
+                  }}
+                >
+                  {signalWord || 'HAZARDS'}:
+                </div>
+                <div style={{ fontSize: `${smallFontSize}px`, lineHeight: '1.1' }}>
+                  {selectedHazards.slice(0, 3).map((hazard, index) => {
+                    // Check if this is an H-code and expand it
+                    const expandedHazard = getHCodeExplanation(hazard);
+                    return (
+                      <div key={index} style={{ marginBottom: `${Math.floor(padding/4)}px` }}>
+                        {expandedHazard}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Pictograms */}
+            {selectedPictograms.length > 0 && (
+              <div 
+                style={{ 
+                  marginTop: `${verticalSpacing}px`, 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: `${Math.floor(padding/2)}px`, 
+                  justifyContent: 'flex-start', 
+                  alignItems: 'center' 
+                }}
+              >
+                {selectedPictograms.slice(0, 4).map((pictogramId, index) => (
+                  <div 
+                    key={`${pictogramId}-${index}`} 
+                    style={{ 
+                      width: `${pictogramSize}px`, 
+                      height: `${pictogramSize}px`, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    {getHazardIcon(pictogramId, pictogramSize)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer - SMALLER TEXT AND ANCHORED TO BOTTOM */}
+        <div 
+          style={{ 
+            borderTop: '2px solid black',
+            position: 'absolute',
+            bottom: `${padding + 12}px`, // Moved up by 12px (half line spacing)
+            left: `${padding}px`,
+            right: `${padding}px`,
+            display: 'flex',
+            alignItems: 'center',
+            height: `${footerHeight}px`,
+            minHeight: '15px'
+          }}
+        >
+          <div 
+            className="font-bold" 
+            style={{ 
+              fontSize: `${Math.floor(smallFontSize * 0.8)}px`, // Reduced font size
+              textAlign: 'left',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {getSpecificPPE()} • VENTILATION REQUIRED
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default SafetyLabel;

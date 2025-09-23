@@ -50,12 +50,27 @@ export const useSDSDocuments = ({
     queryFn: async () => {
       console.log('🔍 Fetching SDS documents directly from Supabase...', { facilityId });
       
-      // Always show all documents (library approach)
-      console.log('📋 Fetching all documents from SDS Library');
-      let query = supabase
-        .from('sds_documents')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+      let query;
+      
+      if (facilityId) {
+        // For facility context: only show documents the facility has interacted with
+        console.log('📋 Fetching facility-specific documents for:', facilityId);
+        query = supabase
+          .from('sds_documents')
+          .select(`
+            *,
+            sds_interactions!inner(facility_id, created_at as interaction_date)
+          `, { count: 'exact' })
+          .eq('sds_interactions.facility_id', facilityId)
+          .order('created_at', { ascending: false });
+      } else {
+        // For admin context: show all documents
+        console.log('📋 Fetching all documents (admin context)');
+        query = supabase
+          .from('sds_documents')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false });
+      }
 
       // Apply search filter
       if (debouncedSearchTerm) {
