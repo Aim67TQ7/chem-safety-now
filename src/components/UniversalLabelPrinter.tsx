@@ -107,8 +107,17 @@ const UniversalLabelPrinter = ({
     try {
       toast.info(`Generating ${scale}x resolution PNG...`);
 
+      const target = labelRef.current;
+      
+      // Preserve existing styles and set dimensions properly
+      const originalWidth = target.style.width;
+      const originalHeight = target.style.height;
+      
+      target.style.width = '300px';
+      target.style.height = '225px';
+
       // Enhanced html2canvas options for perfect quality
-      const canvas = await html2canvas(labelRef.current, {
+      const canvas = await html2canvas(target, {
         backgroundColor: '#ffffff',
         scale: scale,
         logging: false,
@@ -123,6 +132,10 @@ const UniversalLabelPrinter = ({
         imageTimeout: 15000,
         removeContainer: true
       });
+
+      // Restore original styles
+      target.style.width = originalWidth;
+      target.style.height = originalHeight;
 
       // Convert to blob and download
       canvas.toBlob((blob) => {

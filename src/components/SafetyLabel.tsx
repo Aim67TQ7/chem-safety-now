@@ -306,7 +306,7 @@ export function SafetyLabel({
         height: `${fixedHeight}px`, 
         padding: `${padding}px`, 
         fontSize: `${bodyFontSize}px`, 
-        fontFamily: 'monospace',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column'
@@ -328,7 +328,7 @@ export function SafetyLabel({
             className="font-bold uppercase" 
             style={{ 
               fontSize: `${titleFontSize}px`, 
-              lineHeight: '1.2', 
+              lineHeight: '16px', 
               margin: 0 
             }}
           >
@@ -339,7 +339,7 @@ export function SafetyLabel({
               className="font-medium" 
               style={{ 
                 fontSize: `${headerFontSize}px`, 
-                lineHeight: '1.1', 
+                lineHeight: '12px', 
                 margin: 0 
               }}
             >
@@ -350,7 +350,7 @@ export function SafetyLabel({
             <div 
               style={{ 
                 fontSize: `${bodyFontSize}px`, 
-                lineHeight: '1.1', 
+                lineHeight: '11px', 
                 margin: 0 
               }}
             >
@@ -380,7 +380,7 @@ export function SafetyLabel({
                   style={{ 
                     fontSize: `${smallFontSize}px`, 
                     marginBottom: `${Math.floor(padding/4)}px`, 
-                    lineHeight: '1.2', 
+                    lineHeight: '10px', 
                     marginTop: '6px' // Increased top margin
                   }}
                 >
@@ -395,8 +395,8 @@ export function SafetyLabel({
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    lineHeight: '0.9',
-                    fontFamily: 'Arial, sans-serif',
+                    lineHeight: '14px',
+                    fontFamily: 'Arial, Helvetica, sans-serif',
                     textAlign: 'center' as const,
                     verticalAlign: 'middle',
                     marginTop: '-2px' // Shift text up to match webpage alignment
@@ -419,7 +419,7 @@ export function SafetyLabel({
             justifyContent: 'flex-start' 
           }}
         >
-          <div style={{ fontSize: `${bodyFontSize}px`, lineHeight: '1.2' }}>
+          <div style={{ fontSize: `${bodyFontSize}px`, lineHeight: '11px' }}>
             {casNumber && (
               <div style={{ fontSize: `${bodyFontSize}px` }}>
                 <span className="font-bold">CAS:</span> {casNumber}
@@ -447,7 +447,7 @@ export function SafetyLabel({
                 >
                   {signalWord || 'HAZARDS'}:
                 </div>
-                <div style={{ fontSize: `${smallFontSize}px`, lineHeight: '1.1' }}>
+                <div style={{ fontSize: `${smallFontSize}px`, lineHeight: '10px' }}>
                   {selectedHazards.slice(0, 3).map((hazard, index) => {
                     // Check if this is an H-code and expand it
                     const expandedHazard = getHCodeExplanation(hazard);
@@ -493,28 +493,28 @@ export function SafetyLabel({
           </div>
         </div>
 
-        {/* Footer - SMALLER TEXT AND ANCHORED TO BOTTOM */}
+        {/* Footer - FLEX POSITIONED AT BOTTOM */}
         <div 
           style={{ 
             borderTop: '2px solid black',
-            position: 'absolute',
-            bottom: `${padding + 12}px`, // Moved up by 12px (half line spacing)
-            left: `${padding}px`,
-            right: `${padding}px`,
+            marginTop: 'auto',
             display: 'flex',
             alignItems: 'center',
             height: `${footerHeight}px`,
-            minHeight: '15px'
+            minHeight: '15px',
+            padding: `2px ${Math.floor(padding/2)}px`
           }}
         >
           <div 
             className="font-bold" 
             style={{ 
-              fontSize: `${Math.floor(smallFontSize * 0.8)}px`, // Reduced font size
+              fontSize: `${Math.floor(smallFontSize * 0.8)}px`,
+              lineHeight: '10px',
               textAlign: 'left',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              fontFamily: 'Arial, Helvetica, sans-serif'
             }}
           >
             {getSpecificPPE()} • VENTILATION REQUIRED
