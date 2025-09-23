@@ -90,17 +90,24 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
     <nav className="bg-white border-b-2 border-gray-300 shadow-lg sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Enhanced Facility Name and Address for White-Label Prominence */}
-          <div className="flex items-center bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 rounded-lg border border-blue-200">
+          {/* Facility Logo, Name and Address */}
+          <div className="flex items-center">
+            {facilityLogo && (
+              <img 
+                src={facilityLogo} 
+                alt={`${facilityName || 'Facility'} logo`}
+                className="w-12 h-12 mr-3 object-contain"
+              />
+            )}
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold text-gray-900 tracking-tight">
+                <span className="text-3xl font-bold text-foreground tracking-tight">
                   {facilityName || 'Facility Dashboard'}
                 </span>
               </div>
               {facilityAddress && (
-                <div className="flex items-center text-sm text-gray-700 font-medium">
-                  <MapPin className="w-4 h-4 mr-2 text-blue-600" />
+                <div className="flex items-center text-sm text-muted-foreground font-medium">
+                  <MapPin className="w-4 h-4 mr-2 text-primary" />
                   <span>{facilityAddress}</span>
                 </div>
               )}

@@ -364,7 +364,7 @@ export function SafetyLabel({
           className="flex justify-between items-center" 
           style={{ 
             minHeight: `${hmisHeight}px`, 
-            padding: `${Math.floor(padding)}px 0 ${Math.floor(padding/2)}px 0`
+            padding: `${Math.floor(padding/2)}px 0 ${Math.floor(padding/2)}px 0`
           }}
         >
           <div className="flex" style={{ gap: `${Math.floor(padding/2)}px` }}>
@@ -399,7 +399,7 @@ export function SafetyLabel({
                     fontFamily: 'Arial, sans-serif',
                     textAlign: 'center' as const,
                     verticalAlign: 'middle',
-                    marginTop: '-2px' // Shift text up to match webpage alignment
+                    marginTop: '-3px' // Shift text up to match webpage alignment
                   }}
                 >
                   {value}
