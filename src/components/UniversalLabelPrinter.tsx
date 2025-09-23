@@ -197,7 +197,7 @@ const UniversalLabelPrinter = ({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header with Compliance Status */}
-      <div className="flex-shrink-0 p-4 border-b bg-gray-50">
+      <div className="flex-1 overflow-y-auto" style={{ marginTop: "-50px" }}>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h3 className="text-lg font-semibold mb-2">Universal GHS Label Printer</h3>
