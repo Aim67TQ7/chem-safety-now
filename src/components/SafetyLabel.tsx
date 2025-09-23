@@ -137,12 +137,12 @@ export function SafetyLabel({
   selectedPictograms,
   selectedHazards,
   ppeRequirements,
-  labelWidth = 300, 
-  labelHeight = 225,
+  labelWidth = 288, 
+  labelHeight = 192,
   signalWord 
 }: SafetyLabelProps) {
   // Calculate proportional sizes based on label dimensions
-  const scaleFactor = Math.min(labelWidth / 300, labelHeight / 225);
+  const scaleFactor = Math.min(labelWidth / 288, labelHeight / 192);
   
   // Proportional spacing and sizing
   const padding = Math.max(2, Math.floor(labelWidth * 0.02));
@@ -357,47 +357,43 @@ export function SafetyLabel({
           )}
         </div>
 
-        {/* HMIS - Improved Alignment */}
+        {/* HMIS - BLACK TEXT ON YELLOW */}
         <div 
-          className="flex justify-center items-center" 
+          className="flex justify-between items-center" 
           style={{ 
             minHeight: `${hmisHeight}px`, 
             padding: `${Math.floor(padding)}px 0 ${Math.floor(padding/2)}px 0`
           }}
         >
-          <div className="flex justify-center" style={{ gap: `${Math.floor(padding/3)}px`, width: '100%' }}>
+          <div className="flex" style={{ gap: `${Math.floor(padding/2)}px` }}>
             {[
               ['H', hmisHealth, 'health'], 
               ['F', hmisFlammability, 'flammability'], 
               ['R', hmisPhysical, 'reactivity'], 
               ['PPE', hmisSpecial || 'A', null]
             ].map(([label, value, type], i) => (
-              <div className="text-center flex-1" key={i}>
+              <div className="text-center" key={i}>
                 <div 
                   className="font-bold" 
                   style={{ 
                     fontSize: `${smallFontSize}px`, 
-                    marginBottom: `${Math.floor(padding/3)}px`, 
-                    lineHeight: '1.1', 
-                    height: `${Math.floor(smallFontSize * 1.3)}px`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    marginBottom: `${Math.floor(padding/4)}px`, 
+                    lineHeight: '1.2', 
+                    marginTop: '6px' // Increased top margin
                   }}
                 >
                   {label}
                 </div>
                 <div 
-                  className={`hmis-box ${type ? getHazardColor(value as string, type as any) : 'bg-white'} ${type === 'reactivity' ? 'text-black' : type ? 'text-white' : 'text-black'} font-bold border-2 border-black`} 
+                  className={`hmis-box ${type ? getHazardColor(value as string, type as any) : 'bg-white'} ${type === 'reactivity' ? 'text-black' : type ? 'text-white' : 'text-black'} font-bold border border-black`} 
                   style={{ 
-                    width: `${Math.floor((labelWidth - (padding * 2) - (padding)) / 4)}px`, 
+                    width: `${hmisWidthEach - padding}px`, 
                     height: `${hmisBoxHeight}px`, 
                     fontSize: `${hmisFontSize}px`, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    lineHeight: '1',
-                    margin: '0 auto'
+                    lineHeight: '1' 
                   }}
                 >
                   {value}
@@ -459,7 +455,7 @@ export function SafetyLabel({
               </div>
             )}
 
-            {/* Pictograms - Improved Alignment */}
+            {/* Pictograms */}
             {selectedPictograms.length > 0 && (
               <div 
                 style={{ 
@@ -468,8 +464,7 @@ export function SafetyLabel({
                   flexWrap: 'wrap', 
                   gap: `${Math.floor(padding/2)}px`, 
                   justifyContent: 'flex-start', 
-                  alignItems: 'flex-start',
-                  minHeight: `${pictogramSize}px`
+                  alignItems: 'center' 
                 }}
               >
                 {selectedPictograms.slice(0, 4).map((pictogramId, index) => (
@@ -481,10 +476,7 @@ export function SafetyLabel({
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
-                      flexShrink: 0,
-                      border: '1px solid #d1d5db',
-                      borderRadius: '2px',
-                      backgroundColor: 'white'
+                      flexShrink: 0
                     }}
                   >
                     {getHazardIcon(pictogramId, pictogramSize)}
@@ -495,26 +487,28 @@ export function SafetyLabel({
           </div>
         </div>
 
-        {/* Footer - Better Positioning */}
+        {/* Footer - SMALLER TEXT AND ANCHORED TO BOTTOM */}
         <div 
           style={{ 
             borderTop: '2px solid black',
-            marginTop: 'auto',
-            padding: `${Math.floor(padding/2)}px 0`,
+            position: 'absolute',
+            bottom: `${padding}px`,
+            left: `${padding}px`,
+            right: `${padding}px`,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: `${footerHeight}px`,
-            width: '100%'
+            height: `${footerHeight}px`,
+            minHeight: '15px'
           }}
         >
           <div 
-            className="font-bold text-center" 
+            className="font-bold" 
             style={{ 
-              fontSize: `${Math.floor(smallFontSize * 0.9)}px`,
-              lineHeight: '1.1',
-              maxWidth: '100%',
-              wordBreak: 'break-word'
+              fontSize: `${Math.floor(smallFontSize * 0.8)}px`, // Reduced font size
+              textAlign: 'left',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
             {getSpecificPPE()} • VENTILATION REQUIRED

@@ -2,7 +2,7 @@
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import SimplifiedLabelPrinter from '@/components/SimplifiedLabelPrinter';
+import LabelPrinter from '@/components/LabelPrinter';
 import ProductSelector from '@/components/ProductSelector';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -217,9 +217,9 @@ const LabelPrinterPageContent = () => {
           </CardContent>
         </Card>
 
-        {/* Simplified Label Printer Component */}
+        {/* Label Printer Component */}
         {document && (
-          <SimplifiedLabelPrinter
+          <LabelPrinter
             initialProductName={document.product_name || ''}
             initialManufacturer={document.manufacturer || ''}
             selectedDocument={document}
