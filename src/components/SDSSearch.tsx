@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import SDSResultCard from './SDSResultCard';
 import SDSSearchInput from './SDSSearchInput';
+import SDSUploadForm from './SDSUploadForm';
 import { Badge } from '@/components/ui/badge';
 import { useLocation } from 'react-router-dom';
 import { AuditService } from '@/services/auditService';
@@ -426,22 +427,37 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
         </div>
       )}
 
-      {/* No Results State */}
+      {/* No Results State with Upload Option */}
       {hasSearched && searchResults.length === 0 && !isSearching && (
-        <Card className="text-center py-8">
-          <CardContent>
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No SDS Documents Found
-            </h3>
-            <p className="text-gray-600 mb-4">
-              We couldn't find any Safety Data Sheets for your search.
-            </p>
-            <p className="text-sm text-gray-500">
-              Try searching with different keywords or the exact product name.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card className="text-center py-8">
+            <CardContent>
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No SDS Documents Found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                We couldn't find any Safety Data Sheets for your search.
+              </p>
+              <p className="text-sm text-gray-500 mb-4">
+                Try searching with different keywords or the exact product name.
+              </p>
+              <p className="text-sm font-medium text-gray-700">
+                Can't find your SDS? Upload it below!
+              </p>
+            </CardContent>
+          </Card>
+          
+          <SDSUploadForm 
+            facilityId={facilityId}
+            onUploadSuccess={(document) => {
+              toast.success('SDS uploaded successfully! You can now create labels for this product.');
+              // Add the uploaded document to search results
+              setSearchResults([document]);
+              setHasSearched(true);
+            }}
+          />
+        </div>
       )}
     </div>
   );

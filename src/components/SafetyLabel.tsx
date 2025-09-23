@@ -494,7 +494,7 @@ export function SafetyLabel({
           style={{ 
             borderTop: '2px solid black',
             position: 'absolute',
-            bottom: `${padding}px`,
+            bottom: `${padding + 12}px`, // Moved up by 12px (half line spacing)
             left: `${padding}px`,
             right: `${padding}px`,
             display: 'flex',
