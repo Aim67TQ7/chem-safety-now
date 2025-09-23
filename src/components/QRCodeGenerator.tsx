@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { QrCode, Printer, Download } from 'lucide-react';
+import { QrCode, Download } from 'lucide-react';
 import QRCodeLib from 'qrcode';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 
 interface QRCodeGeneratorProps {
@@ -57,28 +59,123 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
     }
   };
 
-  const downloadQRCode = () => {
-    if (qrCodeDataUrl) {
-      const link = document.createElement('a');
-      link.download = `${facilityDisplayName}-QR-Code.png`;
-      link.href = qrCodeDataUrl;
-      link.click();
+  const downloadPDFPoster = async () => {
+    if (!qrCodeDataUrl) return;
+
+    try {
+      // Create a temporary container for the poster
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.width = '8.5in';
+      tempContainer.style.height = '11in';
+      tempContainer.style.backgroundColor = 'white';
+      tempContainer.style.padding = '0.5in';
+      tempContainer.style.fontFamily = 'Arial, sans-serif';
+      
+      // Create poster content
+      tempContainer.innerHTML = `
+        <div style="text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+          <div style="margin-bottom: 2rem;">
+            <h1 style="font-size: 2.5rem; font-weight: bold; color: #1f2937; margin: 0 0 1rem 0;">
+              Safety Information Access
+            </h1>
+            <p style="font-size: 1.25rem; color: #6b7280; margin: 0;">
+              Scan the QR code below for instant access
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 2rem;">
+            <img src="${qrCodeDataUrl}" alt="QR Code" style="width: 300px; height: 300px; margin: 0 auto; display: block; border: 2px solid #e5e7eb; border-radius: 8px;" />
+          </div>
+          
+          <div style="margin-bottom: 2rem;">
+            <p style="font-size: 1.125rem; color: #374151; margin: 0 0 0.5rem 0;">
+              <strong>How to scan:</strong>
+            </p>
+            <p style="font-size: 1rem; color: #6b7280; margin: 0 0 0.25rem 0;">
+              1. Open your phone's camera app
+            </p>
+            <p style="font-size: 1rem; color: #6b7280; margin: 0 0 0.25rem 0;">
+              2. Point the camera at the QR code
+            </p>
+            <p style="font-size: 1rem; color: #6b7280; margin: 0;">
+              3. Tap the notification to access safety information
+            </p>
+          </div>
+          
+          <div style="border-top: 2px solid #e5e7eb; padding-top: 1.5rem;">
+            ${facilityData.logo_url ? `
+              <div style="margin-bottom: 1rem;">
+                <img src="${facilityData.logo_url}" alt="Logo" style="height: 60px; margin: 0 auto; display: block;" />
+              </div>
+            ` : ''}
+            
+            <h2 style="font-size: 1.5rem; font-weight: bold; color: #1f2937; margin: 0 0 1rem 0;">
+              ${facilityDisplayName}
+            </h2>
+            
+            ${facilityData.contact_name ? `
+              <p style="font-size: 1rem; color: #374151; margin: 0 0 0.5rem 0;">
+                <strong>Contact:</strong> ${facilityData.contact_name}
+              </p>
+            ` : ''}
+            
+            ${facilityData.address ? `
+              <p style="font-size: 1rem; color: #374151; margin: 0 0 0.5rem 0;">
+                <strong>Address:</strong> ${facilityData.address}
+              </p>
+            ` : ''}
+            
+            ${facilityData.email ? `
+              <p style="font-size: 1rem; color: #374151; margin: 0;">
+                <strong>Email:</strong> ${facilityData.email}
+              </p>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(tempContainer);
+      
+      // Capture the content as canvas
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Remove temporary container
+      document.body.removeChild(tempContainer);
+      
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: 'letter'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, 8.5, 11);
+      
+      // Download PDF
+      const fileName = `${facilityDisplayName.replace(/[^a-zA-Z0-9]/g, '_')}-Safety-QR-Poster.pdf`;
+      pdf.save(fileName);
       
       toast({
-        title: "QR Code Downloaded",
-        description: "Your QR code has been saved to downloads.",
+        title: "PDF Downloaded",
+        description: "Your safety QR poster has been saved as a PDF.",
+      });
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating the PDF poster.",
+        variant: "destructive"
       });
     }
-  };
-
-  const openPrintView = () => {
-    const printUrl = `/qr-print/${facilityData.slug}`;
-    window.open(printUrl, '_blank');
-    
-    toast({
-      title: "Print View Opened",
-      description: "A new tab with the print-ready poster has been opened.",
-    });
   };
 
   return (
@@ -132,29 +229,16 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ facilityData }) => {
           </div>
 
           <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <Button
-                onClick={openPrintView}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                disabled={!qrCodeDataUrl}
-              >
-                <Printer className="w-4 h-4" />
-                Print
-              </Button>
-              
-              <Button
-                onClick={downloadQRCode}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                disabled={!qrCodeDataUrl}
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            </div>
+            <Button
+              onClick={downloadPDFPoster}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 w-full"
+              disabled={!qrCodeDataUrl}
+            >
+              <Download className="w-4 h-4" />
+              Download PDF Poster
+            </Button>
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800">
