@@ -304,7 +304,7 @@ export function SafetyLabel({
       style={{ 
         width: `${fixedWidth}px`, 
         height: `${fixedHeight}px`, 
-        padding: `${padding}px`, 
+        padding: `2px ${padding}px ${padding}px ${padding}px`, 
         fontSize: `${bodyFontSize}px`, 
         fontFamily: 'monospace',
         position: 'relative',
