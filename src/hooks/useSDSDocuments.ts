@@ -27,13 +27,15 @@ interface UseSDSDocumentsOptions {
   filterType: string;
   filterStatus: string;
   pageSize?: number;
+  facilityId?: string;
 }
 
 export const useSDSDocuments = ({
   searchTerm,
   filterType,
   filterStatus,
-  pageSize = 20
+  pageSize = 20,
+  facilityId
 }: UseSDSDocumentsOptions) => {
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchTerm = useDebounce(searchTerm, 1200);
@@ -41,17 +43,34 @@ export const useSDSDocuments = ({
   // Reset page when search/filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, filterType, filterStatus]);
+  }, [debouncedSearchTerm, filterType, filterStatus, facilityId]);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['sds-documents', currentPage, debouncedSearchTerm, filterType, filterStatus],
+    queryKey: ['sds-documents', currentPage, debouncedSearchTerm, filterType, filterStatus, facilityId],
     queryFn: async () => {
-      console.log('🔍 Fetching SDS documents directly from Supabase...');
+      console.log('🔍 Fetching SDS documents directly from Supabase...', { facilityId });
       
-      let query = supabase
-        .from('sds_documents')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+      let query;
+      
+      if (facilityId) {
+        // For facility context: only show documents the facility has interacted with
+        console.log('📋 Fetching facility-specific documents for:', facilityId);
+        query = supabase
+          .from('sds_documents')
+          .select(`
+            *,
+            sds_interactions!inner(facility_id, created_at as interaction_date)
+          `, { count: 'exact' })
+          .eq('sds_interactions.facility_id', facilityId)
+          .order('sds_interactions.created_at', { ascending: false });
+      } else {
+        // For admin context: show all documents
+        console.log('📋 Fetching all documents (admin context)');
+        query = supabase
+          .from('sds_documents')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false });
+      }
 
       // Apply search filter
       if (debouncedSearchTerm) {

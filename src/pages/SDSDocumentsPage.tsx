@@ -58,24 +58,6 @@ const SDSDocumentsPageContent = () => {
   // Determine if this is admin context
   const isAdminContext = !facilitySlug;
   
-  const {
-    documents,
-    totalCount,
-    totalPages,
-    currentPage,
-    setCurrentPage,
-    isLoading,
-    error,
-    refetch,
-    filterCounts,
-    isSearching
-  } = useSDSDocuments({
-    searchTerm,
-    filterType: 'all', // Simplified for now
-    filterStatus,
-    pageSize: 20
-  });
-
   // Fetch facility data for navbar
   const { data: facilityData } = useQuery({
     queryKey: ['facility', facilitySlug],
@@ -96,6 +78,25 @@ const SDSDocumentsPageContent = () => {
       return facility;
     },
     enabled: !!facilitySlug
+  });
+  
+  const {
+    documents,
+    totalCount,
+    totalPages,
+    currentPage,
+    setCurrentPage,
+    isLoading,
+    error,
+    refetch,
+    filterCounts,
+    isSearching
+  } = useSDSDocuments({
+    searchTerm,
+    filterType: 'all', // Simplified for now
+    filterStatus,
+    pageSize: 20,
+    facilityId: facilityData?.id // Pass facility ID for filtering
   });
 
   const handleEvaluationComplete = () => {

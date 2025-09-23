@@ -99,19 +99,22 @@ class InteractionLogger {
     }
   }
 
-  // Log SDS interactions
+  // Log SDS interactions with proper facility context
   async logSDSInteraction(params: {
     sdsDocumentId: string;
     actionType: 'view' | 'view_sds' | 'download' | 'generate_label' | 'ask_ai' | 'generate_label_from_ai';
     searchQuery?: string;
     metadata?: any;
+    facilityId?: string; // Allow explicit facility ID override
   }) {
     try {
+      const facilityId = params.facilityId || this.currentFacilityId;
+      
       const { error } = await supabase
         .from('sds_interactions')
         .insert({
           session_id: this.sessionId,
-          facility_id: this.currentFacilityId,
+          facility_id: facilityId,
           user_id: this.currentUserId,
           sds_document_id: params.sdsDocumentId,
           action_type: params.actionType,
@@ -121,6 +124,12 @@ class InteractionLogger {
 
       if (error) {
         console.error('Failed to log SDS interaction:', error);
+      } else {
+        console.log('✅ SDS interaction logged:', { 
+          documentId: params.sdsDocumentId, 
+          action: params.actionType, 
+          facilityId 
+        });
       }
     } catch (error) {
       console.error('Error logging SDS interaction:', error);

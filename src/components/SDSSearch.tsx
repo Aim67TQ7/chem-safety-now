@@ -136,23 +136,27 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
         .select()
         .single();
 
+      let documentId = document.id;
       if (saveError) {
         console.log('Document may already exist, continuing with view...');
       } else {
         console.log('✅ Document saved to database:', savedDoc.id);
+        documentId = savedDoc.id;
       }
 
       // Open the PDF in a new tab instead of popup (avoids CORS issues)
       const url = document.bucket_url || document.source_url;
       window.open(url, '_blank');
       
-      // Log SDS document access for OSHA compliance
+      // Log SDS document access for OSHA compliance and facility association
       if (facilityId) {
-        AuditService.logSDSAccess(facilityId, document.product_name, document.id);
+        AuditService.logSDSAccess(facilityId, document.product_name, documentId);
         
+        // This interaction associates the document with the facility
         interactionLogger.logSDSInteraction({
-          sdsDocumentId: document.id,
+          sdsDocumentId: documentId,
           actionType: 'view_sds',
+          facilityId: facilityId,
           metadata: {
             productName: document.product_name,
             manufacturer: document.manufacturer,

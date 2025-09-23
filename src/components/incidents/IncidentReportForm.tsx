@@ -18,6 +18,7 @@ import { WitnessFields } from './WitnessFields';
 import { BodyPartsSelector } from './BodyPartsSelector';
 import { useDemoIncidentSubmission } from '@/hooks/useDemoIncidentSubmission';
 import ImageUpload, { ImageUploadRef } from './ImageUpload';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const baseIncidentSchema = z.object({
   incident_date: z.date(),
@@ -81,6 +82,7 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
   const schema = incidentType === 'near_miss' ? nearMissSchema : reportableSchema;
   const { submitIncident, isSubmitting } = useDemoIncidentSubmission();
   const imageUploadRef = useRef<ImageUploadRef>(null);
+  const { isMobile, isTouchDevice } = useIsMobile();
 
   const form = useForm<IncidentFormData>({
     resolver: zodResolver(schema),
@@ -117,23 +119,23 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
   const isReportable = incidentType === 'reportable';
 
   return (
-    <Card className="max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className={`${isMobile ? 'mx-2' : 'max-w-4xl mx-auto'}`}>
+      <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
+        <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
           {isReportable ? 'Reportable Incident Form' : 'Near-Miss Incident Form'}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className={isMobile ? 'text-sm' : ''}>
           {isReportable 
             ? 'Complete this form for incidents involving actual injuries, illnesses, or property damage'
             : 'Document near-miss incidents to help prevent future accidents'
           }
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className={isMobile ? 'px-4' : ''}>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-${isMobile ? '4' : '6'}`}>
             {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-4`}>
               <FormField
                 control={form.control}
                 name="incident_date"
@@ -147,7 +149,8 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
+                              isTouchDevice && "min-h-[44px]"
                             )}
                           >
                             {field.value ? (
@@ -183,8 +186,12 @@ export const IncidentReportForm: React.FC<IncidentReportFormProps> = ({
                     <FormLabel>Incident Time</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input {...field} type="time" className="pl-10" />
+                        <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          {...field} 
+                          type="time" 
+                          className={`pl-10 ${isTouchDevice ? 'min-h-[44px]' : ''}`}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
