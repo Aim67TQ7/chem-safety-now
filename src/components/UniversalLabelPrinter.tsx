@@ -90,22 +90,80 @@ const UniversalLabelPrinter = ({
     };
   };
 
-  const captureHighResolutionPNG = async (scale: number = 1, filename: string) => {
-    if (!labelRef.current) {
-      toast.error('Label not found for capture');
-      return;
+ const captureHighResolutionPNG = async (scale: number = 1, filename: string) => {
+  if (!labelRef.current) {
+    toast.error('Label not found for capture');
+    return;
+  }
+  if (!productName.trim()) {
+    toast.error('Product name is required');
+    return;
+  }
+
+  const canDownload = handleDownloadAction(`PNG Download (${scale}x)`);
+  if (!canDownload) return;
+
+  try {
+    toast.info(`Generating ${scale}x resolution PNG...`);
+
+    // 1) Ensure fonts are fully ready (prevents text baseline/line-height shifts)
+    if ('fonts' in document && (document as any).fonts?.ready) {
+      await (document as any).fonts.ready;
+      // tiny delay helps some browsers settle font metrics
+      await new Promise(r => setTimeout(r, 30));
     }
 
-    if (!productName.trim()) {
-      toast.error('Product name is required');
-      return;
-    }
+    // 2) Guarantee the label has exact pixel dimensions (no subpixel rounding)
+    const target = labelRef.current;
+    const WIDTH = 300;
+    const HEIGHT = 225;
+    // force layout sizing during capture
+    const prevStyle = target.getAttribute('style') || '';
+    target.setAttribute(
+      'style',
+      `${prevStyle};width:${WIDTH}px;height:${HEIGHT}px;`
+    );
 
-    const canDownload = handleDownloadAction(`PNG Download (${scale}x)`);
-    if (!canDownload) return;
+    // 3) Render using foreignObject (more faithful text layout)
+    const canvas = await html2canvas(target, {
+      backgroundColor: '#ffffff',
+      scale,                     // 1, 2, 4, 8 → you already drive this
+      useCORS: true,
+      allowTaint: false,
+      width: WIDTH,
+      height: HEIGHT,
+      scrollX: 0,
+      scrollY: 0,
+      foreignObjectRendering: true,
+      logging: false,
+      imageTimeout: 15000,
+      removeContainer: true,
+    });
 
-    try {
-      toast.info(`Generating ${scale}x resolution PNG...`);
+    // Restore style after capture
+    target.setAttribute('style', prevStyle);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        toast.error('Failed to generate image');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(`${scale}x PNG downloaded successfully`);
+    }, 'image/png', 1.0);
+  } catch (error) {
+    console.error('PNG generation error:', error);
+    toast.error('Failed to generate PNG');
+  }
+};
+
 
       // Enhanced html2canvas options for perfect quality
       const canvas = await html2canvas(labelRef.current, {
