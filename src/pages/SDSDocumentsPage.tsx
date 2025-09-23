@@ -96,7 +96,7 @@ const SDSDocumentsPageContent = () => {
     filterType: 'all', // Simplified for now
     filterStatus,
     pageSize: 20,
-    facilityId: facilityData?.id // Pass facility ID for filtering
+    facilityId: undefined // Remove facility filtering to show all documents
   });
 
   const handleEvaluationComplete = () => {

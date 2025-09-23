@@ -64,8 +64,8 @@ export const useSDSDocuments = ({
           .eq('sds_interactions.facility_id', facilityId)
           .order('created_at', { ascending: false });
       } else {
-        // For admin context: show all documents
-        console.log('📋 Fetching all documents (admin context)');
+        // Show all documents for everyone
+        console.log('📋 Fetching all documents');
         query = supabase
           .from('sds_documents')
           .select('*', { count: 'exact' })
