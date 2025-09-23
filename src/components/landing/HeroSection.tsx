@@ -19,7 +19,7 @@ const HeroSection = () => {
   const generateQRCode = async () => {
     try {
       const dataUrl = await QRCodeLib.toDataURL(demoUrl, {
-        width: 300,
+        width: 240,
         margin: 2,
         color: {
           dark: '#000000',
@@ -93,7 +93,7 @@ const HeroSection = () => {
             {/* Glowing background for the QR area */}
             <div className="absolute -inset-6 bg-gradient-to-r from-blue-400 to-purple-400 rounded-3xl blur opacity-20 animate-pulse"></div>
             
-            <div className="relative bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl border-4 border-blue-400 shadow-2xl p-8">
+            <div className="relative bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl border-4 border-blue-400 shadow-2xl p-6">
               <div className="text-center space-y-6">
                 {/* QR Code */}
                 <div className="flex justify-center">
@@ -102,11 +102,11 @@ const HeroSection = () => {
                       <img 
                         src={qrCodeDataUrl} 
                         alt="Demo QR Code"
-                        className="w-64 h-64 mx-auto"
+                        className="w-48 h-48 mx-auto"
                       />
                     </div>
                   ) : (
-                    <div className="w-64 h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center">
+                    <div className="w-48 h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center">
                       <QrCode className="w-16 h-16 text-gray-400" />
                     </div>
                   )}
@@ -114,10 +114,10 @@ const HeroSection = () => {
 
                 {/* Mobile Instructions */}
                 <div className="space-y-3">
-                  <h3 className="text-2xl font-bold text-primary">
+                  <h3 className="text-xl font-bold text-primary">
                     📱 Point your phone camera at this code
                   </h3>
-                  <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                  <p className="text-base text-muted-foreground max-w-md mx-auto">
                     Experience our complete safety management platform instantly. No downloads, no signup required for the demo.
                   </p>
                 </div>
