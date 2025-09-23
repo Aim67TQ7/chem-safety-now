@@ -165,22 +165,6 @@ const UniversalLabelPrinter = ({
 };
 
 
-      // Enhanced html2canvas options for perfect quality
-      const canvas = await html2canvas(labelRef.current, {
-        backgroundColor: '#ffffff',
-        scale: scale,
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-        width: 300,
-        height: 225,
-        windowWidth: 300,
-        windowHeight: 225,
-        // High quality rendering options
-        foreignObjectRendering: false,
-        imageTimeout: 15000,
-        removeContainer: true
-      });
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
