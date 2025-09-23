@@ -149,7 +149,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
                 className="flex items-center space-x-2 ml-2"
               >
                 <Database className="w-4 h-4" />
-                <span>Manage SDS</span>
+                <span>SDS LIBRARY</span>
               </Button>
             </Link>
           </div>
@@ -215,7 +215,7 @@ const FacilityNavbar = ({ facilityName, facilityLogo, facilityAddress, facilityI
                   size="sm"
                 >
                   <Database className="w-4 h-4" />
-                  <span>Manage SDS</span>
+                  <span>SDS LIBRARY</span>
                 </Button>
               </Link>
             </div>
