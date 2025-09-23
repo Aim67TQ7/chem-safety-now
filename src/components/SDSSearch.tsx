@@ -33,6 +33,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [lastSearchTerm, setLastSearchTerm] = useState('');
 
   // Auto-search if URL contains search parameter
   useEffect(() => {
@@ -71,6 +72,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
 
       console.log('✅ Search results:', data);
       setSearchResults(data.results || []);
+      setLastSearchTerm(termToSearch);
       
       if (onSearchComplete) {
         onSearchComplete((data.results || []).length > 0);
@@ -85,7 +87,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
     } catch (error: any) {
       console.error('❌ Search failed:', error);
       toast.error(`Search failed: ${error.message}`);
-      setSearchResults([]);
+      // Don't clear existing results on error, just show the error
       
       if (onSearchComplete) {
         onSearchComplete(false);
@@ -199,6 +201,21 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
     }
   };
 
+  const handleResetSearch = () => {
+    setSearchResults([]);
+    setHasSearched(false);
+    setSearchTerm('');
+    setLastSearchTerm('');
+    if (onSearchComplete) {
+      onSearchComplete(false);
+    }
+  };
+
+  const handleNewSearch = () => {
+    setSearchTerm('');
+    // Keep existing results but allow new search
+  };
+
   if (showOnlyResults && searchResults.length === 0 && !hasSearched) {
     return null;
   }
@@ -229,13 +246,36 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
       {searchResults.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              Search Results ({searchResults.length})
-            </h3>
-            <div className="flex items-center gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">
+                Search Results ({searchResults.length})
+              </h3>
+              {lastSearchTerm && (
+                <p className="text-sm text-gray-600">
+                  Results for: "{lastSearchTerm}"
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <Badge variant="secondary">
                 Found {searchResults.length} documents
               </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNewSearch}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                New Search
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetSearch}
+                className="text-red-600 hover:text-red-700"
+              >
+                Reset Search
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -257,6 +297,8 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                 onDownload={handleViewDocument}
                 onPrintLabel={async (doc) => {
                   try {
+                    toast.loading('Preparing document for label printing...');
+                    
                     // Save the document to database first (same as handleViewDocument)
                     const documentData = {
                       product_name: doc.product_name,
@@ -273,6 +315,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                     };
 
                     let documentId = doc.id;
+                    let needsEvaluation = true;
                     
                     // Save to database if not already saved
                     if (!documentId) {
@@ -289,14 +332,56 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                       if (savedDoc) {
                         documentId = savedDoc.id;
                       }
+                    } else {
+                      // Check if document already has AI extraction data
+                      needsEvaluation = !doc.ai_extracted_data || !doc.pictograms || doc.pictograms.length === 0;
                     }
 
-                    // Navigate to label printer with document ID
+                    // Run AI evaluation if needed to extract pictograms and detailed data
+                    if (needsEvaluation && documentId) {
+                      console.log('🤖 Running AI evaluation for complete label data...');
+                      
+                      let pdfUrl = doc.bucket_url || doc.source_url;
+                      if (doc.bucket_url && doc.bucket_url.startsWith('sds-documents/')) {
+                        pdfUrl = `https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/${doc.bucket_url}`;
+                      }
+
+                      // Call OpenAI analysis for complete data extraction
+                      const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('openai-sds-analysis', {
+                        body: { 
+                          document_id: documentId,
+                          pdf_url: pdfUrl
+                        }
+                      });
+
+                      if (!analysisError && analysisResult?.success) {
+                        const extractedData = analysisResult.data;
+                        await supabase
+                          .from('sds_documents')
+                          .update({
+                            ai_extracted_data: extractedData,
+                            ai_extraction_confidence: extractedData.confidence_score || 0,
+                            ai_extraction_date: new Date().toISOString(),
+                            extraction_status: 'completed',
+                            hmis_codes: extractedData.hmis_codes || {},
+                            signal_word: extractedData.signal_word,
+                            pictograms: extractedData.ghs_pictograms || [],
+                            h_codes: extractedData.h_codes || []
+                          })
+                          .eq('id', documentId);
+                        
+                        toast.success('Document analyzed for complete label data');
+                      } else {
+                        console.warn('AI evaluation failed, proceeding with basic data');
+                      }
+                    }
+
+                    // Open label printer in new tab
                     if (documentId) {
-                      navigate(`/facility/${facilitySlug}/label-printer?documentId=${documentId}`);
+                      window.open(`/facility/${facilitySlug}/label-printer?documentId=${documentId}`, '_blank');
                     } else {
-                      // Fallback: navigate with basic parameters
-                      navigate(`/facility/${facilitySlug}/label-printer?productName=${encodeURIComponent(doc.product_name)}&manufacturer=${encodeURIComponent(doc.manufacturer || '')}`);
+                      // Fallback: open with basic parameters
+                      window.open(`/facility/${facilitySlug}/label-printer?productName=${encodeURIComponent(doc.product_name)}&manufacturer=${encodeURIComponent(doc.manufacturer || '')}`, '_blank');
                     }
                     
                     // Log the action
@@ -307,13 +392,18 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                         metadata: {
                           productName: doc.product_name,
                           manufacturer: doc.manufacturer,
-                          accessMethod: 'search_results'
+                          accessMethod: 'search_results',
+                          aiEvaluated: needsEvaluation
                         }
                       });
                     }
                     
+                    toast.dismiss();
+                    toast.success('Label printer opened in new tab');
+                    
                   } catch (error: any) {
                     console.error('❌ Error preparing document for printing:', error);
+                    toast.dismiss();
                     toast.error('Failed to prepare document for printing');
                   }
                 }}
