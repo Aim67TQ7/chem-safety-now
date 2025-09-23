@@ -137,35 +137,37 @@ export function SafetyLabel({
   selectedPictograms,
   selectedHazards,
   ppeRequirements,
-  labelWidth = 288, 
-  labelHeight = 192,
+  labelWidth = 300, 
+  labelHeight = 225,
   signalWord 
 }: SafetyLabelProps) {
-  // Calculate proportional sizes based on label dimensions
-  const scaleFactor = Math.min(labelWidth / 288, labelHeight / 192);
+  // Fixed dimensions for consistent output - always 300x225 (4:3 aspect ratio)
+  const fixedWidth = 300;
+  const fixedHeight = 225;
+  const scaleFactor = 1; // No scaling needed with fixed dimensions
   
-  // Proportional spacing and sizing
-  const padding = Math.max(2, Math.floor(labelWidth * 0.02));
-  const verticalSpacing = Math.max(3, Math.floor(labelHeight * 0.015));
+  // Fixed spacing and sizing for 300x225 label
+  const padding = 6;
+  const verticalSpacing = 4;
   
-  // Section heights (as percentage of total)
-  const headerHeight = Math.floor(labelHeight * 0.15);
-  const hmisHeight = Math.floor(labelHeight * 0.12);
-  const infoHeight = Math.floor(labelHeight * 0.48);
-  const footerHeight = Math.floor(labelHeight * 0.05);
+  // Section heights (optimized for 300x225)
+  const headerHeight = 34;
+  const hmisHeight = 27;
+  const infoHeight = 108;
+  const footerHeight = 12;
 
   // HMIS box dimensions
-  const hmisWidthEach = Math.floor(labelWidth / 4);
-  const hmisBoxHeight = Math.floor(hmisHeight * 0.7);
-  const pictogramSize = Math.max(30 * scaleFactor, Math.floor(labelHeight * 0.15));
+  const hmisWidthEach = 75;
+  const hmisBoxHeight = 18;
+  const pictogramSize = 32;
   
-  // Calculated font sizes
-  const baseFontSize = Math.max(7, Math.floor(8 * scaleFactor));
-  const titleFontSize = Math.max(11, Math.floor(14 * scaleFactor));
-  const headerFontSize = Math.max(9, Math.floor(10 * scaleFactor));
-  const bodyFontSize = Math.max(8, Math.floor(9 * scaleFactor));
-  const smallFontSize = Math.max(7, Math.floor(8 * scaleFactor));
-  const hmisFontSize = Math.max(10, Math.floor(12 * scaleFactor));
+  // Fixed font sizes for 300x225 label
+  const baseFontSize = 8;
+  const titleFontSize = 14;
+  const headerFontSize = 10;
+  const bodyFontSize = 9;
+  const smallFontSize = 8;
+  const hmisFontSize = 12;
 
   // OSHA-compliant GHS pictogram mapping using Supabase storage
   const pictograms = [
@@ -300,8 +302,8 @@ export function SafetyLabel({
     <div 
       className="safety-label bg-white border-2 border-black print:border-black" 
       style={{ 
-        width: `${labelWidth}px`, 
-        height: `${labelHeight}px`, 
+        width: `${fixedWidth}px`, 
+        height: `${fixedHeight}px`, 
         padding: `${padding}px`, 
         fontSize: `${bodyFontSize}px`, 
         fontFamily: 'monospace',

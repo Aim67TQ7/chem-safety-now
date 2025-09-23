@@ -2,7 +2,7 @@
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import LabelPrinter from '@/components/LabelPrinter';
+import UniversalLabelPrinter from '@/components/UniversalLabelPrinter';
 import ProductSelector from '@/components/ProductSelector';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -185,7 +185,7 @@ const LabelPrinterPageContent = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">GHS Label Printer</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Universal GHS Label Printer</h1>
               <p className="text-gray-600">
                 {facility.facility_name} {document && `- ${document.product_name}`}
               </p>
@@ -217,9 +217,9 @@ const LabelPrinterPageContent = () => {
           </CardContent>
         </Card>
 
-        {/* Label Printer Component */}
+        {/* Universal Label Printer Component */}
         {document && (
-          <LabelPrinter
+          <UniversalLabelPrinter
             initialProductName={document.product_name || ''}
             initialManufacturer={document.manufacturer || ''}
             selectedDocument={document}
@@ -229,9 +229,9 @@ const LabelPrinterPageContent = () => {
         {!document && !isLoading && !error && (
           <Card>
             <CardContent className="text-center py-12">
-              <p className="text-gray-600 mb-4">Select a product from the dropdown above to start printing labels.</p>
+              <p className="text-gray-600 mb-4">Select a product from the dropdown above to start creating universal labels.</p>
               <p className="text-sm text-gray-500">
-                The label printer will load with all the product information from our SDS database.
+                Download high-resolution PNG files that work perfectly with any printer or label software - no alignment issues!
               </p>
             </CardContent>
           </Card>
