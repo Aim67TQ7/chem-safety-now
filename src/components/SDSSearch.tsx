@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Search, FileText, AlertCircle, ExternalLink, CheckCircle, Bot, Library } from 'lucide-react';
+import { Loader2, Search, FileText, AlertCircle, ExternalLink, CheckCircle, Bot, Library, Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import SDSResultCard from './SDSResultCard';
@@ -36,6 +36,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [lastSearchTerm, setLastSearchTerm] = useState('');
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   // Auto-search if URL contains search parameter
   useEffect(() => {
@@ -222,6 +223,12 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
     // Keep existing results but allow new search
   };
 
+  const handleUploadSuccess = (document: any) => {
+    toast.success('SDS document uploaded successfully');
+    setShowUploadForm(false);
+    // The SDSDocumentsTable will refresh automatically via its hook
+  };
+
   if (showOnlyResults && searchResults.length === 0 && !hasSearched) {
     return null;
   }
@@ -238,14 +245,35 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <SDSSearchInput
-                facilityId={facilityId || ''}
-                onSearchResults={handleSearchResults}
-                onSearchStart={handleSearchStart}
-              />
+              <div className="space-y-4">
+                <SDSSearchInput
+                  facilityId={facilityId || ''}
+                  onSearchResults={handleSearchResults}
+                  onSearchStart={handleSearchStart}
+                />
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => setShowUploadForm(!showUploadForm)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {showUploadForm ? 'Hide Upload Form' : 'Upload SDS Document'}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* SDS Upload Form */}
+      {showUploadForm && (
+        <SDSUploadForm
+          facilityId={facilityId}
+          onUploadSuccess={handleUploadSuccess}
+          onClose={() => setShowUploadForm(false)}
+        />
       )}
 
       {/* Search Results */}
