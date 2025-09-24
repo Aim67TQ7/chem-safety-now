@@ -165,6 +165,25 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
         // Don't fail the upload, just log the error
       }
 
+      // Create interaction record to associate document with facility
+      if (facilityId) {
+        const { error: interactionError } = await supabase
+          .from('sds_interactions')
+          .insert({
+            facility_id: facilityId,
+            sds_document_id: savedDoc.id,
+            action_type: 'upload',
+            metadata: {
+              upload_source: 'facility_upload',
+              file_name: uploadFile.file.name
+            }
+          });
+
+        if (interactionError) {
+          console.warn('Failed to create interaction record:', interactionError);
+        }
+      }
+
       // Mark as successful
       setFiles(prev => prev.map(f => 
         f.id === uploadFile.id 

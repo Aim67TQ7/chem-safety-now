@@ -223,10 +223,11 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
     // Keep existing results but allow new search
   };
 
-  const handleUploadSuccess = (document: any) => {
-    toast.success('SDS document uploaded successfully');
+  const handleUploadSuccess = (documents: any[]) => {
+    toast.success(`${documents.length} SDS document${documents.length > 1 ? 's' : ''} uploaded successfully`);
     setShowUploadForm(false);
-    // The SDSDocumentsTable will refresh automatically via its hook
+    // Force refresh of the documents table
+    window.location.reload();
   };
 
   if (showOnlyResults && searchResults.length === 0 && !hasSearched) {
