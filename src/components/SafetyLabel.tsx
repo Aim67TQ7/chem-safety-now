@@ -395,11 +395,12 @@ export function SafetyLabel({
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    lineHeight: '14px',
+                    lineHeight: '12px', // Reduced line height
                     fontFamily: 'Arial, Helvetica, sans-serif',
                     textAlign: 'center' as const,
                     verticalAlign: 'middle',
-                    marginTop: '-2px' // Shift text up to match webpage alignment
+                    marginTop: '-6px', // Increased negative margin to lift text up more
+                    paddingTop: '2px' // Add padding to center text better within box
                   }}
                 >
                   {value}

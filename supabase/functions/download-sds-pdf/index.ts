@@ -113,10 +113,11 @@ Deno.serve(async (req) => {
     console.log('🔗 Public URL:', bucketUrl);
 
     // Step 5: Update the document record with bucket URL and file info
+    // Store the complete URL for easy access
     const { error: updateError } = await supabase
       .from('sds_documents')
       .update({
-        bucket_url: bucketUrl,
+        bucket_url: bucketUrl, // This is already the full URL from getPublicUrl
         file_size: pdfBytes.byteLength,
         file_type: 'application/pdf'
       })
