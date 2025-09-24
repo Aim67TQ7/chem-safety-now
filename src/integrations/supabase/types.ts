@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -797,6 +797,48 @@ export type Database = {
           },
         ]
       }
+      licenses: {
+        Row: {
+          company_name: string
+          contact_email: string
+          contact_name: string | null
+          created_at: string
+          custom_domain: string | null
+          id: string
+          is_active: boolean
+          license_code: string
+          qr_code_url: string | null
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          contact_email: string
+          contact_name?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          id?: string
+          is_active?: boolean
+          license_code: string
+          qr_code_url?: string | null
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          contact_email?: string
+          contact_name?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          id?: string
+          is_active?: boolean
+          license_code?: string
+          qr_code_url?: string | null
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qr_code_interactions: {
         Row: {
           action_type: string
@@ -1118,6 +1160,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sds_extractions: {
+        Row: {
+          created_at: string
+          extraction_results: Json
+          guide_file_name: string
+          id: string
+          product_name: string | null
+          sds_file_name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          extraction_results: Json
+          guide_file_name: string
+          id?: string
+          product_name?: string | null
+          sds_file_name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          extraction_results?: Json
+          guide_file_name?: string
+          id?: string
+          product_name?: string | null
+          sds_file_name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       sds_interactions: {
         Row: {
@@ -1539,29 +1614,41 @@ export type Database = {
       }
       convert_trial_to_paid: {
         Args: {
-          p_facility_id: string
-          p_sales_rep_id: string
-          p_plan_type?: string
           p_billing_period?: string
+          p_facility_id: string
+          p_plan_type?: string
+          p_sales_rep_id: string
         }
         Returns: boolean
+      }
+      create_license: {
+        Args: {
+          company_name_param: string
+          contact_email_param: string
+          contact_name_param?: string
+        }
+        Returns: Json
       }
       extend_trial_period: {
         Args: {
-          p_facility_id: string
-          p_days: number
           p_admin_email: string
+          p_days: number
+          p_facility_id: string
           p_notes?: string
         }
         Returns: boolean
       }
+      generate_license_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       grant_free_subscription: {
         Args: {
-          p_facility_id: string
-          p_plan_type: string
-          p_duration_months: number
           p_admin_email: string
+          p_duration_months: number
+          p_facility_id: string
           p_notes?: string
+          p_plan_type: string
         }
         Returns: boolean
       }
@@ -1570,7 +1657,7 @@ export type Database = {
         Returns: boolean
       }
       reset_facility_subscription: {
-        Args: { p_facility_id: string; p_admin_email: string; p_notes?: string }
+        Args: { p_admin_email: string; p_facility_id: string; p_notes?: string }
         Returns: boolean
       }
       reset_monthly_usage: {
@@ -1586,7 +1673,7 @@ export type Database = {
         Returns: boolean
       }
       upgrade_user_subscription: {
-        Args: { p_user_id: string; p_tier_name: string }
+        Args: { p_tier_name: string; p_user_id: string }
         Returns: boolean
       }
     }
