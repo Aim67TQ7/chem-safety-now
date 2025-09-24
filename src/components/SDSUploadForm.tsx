@@ -1,16 +1,23 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, X, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface SDSUploadFormProps {
   facilityId?: string;
-  onUploadSuccess?: (document: any) => void;
+  onUploadSuccess?: (documents: any[]) => void;
   onClose?: () => void;
+}
+
+interface UploadFile {
+  file: File;
+  id: string;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
+  message?: string;
 }
 
 const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
@@ -18,37 +25,54 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
   onUploadSuccess,
   onClose
 }) => {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<UploadFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [validationStatus, setValidationStatus] = useState<'pending' | 'validating' | 'valid' | 'invalid' | null>(null);
-  const [validationMessage, setValidationMessage] = useState('');
 
   const validateFile = (file: File): string | null => {
-    // Check file type
-    if (file.type !== 'application/pdf') {
-      return 'Only PDF files are allowed';
-    }
-    
     // Check file size (max 20MB)
     if (file.size > 20 * 1024 * 1024) {
       return 'File size must be less than 20MB';
     }
     
+    // Recommend PDF but don't enforce
+    if (file.type !== 'application/pdf') {
+      return 'Warning: Only PDF files are recommended for SDS documents';
+    }
+    
     return null;
   };
 
-  const handleFileSelect = (selectedFile: File) => {
-    const error = validateFile(selectedFile);
-    if (error) {
-      toast.error(error);
+  const handleFileSelect = (selectedFiles: FileList) => {
+    const newFiles: UploadFile[] = [];
+    const currentFileCount = files.length;
+    
+    // Check if adding these files would exceed the limit
+    if (currentFileCount + selectedFiles.length > 5) {
+      toast.error(`You can only upload up to 5 files at a time. Currently selected: ${currentFileCount}`);
       return;
     }
     
-    setFile(selectedFile);
-    setValidationStatus('pending');
-    setValidationMessage('');
+    Array.from(selectedFiles).forEach((file) => {
+      const error = validateFile(file);
+      if (error && !error.includes('Warning:')) {
+        toast.error(`${file.name}: ${error}`);
+        return;
+      }
+      
+      if (error && error.includes('Warning:')) {
+        toast.warning(`${file.name}: ${error}`);
+      }
+      
+      newFiles.push({
+        file,
+        id: `${Date.now()}_${Math.random()}`,
+        status: 'pending',
+        progress: 0
+      });
+    });
+    
+    setFiles(prev => [...prev, ...newFiles]);
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -65,116 +89,149 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
     e.preventDefault();
     setIsDragging(false);
     
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) {
-      handleFileSelect(droppedFile);
+    if (e.dataTransfer.files) {
+      handleFileSelect(e.dataTransfer.files);
     }
-  }, []);
+  }, [files]);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      handleFileSelect(selectedFile);
+    if (e.target.files) {
+      handleFileSelect(e.target.files);
+    }
+  };
+
+  const uploadSingleFile = async (uploadFile: UploadFile): Promise<any> => {
+    try {
+      // Update status
+      setFiles(prev => prev.map(f => 
+        f.id === uploadFile.id 
+          ? { ...f, status: 'uploading', progress: 10, message: 'Uploading...' }
+          : f
+      ));
+
+      // Upload file to storage
+      const fileName = `upload_${Date.now()}_${uploadFile.file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('sds-documents')
+        .upload(fileName, uploadFile.file);
+
+      if (uploadError) throw uploadError;
+
+      // Update progress
+      setFiles(prev => prev.map(f => 
+        f.id === uploadFile.id 
+          ? { ...f, progress: 50, message: 'Saving to database...' }
+          : f
+      ));
+
+      // Save document to database without validation
+      const { data: savedDoc, error: saveError } = await supabase
+        .from('sds_documents')
+        .insert([{
+          product_name: uploadFile.file.name.replace('.pdf', '').replace(/_/g, ' '),
+          source_url: `https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/sds-documents/${uploadData.path}`,
+          bucket_url: `sds-documents/${uploadData.path}`,
+          file_name: uploadFile.file.name,
+          file_type: uploadFile.file.type,
+          document_type: 'unknown_document', // Will be determined by extraction
+          extraction_status: 'pending',
+          is_readable: false, // Will be updated after extraction
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (saveError) throw saveError;
+
+      // Update progress
+      setFiles(prev => prev.map(f => 
+        f.id === uploadFile.id 
+          ? { ...f, progress: 80, message: 'Starting text extraction...' }
+          : f
+      ));
+
+      // Trigger text extraction in background
+      const { error: extractionError } = await supabase.functions.invoke('extract-sds-text', {
+        body: {
+          document_id: savedDoc.id,
+          file_name: uploadFile.file.name,
+          validate_only: false
+        }
+      });
+
+      if (extractionError) {
+        console.warn('Text extraction failed:', extractionError);
+        // Don't fail the upload, just log the error
+      }
+
+      // Mark as successful
+      setFiles(prev => prev.map(f => 
+        f.id === uploadFile.id 
+          ? { ...f, status: 'success', progress: 100, message: 'Upload complete!' }
+          : f
+      ));
+
+      return savedDoc;
+
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setFiles(prev => prev.map(f => 
+        f.id === uploadFile.id 
+          ? { ...f, status: 'error', message: `Failed: ${error.message}` }
+          : f
+      ));
+      throw error;
     }
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
 
     setIsUploading(true);
-    setUploadProgress(10);
-    setValidationStatus('validating');
-    setValidationMessage('Uploading and validating SDS document...');
+    const uploadedDocs: any[] = [];
 
     try {
-      // Upload file to temporary storage
-      const fileName = `upload_${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('sds-documents')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      setUploadProgress(40);
-      setValidationMessage('File uploaded, validating SDS content...');
-
-      // Validate the uploaded SDS document
-      const { data: validationResult, error: validationError } = await supabase.functions.invoke('sds-upload-validation', {
-        body: {
-          file_path: uploadData.path,
-          original_filename: file.name,
-          facility_id: facilityId
+      // Upload all files
+      for (const file of files) {
+        if (file.status === 'pending') {
+          try {
+            const doc = await uploadSingleFile(file);
+            uploadedDocs.push(doc);
+          } catch (error) {
+            // Continue with other files even if one fails
+            continue;
+          }
         }
-      });
+      }
 
-      if (validationError) throw validationError;
+      const successCount = files.filter(f => f.status === 'success').length;
+      const errorCount = files.filter(f => f.status === 'error').length;
 
-      setUploadProgress(80);
-
-      if (validationResult.is_valid) {
-        setValidationStatus('valid');
-        setValidationMessage('SDS document validated successfully');
-        setUploadProgress(100);
-
-        // Save validated document to database
-        const { data: savedDoc, error: saveError } = await supabase
-          .from('sds_documents')
-          .insert([{
-            product_name: validationResult.product_name,
-            manufacturer: validationResult.manufacturer,
-            source_url: `https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/sds-documents/${uploadData.path}`,
-            bucket_url: `sds-documents/${uploadData.path}`,
-            file_name: file.name,
-            file_type: 'application/pdf',
-            document_type: 'sds',
-            extraction_status: 'completed',
-            is_readable: true,
-            ai_extracted_data: validationResult.extracted_data || {},
-            ai_extraction_confidence: validationResult.confidence_score || 0,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }])
-          .select()
-          .single();
-
-        if (saveError) throw saveError;
-
-        toast.success('SDS document uploaded and validated successfully');
+      if (successCount > 0) {
+        toast.success(`${successCount} document${successCount > 1 ? 's' : ''} uploaded successfully${errorCount > 0 ? `, ${errorCount} failed` : ''}`);
         
         if (onUploadSuccess) {
-          onUploadSuccess(savedDoc);
+          onUploadSuccess(uploadedDocs);
         }
-
-        // Reset form
-        setFile(null);
-        setValidationStatus(null);
-        setUploadProgress(0);
-        
       } else {
-        setValidationStatus('invalid');
-        setValidationMessage(validationResult.validation_errors?.join(', ') || 'Document is not a valid SDS');
-        
-        // Clean up uploaded file
-        await supabase.storage.from('sds-documents').remove([uploadData.path]);
-        
-        toast.error('Uploaded file is not a valid SDS document');
+        toast.error('All uploads failed');
       }
 
     } catch (error: any) {
-      console.error('Upload error:', error);
-      setValidationStatus('invalid');
-      setValidationMessage(`Upload failed: ${error.message}`);
-      toast.error('Failed to upload SDS document');
+      console.error('Batch upload error:', error);
+      toast.error('Upload process failed');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const removeFile = () => {
-    setFile(null);
-    setValidationStatus(null);
-    setValidationMessage('');
-    setUploadProgress(0);
+  const removeFile = (fileId: string) => {
+    setFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  const clearAllFiles = () => {
+    setFiles([]);
   };
 
   return (
@@ -182,7 +239,7 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Upload className="w-5 h-5" />
-          Upload SDS Document
+          Upload SDS Documents
         </CardTitle>
         {onClose && (
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -191,12 +248,19 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-sm text-muted-foreground">
-          Upload your own Safety Data Sheet (SDS) document if you can't find it in our database.
-          Only PDF files up to 20MB are accepted.
+        {/* Warning Message */}
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-800 mb-1">Please upload Safety Data Sheet (SDS) documents only</p>
+            <p className="text-amber-700">
+              While we don't enforce file validation, uploading non-SDS documents may result in incomplete or incorrect hazard information extraction.
+              Maximum file size: 20MB per file. Maximum files: 5 at a time.
+            </p>
+          </div>
         </div>
 
-        {!file ? (
+        {files.length === 0 ? (
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
               isDragging 
@@ -211,71 +275,100 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
             <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <div className="space-y-2">
               <p className="text-lg font-medium">
-                {isDragging ? 'Drop your SDS file here' : 'Drop your SDS file here or click to browse'}
+                {isDragging ? 'Drop your SDS files here' : 'Drop your SDS files here or click to browse'}
               </p>
               <p className="text-sm text-muted-foreground">
-                Supports PDF files up to 20MB
+                Upload up to 5 PDF files, max 20MB each
               </p>
             </div>
             <input
               id="sds-file-input"
               type="file"
               accept=".pdf"
+              multiple
               onChange={handleFileInputChange}
               className="hidden"
             />
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <FileText className="w-8 h-8 text-red-600" />
-                <div>
-                  <p className="font-medium">{file.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {(file.size / (1024 * 1024)).toFixed(2)} MB
-                  </p>
+            {/* File List */}
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {files.map((uploadFile) => (
+                <div key={uploadFile.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3 flex-1">
+                    <FileText className="w-6 h-6 text-red-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{uploadFile.file.name}</p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{(uploadFile.file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                        {uploadFile.status === 'success' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                        {uploadFile.status === 'error' && <AlertCircle className="w-4 h-4 text-red-600" />}
+                        {uploadFile.status === 'uploading' && <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
+                      </div>
+                      {uploadFile.message && (
+                        <p className={`text-xs mt-1 ${
+                          uploadFile.status === 'success' ? 'text-green-600' : 
+                          uploadFile.status === 'error' ? 'text-red-600' : 
+                          'text-muted-foreground'
+                        }`}>
+                          {uploadFile.message}
+                        </p>
+                      )}
+                      {uploadFile.status === 'uploading' && (
+                        <Progress value={uploadFile.progress} className="w-full mt-2" />
+                      )}
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => removeFile(uploadFile.id)}
+                    disabled={uploadFile.status === 'uploading'}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
-              </div>
-              <Button variant="ghost" size="sm" onClick={removeFile}>
-                <X className="w-4 h-4" />
-              </Button>
+              ))}
             </div>
 
-            {validationStatus && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  {validationStatus === 'valid' && <CheckCircle className="w-4 h-4 text-green-600" />}
-                  {validationStatus === 'invalid' && <AlertCircle className="w-4 h-4 text-red-600" />}
-                  {validationStatus === 'validating' && <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
-                  <span className={`text-sm ${
-                    validationStatus === 'valid' ? 'text-green-600' : 
-                    validationStatus === 'invalid' ? 'text-red-600' : 
-                    'text-muted-foreground'
-                  }`}>
-                    {validationMessage}
-                  </span>
-                </div>
-                {isUploading && (
-                  <Progress value={uploadProgress} className="w-full" />
-                )}
-              </div>
+            {/* Add More Files */}
+            {files.length < 5 && (
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById('sds-file-input')?.click()}
+                disabled={isUploading}
+                className="w-full"
+              >
+                Add More Files ({files.length}/5)
+              </Button>
             )}
 
+            {/* Action Buttons */}
             <div className="flex gap-2">
               <Button 
                 onClick={handleUpload} 
-                disabled={isUploading || validationStatus === 'valid'}
+                disabled={isUploading || files.every(f => f.status === 'success')}
                 className="flex-1"
               >
-                {isUploading ? 'Uploading...' : 'Upload & Validate'}
+                {isUploading ? 'Uploading...' : 'Upload All Files'}
               </Button>
-              <Button variant="outline" onClick={removeFile}>
-                Cancel
+              <Button variant="outline" onClick={clearAllFiles} disabled={isUploading}>
+                Clear All
               </Button>
             </div>
           </div>
         )}
+
+        {/* Hidden file input for additional files */}
+        <input
+          id="sds-file-input"
+          type="file"
+          accept=".pdf"
+          multiple
+          onChange={handleFileInputChange}
+          className="hidden"
+        />
       </CardContent>
     </Card>
   );
