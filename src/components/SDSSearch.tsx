@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import SDSResultCard from './SDSResultCard';
 import SDSSearchInput from './SDSSearchInput';
 import SDSUploadForm from './SDSUploadForm';
+import SDSDocumentsTable from './sds/SDSDocumentsTable';
 import { Badge } from '@/components/ui/badge';
 import { useLocation } from 'react-router-dom';
 import { AuditService } from '@/services/auditService';
@@ -421,6 +422,86 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Facility SDS Documents Table */}
+      {facilityId && (
+        <SDSDocumentsTable
+          facilityId={facilityId}
+          facilitySlug={facilitySlug}
+          onViewDocument={handleViewDocument}
+          onPrintLabel={async (document) => {
+            try {
+              toast.loading('Preparing document for label printing...');
+              
+              let needsEvaluation = !document.ai_extracted_data || !document.pictograms || document.pictograms.length === 0;
+              
+              // Run AI evaluation if needed to extract pictograms and detailed data
+              if (needsEvaluation && document.id) {
+                console.log('🤖 Running AI evaluation for complete label data...');
+                
+                let pdfUrl = document.bucket_url || document.source_url;
+                if (document.bucket_url && document.bucket_url.startsWith('sds-documents/')) {
+                  pdfUrl = `https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/${document.bucket_url}`;
+                }
+
+                // Call OpenAI analysis for complete data extraction
+                const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('openai-sds-analysis', {
+                  body: { 
+                    document_id: document.id,
+                    pdf_url: pdfUrl
+                  }
+                });
+
+                if (!analysisError && analysisResult?.success) {
+                  const extractedData = analysisResult.data;
+                  await supabase
+                    .from('sds_documents')
+                    .update({
+                      ai_extracted_data: extractedData,
+                      ai_extraction_confidence: extractedData.confidence_score || 0,
+                      ai_extraction_date: new Date().toISOString(),
+                      extraction_status: 'completed',
+                      hmis_codes: extractedData.hmis_codes || {},
+                      signal_word: extractedData.signal_word,
+                      pictograms: extractedData.ghs_pictograms || [],
+                      h_codes: extractedData.h_codes || []
+                    })
+                    .eq('id', document.id);
+                  
+                  toast.success('Document analyzed for complete label data');
+                } else {
+                  console.warn('AI evaluation failed, proceeding with basic data');
+                }
+              }
+
+              // Open label printer in new tab
+              window.open(`/facility/${facilitySlug}/label-printer?documentId=${document.id}`, '_blank');
+              
+              // Log the action
+              if (facilityId) {
+                interactionLogger.logSDSInteraction({
+                  sdsDocumentId: document.id,
+                  actionType: 'generate_label',
+                  metadata: {
+                    productName: document.product_name,
+                    manufacturer: document.manufacturer,
+                    accessMethod: 'facility_table',
+                    aiEvaluated: needsEvaluation
+                  }
+                });
+              }
+              
+              toast.dismiss();
+              toast.success('Label printer opened in new tab');
+              
+            } catch (error: any) {
+              console.error('❌ Error preparing document for printing:', error);
+              toast.dismiss();
+              toast.error('Failed to prepare document for printing');
+            }
+          }}
+        />
       )}
 
       {/* No Results State with Upload Option */}
