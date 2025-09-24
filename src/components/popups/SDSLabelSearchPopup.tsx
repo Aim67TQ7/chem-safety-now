@@ -65,9 +65,17 @@ const SDSLabelSearchPopup = ({ isOpen, onClose }: SDSLabelSearchPopupProps) => {
   };
 
   const handleViewDocument = (document: any) => {
-    const pdfUrl = document.bucket_url 
-      ? supabase.storage.from('sds-documents').getPublicUrl(document.bucket_url.replace('sds-documents/', '')).data.publicUrl
-      : document.source_url;
+    let pdfUrl = document.source_url; // Default fallback
+    
+    if (document.bucket_url) {
+      // If it's already a full Supabase URL, use it directly
+      if (document.bucket_url.startsWith('https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/')) {
+        pdfUrl = document.bucket_url;
+      } else {
+        // Otherwise, generate the public URL from the path
+        pdfUrl = supabase.storage.from('sds-documents').getPublicUrl(document.bucket_url.replace('sds-documents/', '')).data.publicUrl;
+      }
+    }
     
     window.open(pdfUrl, '_blank');
   };

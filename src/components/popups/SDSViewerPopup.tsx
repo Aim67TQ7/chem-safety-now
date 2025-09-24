@@ -46,8 +46,13 @@ const SDSViewerPopup = ({
   };
 
   const getPDFUrl = () => {
-    // If we have a bucket_url, generate the public URL from Supabase storage
+    // If we have a bucket_url, check if it's already a full URL or a path
     if (sdsDocument.bucket_url) {
+      // If it's already a full Supabase URL, use it directly
+      if (sdsDocument.bucket_url.startsWith('https://fwzgsiysdwsmmkgqmbsd.supabase.co/storage/v1/object/public/')) {
+        return sdsDocument.bucket_url;
+      }
+      // Otherwise, generate the public URL from the path
       const { data } = supabase.storage
         .from('sds-documents')
         .getPublicUrl(sdsDocument.bucket_url.replace('sds-documents/', ''));

@@ -130,7 +130,8 @@ Deno.serve(async (req) => {
     }
 
     // Step 6: Trigger text extraction (background task)
-    EdgeRuntime.waitUntil((async () => {
+    // Note: Background tasks will continue after response is sent
+    (async () => {
       console.log('🔍 Triggering text extraction...');
       try {
         const { error: extractionError } = await supabase.functions.invoke('extract-sds-text', {
@@ -148,7 +149,7 @@ Deno.serve(async (req) => {
       } catch (extractionError) {
         console.error('❌ Text extraction error:', extractionError);
       }
-    })());
+    })();
 
     console.log('✅ PDF download and storage completed successfully');
 
