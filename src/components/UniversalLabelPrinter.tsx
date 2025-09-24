@@ -6,9 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Download, AlertTriangle, CheckCircle, Shield, Image as ImageIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, AlertTriangle, CheckCircle, Shield, Image as ImageIcon, Printer } from "lucide-react";
 import { SafetyLabel } from './SafetyLabel';
 import { extractEnhancedSDSData } from './utils/enhancedSdsDataExtractor';
+import { ZebraPrintAdapter, ZebraPrintOptions } from './ZebraPrinterIntegration';
+import { useZebraPrintHandler } from './ZebraPrinterHandlerImplementation';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { useDemoPrintActions } from '@/hooks/useDemoPrintActions';
@@ -28,7 +31,17 @@ const UniversalLabelPrinter = ({
   const sdsData = selectedDocument ? extractEnhancedSDSData(selectedDocument) : null;
   const { handleDownloadAction } = useDemoPrintActions();
   
+  // State for label customization
   const [productId, setProductId] = useState(sdsData?.productId || '');
+  const [labelWidth, setLabelWidth] = useState(300);
+  const [labelHeight, setLabelHeight] = useState(225);
+  
+  // Initialize Zebra print handler
+  const { handlePrint: handleZebraPrint, isPrinting, isAvailable } = useZebraPrintHandler({
+    labelRef,
+    onPrintComplete: () => toast.success('Print job sent to Zebra printer'),
+    onPrintError: (error) => toast.error(`Print failed: ${error}`)
+  });
   
   // Safety-critical data (read-only from SDS)
   const productName = sdsData?.productName || initialProductName;
@@ -113,8 +126,8 @@ const UniversalLabelPrinter = ({
       const originalWidth = target.style.width;
       const originalHeight = target.style.height;
       
-      target.style.width = '300px';
-      target.style.height = '225px';
+      target.style.width = `${labelWidth}px`;
+      target.style.height = `${labelHeight}px`;
 
       // Enhanced html2canvas options for perfect quality
       const canvas = await html2canvas(target, {
@@ -123,10 +136,10 @@ const UniversalLabelPrinter = ({
         logging: false,
         useCORS: true,
         allowTaint: false,
-        width: 300,
-        height: 225,
-        windowWidth: 300,
-        windowHeight: 225,
+        width: labelWidth,
+        height: labelHeight,
+        windowWidth: labelWidth,
+        windowHeight: labelHeight,
         // High quality rendering options
         foreignObjectRendering: false,
         imageTimeout: 15000,
@@ -165,33 +178,50 @@ const UniversalLabelPrinter = ({
   const downloadOptions = [
     {
       label: 'Draft Quality',
-      description: '300×225 - Quick preview',
+      description: `${labelWidth}×${labelHeight} - Quick preview`,
       scale: 1,
       variant: 'outline' as const,
-      filename: `safety-label-draft-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+      filename: `safety-label-draft-${labelWidth}x${labelHeight}-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
     },
     {
       label: 'Standard Print',
-      description: '600×450 - Most printers',
+      description: `${labelWidth * 2}×${labelHeight * 2} - Most printers`,
       scale: 2,
       variant: 'outline' as const,
-      filename: `safety-label-standard-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+      filename: `safety-label-standard-${labelWidth}x${labelHeight}-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
     },
     {
       label: 'High Quality',
-      description: '1200×900 - Professional',
+      description: `${labelWidth * 4}×${labelHeight * 4} - Professional`,
       scale: 4,
       variant: 'default' as const,
-      filename: `safety-label-hq-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+      filename: `safety-label-hq-${labelWidth}x${labelHeight}-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
     },
     {
       label: 'Maximum',
-      description: '2400×1800 - Ultra HD',
+      description: `${labelWidth * 8}×${labelHeight * 8} - Ultra HD`,
       scale: 8,
       variant: 'outline' as const,
-      filename: `safety-label-max-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+      filename: `safety-label-max-${labelWidth}x${labelHeight}-${productName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
     }
   ];
+
+  // Handle Zebra print request
+  const handleZebraPrintRequest = (options: ZebraPrintOptions) => {
+    handleZebraPrint(options);
+  };
+
+  // Preset label sizes (pixels)
+  const presetSizes = [
+    { name: '2" × 1.33"', width: 288, height: 192 },
+    { name: '3" × 2"', width: 432, height: 288 },
+    { name: '4" × 2.67"', width: 576, height: 384 },
+  ];
+
+  const handlePresetSize = (width: number, height: number) => {
+    setLabelWidth(width);
+    setLabelHeight(height);
+  };
 
   const compliance = getComplianceStatus();
   const ComplianceIcon = compliance.icon;
@@ -323,49 +353,121 @@ const UniversalLabelPrinter = ({
 
                 <Separator />
 
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-sm font-medium text-blue-800 mb-2">Fixed Label Size: 300×225 pixels</p>
-                  <p className="text-xs text-blue-600">
-                    Optimized 4:3 aspect ratio ensures perfect scaling to any printer or label stock.
-                  </p>
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Label Dimensions (pixels)</Label>
+                  
+                  {/* Preset Size Buttons */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {presetSizes.map((preset) => (
+                      <Button
+                        key={preset.name}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePresetSize(preset.width, preset.height)}
+                        className="text-xs p-2 h-auto"
+                      >
+                        {preset.name}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  {/* Custom Size Inputs */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="width" className="text-xs text-gray-600">Width (px)</Label>
+                      <Input
+                        id="width"
+                        type="number"
+                        value={labelWidth}
+                        onChange={(e) => setLabelWidth(Number(e.target.value))}
+                        min="200"
+                        max="800"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="height" className="text-xs text-gray-600">Height (px)</Label>
+                      <Input
+                        id="height"
+                        type="number"
+                        value={labelHeight}
+                        onChange={(e) => setLabelHeight(Number(e.target.value))}
+                        min="150"
+                        max="600"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    <strong>Physical Size:</strong> ~{(labelWidth / 144).toFixed(2)}" × {(labelHeight / 144).toFixed(2)}" @ 144 DPI<br />
+                    <strong>Aspect Ratio:</strong> {(labelWidth / labelHeight).toFixed(2)}:1
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Download Options */}
+            {/* Printing and Download Options */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center">
-                  <ImageIcon className="w-4 h-4 mr-2" />
-                  PNG Download Options
+                  <Printer className="w-4 h-4 mr-2" />
+                  Printing & Download Options
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-1 gap-2">
-                  {downloadOptions.map((option) => (
-                    <Button
-                      key={option.scale}
-                      variant={option.variant}
-                      size="sm"
-                      onClick={() => captureHighResolutionPNG(option.scale, option.filename)}
-                      className="justify-start"
-                    >
-                      <Download className="w-3 h-3 mr-2" />
-                      <div className="text-left flex-1">
-                        <div className="font-medium">{option.label}</div>
-                        <div className="text-xs opacity-75">{option.description}</div>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-                
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    <strong>Universal Compatibility:</strong> Download PNG files work with any label software, 
-                    printer driver, or professional print service. No alignment issues.
-                  </AlertDescription>
-                </Alert>
+              <CardContent>
+                <Tabs defaultValue="png" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="png">PNG Download</TabsTrigger>
+                    <TabsTrigger value="zebra">Zebra Printer</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="png" className="space-y-3 mt-4">
+                    <div className="grid grid-cols-1 gap-2">
+                      {downloadOptions.map((option) => (
+                        <Button
+                          key={option.scale}
+                          variant={option.variant}
+                          size="sm"
+                          onClick={() => captureHighResolutionPNG(option.scale, option.filename)}
+                          className="justify-start"
+                        >
+                          <Download className="w-3 h-3 mr-2" />
+                          <div className="text-left flex-1">
+                            <div className="font-medium">{option.label}</div>
+                            <div className="text-xs opacity-75">{option.description}</div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    <Alert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        <strong>Universal Compatibility:</strong> PNG files work with any label software, 
+                        printer driver, or professional print service.
+                      </AlertDescription>
+                    </Alert>
+                  </TabsContent>
+                  
+                  <TabsContent value="zebra" className="mt-4">
+                    {!isAvailable && (
+                      <Alert className="mb-4">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          Zebra Browser Print utility not detected. Please install it for direct thermal printing.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <ZebraPrintAdapter
+                      onPrint={handleZebraPrintRequest}
+                      defaultLabelWidth={labelWidth / 203} // Convert pixels to inches (203 DPI)
+                      defaultLabelHeight={labelHeight / 203}
+                      showAdvancedOptions={false}
+                    />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
 
@@ -421,8 +523,8 @@ const UniversalLabelPrinter = ({
                         selectedHazards={selectedHazards}
                         ppeRequirements={ppeRequirements}
                         signalWord={signalWord}
-                        labelWidth={300}
-                        labelHeight={225}
+                        labelWidth={labelWidth}
+                        labelHeight={labelHeight}
                       />
                     </div>
                   </div>
@@ -430,8 +532,9 @@ const UniversalLabelPrinter = ({
                   <Alert className="w-full">
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription className="text-sm">
-                      <strong>What you see is exactly what prints.</strong> Download PNG files at different 
-                      resolutions and import them into your label software for perfect results every time.
+                      <strong>What you see is exactly what prints.</strong> Current size: {labelWidth}×{labelHeight}px 
+                      (~{(labelWidth / 144).toFixed(2)}" × {(labelHeight / 144).toFixed(2)}"). Adjust dimensions above 
+                      and download PNG files for any printer.
                     </AlertDescription>
                   </Alert>
                 </div>
