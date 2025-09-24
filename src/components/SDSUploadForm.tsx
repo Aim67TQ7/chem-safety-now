@@ -167,6 +167,8 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
 
       // Create interaction record to associate document with facility
       if (facilityId) {
+        console.log('Creating interaction record for:', { facilityId, documentId: savedDoc.id, fileName: uploadFile.file.name });
+        
         const { error: interactionError } = await supabase
           .from('sds_interactions')
           .insert({
@@ -180,8 +182,15 @@ const SDSUploadForm: React.FC<SDSUploadFormProps> = ({
           });
 
         if (interactionError) {
-          console.warn('Failed to create interaction record:', interactionError);
+          console.error('Failed to create interaction record:', interactionError);
+          toast.error(`Upload warning: Document saved but not linked to facility. Error: ${interactionError.message}`);
+          // Don't fail the upload but show a warning
+        } else {
+          console.log('Interaction record created successfully');
         }
+      } else {
+        console.warn('No facilityId provided - interaction record not created');
+        toast.warning('Document uploaded but not linked to facility (no facility ID)');
       }
 
       // Mark as successful
