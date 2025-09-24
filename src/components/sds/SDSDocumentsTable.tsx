@@ -36,7 +36,7 @@ const SDSDocumentsTable: React.FC<SDSDocumentsTableProps> = ({
     searchTerm: '',
     filterType: 'all',
     filterStatus: 'all',
-    pageSize: 10,
+    pageSize: 100,
     facilityId
   });
 
