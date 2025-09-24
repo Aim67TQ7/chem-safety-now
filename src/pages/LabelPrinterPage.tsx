@@ -6,7 +6,8 @@ import UniversalLabelPrinter from '@/components/UniversalLabelPrinter';
 import ProductSelector from '@/components/ProductSelector';
 import FacilityNavbar from '@/components/FacilityNavbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, AlertCircle, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { DemoProvider } from '@/contexts/DemoContext';
 import DemoIndicator from '@/components/DemoIndicator';
@@ -184,11 +185,22 @@ const LabelPrinterPageContent = () => {
       <div className="bg-white border-b border-gray-200 px-4 py-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Universal GHS Label Printer</h1>
-              <p className="text-gray-600">
-                {facility.facility_name} {document && `- ${document.product_name}`}
-              </p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Universal GHS Label Printer</h1>
+                <p className="text-gray-600">
+                  {facility.facility_name} {document && `- ${document.product_name}`}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/facility/${facilitySlug}/print-tools`)}
+                className="flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                Universal Printer
+              </Button>
             </div>
             {document && (
               <div className="text-sm text-gray-500">

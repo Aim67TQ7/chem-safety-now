@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import LabelPrinter from '@/components/LabelPrinter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -124,6 +124,15 @@ const AdminLabelPrinterPage = () => {
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Documents
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/print-tools')}
+                  className="flex items-center gap-2"
+                >
+                  <Printer className="h-4 w-4" />
+                  Universal Printer
                 </Button>
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Admin GHS Label Printer</h1>
