@@ -59,7 +59,7 @@ export const useSDSDocuments = ({
           .from('sds_documents')
           .select(`
             *,
-            sds_interactions!inner(facility_id, created_at as interaction_date)
+            sds_interactions!inner(facility_id, created_at)
           `, { count: 'exact' })
           .eq('sds_interactions.facility_id', facilityId)
           .order('created_at', { ascending: false });
