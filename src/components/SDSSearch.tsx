@@ -62,7 +62,7 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
       const { data, error } = await supabase.functions.invoke('sds-search', {
         body: { 
           product_name: termToSearch,
-          max_results: 10
+          max_results: 5
         }
       });
 
@@ -411,14 +411,6 @@ const SDSSearch: React.FC<SDSSearchProps> = ({
                     toast.dismiss();
                     toast.error('Failed to prepare document for printing');
                   }
-                }}
-                onAskAI={(doc) => {
-                  // Handle Ask AI functionality - this would typically open an AI assistant
-                  toast.info("AI Assistant feature coming soon!");
-                }}
-                onEvaluationComplete={() => {
-                  // Refresh search or handle evaluation completion
-                  toast.success("Document evaluation completed");
                 }}
                 isSelected={false}
                 onSelect={() => {}}

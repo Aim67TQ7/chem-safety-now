@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import SDSDocumentsPage from "./pages/SDSDocumentsPage";
+import UniversalPrinterPage from "./pages/UniversalPrinterPage";
 import SEOHelmet from "./components/SEOHelmet";
 import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalHeader from "./components/GlobalHeader";
@@ -98,6 +99,8 @@ const App = () => {
                 <Route key={to} path={to} element={page} />
               ))}
               <Route path="/admin/sds-documents" element={<SDSDocumentsPage />} />
+              <Route path="/admin/print-tools" element={<UniversalPrinterPage />} />
+              <Route path="/facility/:facilitySlug/print-tools" element={<UniversalPrinterPage />} />
               <Route path="/qr-print/:facilitySlug" element={navItems.find(item => item.to === "/qr-print/:facilitySlug")?.page} />
               <Route path="/sales-rep/:salesRepId" element={navItems.find(item => item.to === "/sales-rep/:salesRepId")?.page} />
             </Routes>
